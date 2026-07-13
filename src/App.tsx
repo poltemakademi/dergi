@@ -1,8 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, CheckCircle2, Link2, Shield, Database, Mail, ArrowRight, Sparkles, TrendingUp, BarChart3, Globe, BookOpen, Fingerprint, Zap } from 'lucide-react';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import EarlyAccess from './EarlyAccess';
+import SystemFeatures from './SystemFeatures';
+import Applications from './Applications';
+import Auth from './Auth';
+import Integrations from './Integrations';
+import { Search, ChevronDown, CheckCircle2, Link2, Shield, Database, Mail, ArrowRight, Sparkles, TrendingUp, BarChart3, Globe, BookOpen, Zap } from 'lucide-react';
 
 export default function App() {
-  const [scrolled, setScrolled] = useState(false);
+    const [currentHash, setCurrentHash] = useState(window.location.hash);
+  useEffect(() => {
+    const handleHashChange = () => setCurrentHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   // Removed scrollRef
 
@@ -36,7 +48,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-200 selection:text-indigo-900 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-200 selection:text-indigo-900 relative overflow-hidden flex flex-col">
 
       {/* --- Ambient Background --- */}
       <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)] -z-20" />
@@ -44,36 +56,14 @@ export default function App() {
       <div className="absolute top-96 -right-64 w-[600px] h-[600px] bg-indigo-500/10 blur-[120px] rounded-full -z-10 pointer-events-none" />
 
       {/* --- Ultra Premium Floating Pill Navbar --- */}
-      <nav className={`fixed z-50 transition-all duration-500 left-1/2 -translate-x-1/2 max-w-[1200px] w-[calc(100%-2rem)] flex items-center justify-between ${scrolled ? 'top-4 bg-white/90 backdrop-blur-2xl border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] py-3 px-4 rounded-[2.5rem]' : 'top-6 bg-white border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] py-3.5 px-5 rounded-[2.5rem]'}`}>
+            <Navbar />
 
-        <div className="flex items-center gap-3 cursor-pointer group pl-2">
-          <div className="flex gap-[3px] items-center">
-            <div className="w-1.5 h-7 bg-indigo-600 rounded-full group-hover:h-8 group-hover:bg-indigo-500 transition-all duration-300 shadow-[0_0_10px_rgba(79,70,229,0.4)]" />
-            <div className="w-1.5 h-5 bg-sky-400 rounded-full group-hover:h-7 group-hover:bg-sky-300 transition-all duration-300 delay-75 shadow-[0_0_10px_rgba(56,189,248,0.4)]" />
-            <div className="w-1.5 h-6 bg-indigo-300 rounded-full group-hover:h-5 group-hover:bg-indigo-200 transition-all duration-300 delay-150" />
-          </div>
-          <span className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-950 transition-colors">
-            Academia<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-500 animate-gradient-x bg-[length:200%_auto]">Nexus</span>
-          </span>
-        </div>
-
-        <div className="hidden lg:flex items-center gap-8 text-sm font-bold text-slate-600">
-          <a href="#" className="hover:text-indigo-600 transition-colors py-2">Journals Directory</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors py-2">Early Access</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors py-2">Pricing</a>
-        </div>
-
-        <div className="flex items-center gap-2.5 pr-1">
-          <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-black tracking-widest uppercase rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-            Log In
-          </button>
-          <button className="relative group overflow-hidden px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10 flex items-center gap-2">Apply Journal</span>
-          </button>
-        </div>
-      </nav>
+      {currentHash === '#early-access' ? <EarlyAccess /> :
+       currentHash === '#sistem-ozellikleri' ? <SystemFeatures /> :
+       currentHash === '#basvurular' ? <Applications /> :
+       currentHash === '#entegrasyonlar' ? <Integrations /> :
+       currentHash === '#auth' ? <Auth /> : (
+         <>
 
       <main className="pb-24 pt-24">
         {/* --- Hero Section --- */}
@@ -365,98 +355,11 @@ export default function App() {
           </div>
         </section>
       </main>
+         </>
+       )}
 
       {/* --- Ultra Premium Footer --- */}
-      <footer className="relative bg-slate-950 pt-20 pb-10 border-t border-slate-800/50 overflow-hidden mt-20">
-        {/* Ambient Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-indigo-600/10 blur-[80px] rounded-full pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-sky-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 mb-16">
-            
-            {/* Brand Section */}
-            <div className="md:col-span-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-3 cursor-pointer mb-6 group inline-flex">
-                  <div className="flex gap-[3px] items-center">
-                    <div className="w-1.5 h-7 bg-indigo-500 rounded-full group-hover:h-8 group-hover:bg-indigo-400 transition-all duration-300 shadow-[0_0_10px_rgba(99,102,241,0.3)]" />
-                    <div className="w-1.5 h-5 bg-sky-400 rounded-full group-hover:h-7 group-hover:bg-sky-300 transition-all duration-300 delay-75 shadow-[0_0_10px_rgba(56,189,248,0.3)]" />
-                    <div className="w-1.5 h-6 bg-indigo-300 rounded-full group-hover:h-5 group-hover:bg-indigo-200 transition-all duration-300 delay-150" />
-                  </div>
-                  <span className="text-2xl font-black tracking-tight text-white group-hover:text-indigo-50 transition-colors">
-                    Academia<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400 animate-gradient-x bg-[length:200%_auto]">Nexus</span>
-                  </span>
-                </div>
-                <p className="text-slate-400 text-base leading-relaxed font-medium max-w-sm">
-                  The next-generation infrastructure for academic publishing. Streamlining peer review, indexing, and dissemination globally.
-                </p>
-              </div>
-              
-              <div className="flex gap-4 mt-8">
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-[0_0_15px_rgba(79,70,229,0.4)]">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                  </svg>
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-[0_0_15px_rgba(79,70,229,0.4)]">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-[0_0_15px_rgba(79,70,229,0.4)]">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-
-            {/* Links Section */}
-            <div className="md:col-span-7 grid grid-cols-2 gap-12 sm:gap-8">
-              <div className="flex flex-col gap-4">
-                <h4 className="text-slate-50 font-bold tracking-wider text-sm uppercase mb-2">Platform</h4>
-                <a href="/sistem-ozellikleri" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> System Features
-                </a>
-                <a href="/entegrasyonlar" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> Integrations
-                </a>
-                <a href="/early-access" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> Early Access
-                </a>
-              </div>
-              
-              <div className="flex flex-col gap-4">
-                <h4 className="text-slate-50 font-bold tracking-wider text-sm uppercase mb-2">Resources</h4>
-                <a href="/basvurular" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> Journal Applications
-                </a>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> Technical Docs
-                </a>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 font-medium transition-colors inline-flex items-center gap-1.5 group">
-                  <span className="w-0 group-hover:w-2 h-0.5 bg-indigo-500 transition-all duration-300"></span> API Reference
-                </a>
-              </div>
-            </div>
-
-          </div>
-          
-          <div className="border-t border-slate-800/80 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Fingerprint className="w-4 h-4 text-slate-600" />
-              &copy; 2026 AcademiaNexus. All rights reserved.
-            </div>
-            <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
-              <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-slate-300 transition-colors">Cookie Settings</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
 
     </div>
