@@ -61,7 +61,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFC] flex text-slate-800 font-sans selection:bg-slate-200 selection:text-slate-900">
+    <div className="min-h-screen bg-transparent flex text-slate-800 font-sans selection:bg-slate-200 selection:text-slate-900">
       
       {/* Enterprise Sidebar */}
       <motion.aside 

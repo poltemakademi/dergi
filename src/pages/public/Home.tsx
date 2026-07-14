@@ -17,15 +17,7 @@ export default function Home() {
 
           {/* Left Column: Copywriting & Actions */}
           <div className="lg:col-span-5 text-left space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100/80 text-indigo-700 text-xs font-semibold tracking-wide"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{t.hero.version}</span>
-            </motion.div>
+
 
             <motion.h1
               initial={{ opacity: 0, y: 15 }}
@@ -55,9 +47,9 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-wrap items-center gap-4"
             >
-              <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer">
+              <Link to="/dashboard" className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center">
                 {t.hero.submit}
-              </button>
+              </Link>
               <Link to="/directory" className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center">
                 {t.hero.explore}
               </Link>
@@ -107,8 +99,8 @@ export default function Home() {
           {/* Right Column: High-Fidelity Browser Window Mock */}
           <div className="lg:col-span-7 relative">
             {/* Soft decorative background glows */}
-            <div className="absolute -top-12 -left-12 w-72 h-72 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
-            <div className="absolute -bottom-12 -right-12 w-72 h-72 bg-sky-500/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute -top-12 -left-12 w-72 h-72 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-12 -right-12 w-72 h-72 bg-sky-500/5 blur-[100px] rounded-full pointer-events-none" />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -202,11 +194,11 @@ export default function Home() {
 
       {/* --- Data Visualization Stats --- */}
       <section className="relative z-10 py-16 px-4">
-        <div className="max-w-7xl mx-auto bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] p-12 md:p-16 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto bg-slate-900 backdrop-blur-xl rounded-[2.5rem] border border-slate-800 shadow-2xl p-12 md:p-16 relative overflow-hidden">
           {/* Inner background glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-indigo-50/50 via-sky-50/50 to-indigo-50/50 opacity-50 pointer-events-none"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-indigo-500/10 via-sky-500/10 to-indigo-500/10 opacity-50 pointer-events-none"></div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center divide-x divide-slate-100 relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center divide-x divide-slate-800 relative z-10">
             {[
               { value: '142', label: t.stats.journals, icon: BookOpen, color: 'from-blue-500 to-indigo-600' },
               { value: '12.4k+', label: t.stats.reviewers, icon: Shield, color: 'from-emerald-400 to-teal-500' },
@@ -214,12 +206,12 @@ export default function Home() {
               { value: '2.1M', label: t.stats.dois, icon: BarChart3, color: 'from-fuchsia-500 to-purple-600' },
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center group cursor-default">
-                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform duration-500 relative">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-500`}></div>
-                  <stat.icon className="w-6 h-6 text-slate-400 group-hover:text-slate-900 transition-colors duration-500" />
+                <div className="w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-6 shadow-sm border border-slate-700 group-hover:scale-110 transition-transform duration-500 relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity duration-500`}></div>
+                  <stat.icon className="w-6 h-6 text-white transition-colors duration-500" />
                 </div>
-                <span className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 mb-3 tracking-tighter group-hover:scale-105 transition-transform duration-500">{stat.value}</span>
-                <span className="text-xs font-black tracking-[0.2em] text-slate-400 group-hover:text-indigo-500 transition-colors duration-500">{stat.label}</span>
+                <span className="text-5xl md:text-6xl font-black text-white mb-3 tracking-tighter group-hover:scale-105 transition-transform duration-500">{stat.value}</span>
+                <span className="text-xs font-black tracking-[0.2em] text-slate-400 group-hover:text-indigo-400 transition-colors duration-500">{stat.label}</span>
               </div>
             ))}
           </div>
