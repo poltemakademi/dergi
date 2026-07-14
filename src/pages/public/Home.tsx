@@ -1,24 +1,20 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Link2, Shield, Database, Mail, ArrowRight, Sparkles, BarChart3, Globe, BookOpen, Zap, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
+import { MOCK_JOURNALS } from '../../lib/mockData';
 
 export default function Home() {
+  const { t } = useTranslation();
 
-
-  const journals = [
-    { id: 'JS', name: 'Journal of Space Exploration', tr: 'Uzay Keşifleri Dergisi', issn: '2845-901X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop' },
-    { id: 'AM', name: 'Annals of Modern Medicine', tr: 'Modern Tıp Yıllıkları', issn: '1992-0453', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop' },
-    { id: 'ET', name: 'Engineering & Tech Review', tr: 'Mühendislik ve Teknoloji İncelemeleri', issn: '3012-7822', index: 'Crossref Pending', indexColor: 'text-amber-700 bg-amber-50 border-amber-200', cover: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop' },
-    { id: 'QC', name: 'Quantum Computing Letters', tr: 'Kuantum Hesaplama Mektupları', issn: '4451-229X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1614935151651-0bea6508ab6b?q=80&w=600&auto=format&fit=crop' },
-    { id: 'ES', name: 'Earth & Environmental Science', tr: 'Dünya ve Çevre Bilimleri', issn: '5512-8812', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=600&auto=format&fit=crop' },
-    { id: 'AI', name: 'Artificial Intelligence Horizon', tr: 'Yapay Zeka Ufku', issn: '9912-445X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=600&auto=format&fit=crop' },
-  ];
+  const journals = MOCK_JOURNALS;
 
   return (
     <main className="pb-24 pt-24">
       {/* --- Hero Section --- */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 min-h-[calc(100vh-192px)] flex items-center border-b border-slate-100">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center py-12">
-          
+
           {/* Left Column: Copywriting & Actions */}
           <div className="lg:col-span-5 text-left space-y-6">
             <motion.div
@@ -28,7 +24,7 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100/80 text-indigo-700 text-xs font-semibold tracking-wide"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Version 3.0 Platform Live</span>
+              <span>{t.hero.version}</span>
             </motion.div>
 
             <motion.h1
@@ -37,9 +33,9 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 font-serif leading-[1.15]"
             >
-              The New Standard in <br />
+              {t.hero.titlePre} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500">
-                Academic Publishing
+                {t.hero.titlePost}
               </span>
             </motion.h1>
 
@@ -49,7 +45,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-slate-500 text-base md:text-lg leading-relaxed font-normal"
             >
-              An enterprise-grade, multi-tenant journal management platform. Experience double-blind peer review, automated DOIs, and global indexing in one unified ecosystem.
+              {t.hero.desc}
             </motion.p>
 
             {/* Actions */}
@@ -60,11 +56,11 @@ export default function Home() {
               className="flex flex-wrap items-center gap-4"
             >
               <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer">
-                Submit Manuscript
+                {t.hero.submit}
               </button>
-              <button className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all shadow-sm cursor-pointer">
-                Explore Journals
-              </button>
+              <Link to="/directory" className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center">
+                {t.hero.explore}
+              </Link>
             </motion.div>
 
             {/* Micro stats under actions */}
@@ -75,13 +71,13 @@ export default function Home() {
               className="pt-6 border-t border-slate-100 flex items-center gap-6"
             >
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Indexing</span>
-                <span className="text-sm font-bold text-slate-800">Scopus & WoS</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{t.hero.indexing}</span>
+                <span className="text-sm font-bold text-slate-800">{t.hero.indexingVal}</span>
               </div>
               <div className="w-px h-6 bg-slate-200" />
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">DOI Registry</span>
-                <span className="text-sm font-bold text-slate-800">Crossref Native</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{t.hero.doi}</span>
+                <span className="text-sm font-bold text-slate-800">{t.hero.doiVal}</span>
               </div>
             </motion.div>
           </div>
@@ -91,7 +87,7 @@ export default function Home() {
             {/* Soft decorative background glows */}
             <div className="absolute -top-12 -left-12 w-72 h-72 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
             <div className="absolute -bottom-12 -right-12 w-72 h-72 bg-sky-500/10 blur-[100px] rounded-full pointer-events-none" />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -119,59 +115,59 @@ export default function Home() {
                   <div className="flex-1 p-6 overflow-y-auto space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-600 rounded">
-                        Published Open-Access
+                        {t.mockArticle.tag}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">DOI: 10.2845/qg.2026</span>
                     </div>
 
                     <h2 className="text-xl font-bold text-slate-900 leading-snug font-serif">
-                      A Neural Framework for Quantum Grid Computing Architecture
+                      {t.mockArticle.title}
                     </h2>
 
                     <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="font-semibold text-slate-800">Sarah Jenkins, Michael Chen</span>
+                      <span className="font-semibold text-slate-800">{t.mockArticle.authors}</span>
                       <span>•</span>
-                      <span>Department of Systems Engineering</span>
+                      <span>{t.mockArticle.dept}</span>
                     </div>
 
                     <div className="border-t border-slate-100 pt-3">
-                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">Abstract</h3>
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">{t.mockArticle.abstractTitle}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
-                        This paper presents a novel approach to grid computing using neural framework architectures. By mapping resource distribution nodes across simulated quantum states, we demonstrate a 42% decrease in synchronization latency...
+                        {t.mockArticle.abstractText}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 pt-2">
                       <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-[9px] font-semibold text-slate-600 rounded">
-                        Scopus Indexed
+                        {t.mockArticle.scopus}
                       </span>
                       <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-[9px] font-semibold text-slate-600 rounded">
-                        Crossref Registered
+                        {t.mockArticle.crossref}
                       </span>
                     </div>
                   </div>
 
                   {/* Sidebar stats panel */}
-                  <div className="w-48 border-l border-slate-100 bg-slate-50/50 p-5 flex flex-col justify-between shrink-0">
+                  <div className="w-48 border-l border-slate-100 bg-slate-50/50 p-5 flex flex-col justify-between shrink-0 text-left">
                     <div className="space-y-4">
                       <div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Downloads</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.mockArticle.downloads}</span>
                         <div className="text-lg font-black text-slate-800">1,248</div>
                       </div>
                       <div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Citations</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.mockArticle.citations}</span>
                         <div className="text-lg font-black text-slate-800">142</div>
                       </div>
                       <div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Peer Review Status</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.mockArticle.statusTitle}</span>
                         <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-[10px] font-bold text-indigo-600 rounded block text-center mt-1">
-                          Double-Blind Pass
+                          {t.mockArticle.statusVal}
                         </span>
                       </div>
                     </div>
 
                     <button className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg shadow-sm transition-colors text-center cursor-pointer">
-                      Download PDF
+                      {t.mockArticle.downloadPdf}
                     </button>
                   </div>
                 </div>
@@ -190,10 +186,10 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center divide-x divide-slate-100 relative z-10">
             {[
-              { value: '142', label: 'HOSTED JOURNALS', icon: BookOpen, color: 'from-blue-500 to-indigo-600' },
-              { value: '12.4k+', label: 'VERIFIED REVIEWERS', icon: Shield, color: 'from-emerald-400 to-teal-500' },
-              { value: '84.2k', label: 'OPEN-ACCESS ARTICLES', icon: Globe, color: 'from-amber-400 to-orange-500' },
-              { value: '2.1M', label: 'ACTIVE DOIS MINTED', icon: BarChart3, color: 'from-fuchsia-500 to-purple-600' },
+              { value: '142', label: t.stats.journals, icon: BookOpen, color: 'from-blue-500 to-indigo-600' },
+              { value: '12.4k+', label: t.stats.reviewers, icon: Shield, color: 'from-emerald-400 to-teal-500' },
+              { value: '84.2k', label: t.stats.articles, icon: Globe, color: 'from-amber-400 to-orange-500' },
+              { value: '2.1M', label: t.stats.dois, icon: BarChart3, color: 'from-fuchsia-500 to-purple-600' },
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center group cursor-default">
                 <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform duration-500 relative">
@@ -211,25 +207,26 @@ export default function Home() {
       {/* --- Featured Journals Marquee (Infinite Loop) --- */}
       <section className="max-w-[1400px] mx-auto py-24 relative z-10 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4 px-8 md:px-4">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl text-left">
             <div className="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm tracking-wider uppercase mb-3">
-              <Zap className="w-4 h-4" /> Top Tier Publications
+              <Zap className="w-4 h-4" /> {t.marquee.sub}
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Featured Journals</h2>
-            <p className="text-xl text-slate-500 font-medium">Explore the highest-impact publications hosted on our multi-tenant infrastructure.</p>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">{t.marquee.title}</h2>
+            <p className="text-xl text-slate-500 font-medium">{t.marquee.desc}</p>
           </div>
-          <a href="#" className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
-            View Directory <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
+          <Link to="/directory" className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
+            {t.marquee.btn} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
         <div className="flex overflow-hidden group [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] pt-4 pb-16">
           {/* First Marquee Group */}
           <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max">
             {journals.map((journal, i) => (
-              <div
+              <Link
                 key={`${journal.id}-${i}`}
-                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden"
+                to={`/${journal.id.toLowerCase()}`}
+                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
               >
                 {/* Journal Cover Area */}
                 <div className="h-48 relative overflow-hidden">
@@ -251,13 +248,15 @@ export default function Home() {
                 </div>
 
                 {/* Content Area */}
-                <div className="p-8 flex flex-col flex-1">
-                  <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
-                  <p className="text-slate-500 font-medium mb-8 text-sm italic">{journal.tr}</p>
+                <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
+                    <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
+                  </div>
 
                   <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">e-ISSN</span>
+                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
                       <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
@@ -265,16 +264,17 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
           {/* Second Marquee Group (Duplicate for seamless loop) */}
           <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max" aria-hidden="true">
             {journals.map((journal, i) => (
-              <div
+              <Link
                 key={`${journal.id}-dup-${i}`}
-                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden"
+                to={`/${journal.id.toLowerCase()}`}
+                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
               >
                 <div className="h-48 relative overflow-hidden">
                   <div className="absolute inset-0 bg-slate-900">
@@ -293,13 +293,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="p-8 flex flex-col flex-1">
-                  <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
-                  <p className="text-slate-500 font-medium mb-8 text-sm italic">{journal.tr}</p>
+                <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
+                    <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
+                  </div>
 
                   <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">e-ISSN</span>
+                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
                       <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
@@ -307,7 +309,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -315,7 +317,7 @@ export default function Home() {
 
       {/* --- Bento Box Marketplace --- */}
       <section className="max-w-7xl mx-auto px-4 py-24 mb-20 relative z-10 border-t border-slate-100">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -323,18 +325,18 @@ export default function Home() {
           className="text-center mb-16 max-w-3xl mx-auto"
         >
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs mb-4 uppercase tracking-widest">
-            <Zap className="w-3.5 h-3.5 text-indigo-600 animate-pulse" /> 
-            Core Integrations
+            <Zap className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+            {t.bento.sub}
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight font-serif">
-            Integrated Academic Marketplace
+            {t.bento.title}
           </h2>
           <p className="text-lg text-slate-500 font-normal leading-relaxed max-w-2xl mx-auto">
-            Everything required to run a high-impact journal, seamlessly bundled into a single streamlined architecture.
+            {t.bento.desc}
           </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
@@ -356,9 +358,9 @@ export default function Home() {
           >
             {/* Ambient subtle glow */}
             <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
-            
+
             {/* Mock Academic DOI Panel */}
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 font-mono text-xs text-slate-400 space-y-4 shadow-2xl relative z-10 w-full">
+            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 font-mono text-xs text-slate-400 space-y-4 shadow-2xl relative z-10 w-full text-left">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <span className="text-slate-500">SYSTEM // CROSSREF_API</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">LIVE CONNECTION</span>
@@ -378,58 +380,58 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative z-10 mt-8">
+            <div className="relative z-10 mt-8 text-left">
               <div className="inline-flex items-center gap-1.5 text-indigo-400 font-bold text-xs uppercase tracking-widest mb-3">
                 <Link2 className="w-3.5 h-3.5" />
-                Crossref Automation
+                {t.bento.doiSub}
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">Crossref DOI Automation</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">{t.bento.doiTitle}</h3>
               <p className="text-slate-400 leading-relaxed text-sm md:text-base font-normal max-w-md">
-                Auto-mint and register Digital Object Identifiers instantly upon publication approval. Completely native integration.
+                {t.bento.doiDesc}
               </p>
             </div>
           </motion.div>
 
           {/* Plagiarism Card (Top Right 2x1 card) */}
-          <motion.div 
+          <motion.div
             variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.4 }}
-            className="md:col-span-2 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer flex flex-col justify-between relative overflow-hidden"
+            className="md:col-span-2 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer flex flex-col justify-between relative overflow-hidden text-left"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
               <div className="flex-1">
                 <div className="inline-flex items-center gap-1.5 text-rose-600 font-bold text-xs uppercase tracking-widest mb-3">
                   <Shield className="w-3.5 h-3.5" />
-                  Anti-Plagiarism
+                  {t.bento.plagSub}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">iThenticate Webhooks</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">{t.bento.plagTitle}</h3>
                 <p className="text-slate-500 font-normal leading-relaxed text-sm">
-                  Automated plagiarism detection pipeline natively integrated into the pre-check flow.
+                  {t.bento.plagDesc}
                 </p>
               </div>
-              
+
               {/* Plagiarism Mock UI */}
               <div className="shrink-0 bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full sm:w-48 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Similarity Score</span>
-                  <span className="text-xs font-bold text-emerald-600 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100">Safe</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.bento.plagScore}</span>
+                  <span className="text-xs font-bold text-emerald-600 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100">{t.bento.plagSafe}</span>
                 </div>
                 <div className="text-2xl font-black text-slate-900 mb-2">12.4%</div>
                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                   <div className="bg-emerald-500 h-full rounded-full" style={{ width: '12.4%' }} />
                 </div>
-                <div className="text-[9px] text-slate-400 mt-2 font-mono">iThenticate DB Verified</div>
+                <div className="text-[9px] text-slate-400 mt-2 font-mono">{t.bento.plagDb}</div>
               </div>
             </div>
           </motion.div>
 
           {/* Sobiad Card (Bottom Left 1x1 card) */}
-          <motion.div 
+          <motion.div
             variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.4 }}
-            className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between"
+            className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between text-left"
           >
             <div className="bg-sky-50/50 border border-sky-100/50 rounded-2xl p-4 mb-6 shadow-sm">
               <div className="space-y-2">
@@ -449,22 +451,22 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            
+
             <div className="relative z-10">
               <div className="inline-flex items-center gap-1 text-sky-600 font-bold text-[10px] uppercase tracking-widest mb-2">
-                <Database className="w-3 h-3" /> Indexing Gateways
+                <Database className="w-3 h-3" /> {t.bento.indexSub}
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1.5 tracking-tight">Sobiad Indexing</h3>
-              <p className="text-xs text-slate-500 font-normal leading-relaxed">Direct metadata push to citation indexing gateways.</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-1.5 tracking-tight">{t.bento.indexTitle}</h3>
+              <p className="text-xs text-slate-500 font-normal leading-relaxed">{t.bento.indexDesc}</p>
             </div>
           </motion.div>
 
           {/* Mass Mailer Card (Bottom Right 1x1 card) */}
-          <motion.div 
+          <motion.div
             variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
             whileHover={{ y: -4 }}
             transition={{ duration: 0.4 }}
-            className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between"
+            className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl hover:border-slate-300 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between text-left"
           >
             <div className="bg-purple-50/50 border border-purple-100/50 rounded-2xl p-4 mb-6 shadow-sm">
               <div className="space-y-2">
@@ -487,10 +489,10 @@ export default function Home() {
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-1 text-purple-600 font-bold text-[10px] uppercase tracking-widest mb-2">
-                <Mail className="w-3 h-3" /> Communication
+                <Mail className="w-3 h-3" /> {t.bento.mailSub}
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1.5 tracking-tight">Mass Mailer Engine</h3>
-              <p className="text-xs text-slate-500 font-normal leading-relaxed">High-deliverability encrypted hub for reviewer invitations.</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-1.5 tracking-tight">{t.bento.mailTitle}</h3>
+              <p className="text-xs text-slate-500 font-normal leading-relaxed">{t.bento.mailDesc}</p>
             </div>
           </motion.div>
         </motion.div>
@@ -498,4 +500,3 @@ export default function Home() {
     </main>
   );
 }
-

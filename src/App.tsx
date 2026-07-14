@@ -10,6 +10,8 @@ import EarlyAccess from './pages/public/EarlyAccess';
 import Integrations from './pages/public/Integrations';
 import Auth from './pages/public/Auth';
 import About from './pages/public/About';
+import Directory from './pages/public/Directory';
+import JournalHome from './pages/journal/JournalHome';
 
 export default function App() {
   return (
@@ -18,6 +20,7 @@ export default function App() {
         {/* --- 1. Global Platform Routes (No-Auth) --- */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/directory" element={<Directory />} />
           <Route path="/sistem-ozellikleri" element={<SystemFeatures />} />
           <Route path="/entegrasyonlar" element={<Integrations />} />
           <Route path="/early-access" element={<EarlyAccess />} />
@@ -27,7 +30,7 @@ export default function App() {
 
         {/* --- 2. Individual Tenant Gateway (Journal Pages) --- */}
         <Route path="/:tenant_slug" element={<JournalLayout />}>
-          <Route index element={<div>Journal Homepage</div>} />
+          <Route index element={<JournalHome />} />
           <Route path="current" element={<div>Current Issue</div>} />
           <Route path="archives" element={<div>Archives</div>} />
           <Route path="article/:id" element={<div>Article Details</div>} />

@@ -1,43 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Globe, Check, ChevronDown } from 'lucide-react';
-
-const dict = {
-  EN: {
-    nav: { journals: "Directory", sys: "System Features", early: "Early Access", pricing: "Pricing", login: "Log In", apply: "Author Application", about: "About Us" }
-  },
-  TR: {
-    nav: { journals: "Dergiler Dizini", sys: "Sistem Özellikleri", early: "Erken Erişim", pricing: "Fiyatlandırma", login: "Giriş Yap", apply: "Yazar Başvurusu", about: "Hakkımızda" }
-  }
-};
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLangState] = useState<'EN' | 'TR'>(
-    () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
-  );
-
-  const t = dict[lang];
+  const { t, lang, setLang } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    const handleLangChange = () => {
-      setLangState((localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR');
-    };
-    window.addEventListener('lang-change', handleLangChange);
-    return () => window.removeEventListener('lang-change', handleLangChange);
-  }, []);
-
-  const setLang = (l: 'EN' | 'TR') => {
-    localStorage.setItem('app_lang', l);
-    setLangState(l);
-    window.dispatchEvent(new Event('lang-change'));
-  };
 
   return (
     <nav className={`fixed z-50 transition-all duration-500 left-1/2 -translate-x-1/2 max-w-[1200px] w-[calc(100%-2rem)] flex items-center justify-between ${scrolled ? 'top-4 bg-white/90 backdrop-blur-2xl border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] py-3 px-4 rounded-[2.5rem]' : 'top-6 bg-white border border-slate-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] py-3.5 px-5 rounded-[2.5rem]'}`}>
@@ -63,7 +37,7 @@ export default function Navbar() {
       <div className="flex items-center gap-2.5 pr-1">
         {/* Language Switcher */}
         <div className="relative group/lang hidden sm:block">
-          <button className="flex items-center gap-1.5 px-3 py-2 text-slate-600 hover:text-indigo-600 transition-colors rounded-full font-bold text-xs cursor-pointer">
+          <button className="flex items-center gap-1.5 px-3 py-2.5 text-slate-600 hover:text-indigo-600 transition-colors rounded-full font-bold text-xs cursor-pointer">
             <Globe className="w-4 h-4" />
             <span>{lang}</span>
             <ChevronDown className="w-3 h-3 opacity-50" />
@@ -82,11 +56,11 @@ export default function Navbar() {
           </div>
         </div>
 
-        <Link to="/auth" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-black tracking-widest uppercase rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
+        <Link to="/auth" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
           {t.nav.login}
         </Link>
-        <Link to="/early-access" className="relative group overflow-hidden px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
+        <Link to="/early-access" className="relative group overflow-hidden px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <span className="relative z-10 flex items-center gap-2">{t.nav.apply}</span>
         </Link>
