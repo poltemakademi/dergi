@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 const dict = {
   EN: {
     nav: { journals: "Journals Directory", sys: "System Features", early: "Early Access", pricing: "Pricing", login: "Log In", apply: "Submit Manuscript" },
-    hero: { badge: "Core Ecosystem", title: "Technical Integrations", desc: "Discover how AcademiaNexus seamlessly connects with global academic standards, data gateways, and verification hubs." },
+    hero: { badge: "Core Ecosystem", title: "Technical Integrations", desc: "Discover how novaijournal seamlessly connects with global academic standards, data gateways, and verification hubs." },
     crossref: { 
       title: "Crossref DOI Automation", 
       desc: "Instant minting pipeline. A valid DOI metadata token is generated seamlessly the moment a manuscript transitions to accepted status.",
@@ -34,7 +34,7 @@ const dict = {
   },
   TR: {
     nav: { journals: "Dergiler Dizini", sys: "Sistem Özellikleri", early: "Erken Erişim", pricing: "Fiyatlandırma", login: "Giriş Yap", apply: "Yazar Başvurusu" },
-    hero: { badge: "Temel Ekosistem", title: "Teknik Entegrasyonlar", desc: "AcademiaNexus'un küresel akademik standartlar, veri ağ geçitleri ve doğrulama merkezleriyle nasıl sorunsuz bağlantı kurduğunu keşfedin." },
+    hero: { badge: "Temel Ekosistem", title: "Teknik Entegrasyonlar", desc: "novaijournal'un küresel akademik standartlar, veri ağ geçitleri ve doğrulama merkezleriyle nasıl sorunsuz bağlantı kurduğunu keşfedin." },
     crossref: { 
       title: "Crossref DOI Otomasyonu", 
       desc: "Anında oluşturma boru hattı. Bir makale kabul durumuna geçtiği an sorunsuz bir şekilde geçerli bir DOI meta veri belirteci oluşturulur.",

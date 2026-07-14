@@ -4,12 +4,12 @@ import { Shield, Globe, Zap, Sparkles, ChevronDown, Award, Users, BookOpen, Cpu,
 
 const dict = {
   EN: {
-    badge: "AcademiaNexus Ecosystem Altyapısı",
+    badge: "novaijournal Ecosystem Altyapısı",
     title: "Pioneering the Next Era of Academic Publishing",
     subtitle: "A secure, decentralized, and highly automated multi-tenant infrastructure designed for global scientific impact.",
     
     sectionMission: "Our Editorial Philosophy",
-    missionText1: "At AcademiaNexus, we believe that scientific knowledge is a global public good. Our mission is to dismantle the barriers of traditional publishing by providing academic institutions, research hubs, and independent publishers with state-of-the-art multi-tenant software that streamlines the entire editorial lifecycle.",
+    missionText1: "At novaijournal, we believe that scientific knowledge is a global public good. Our mission is to dismantle the barriers of traditional publishing by providing academic institutions, research hubs, and independent publishers with state-of-the-art multi-tenant software that streamlines the entire editorial lifecycle.",
     missionText2: "By automating metadata registry, double-blind peer review assignment, similarity index checks, and database indexing, we allow editorial boards to focus on what truly matters: selecting and nurturing high-impact scientific work.",
     
     pillarsTitle: "Core Operating Principles",
@@ -49,7 +49,7 @@ const dict = {
     },
 
     timelineTitle: "The Manuscript Journey",
-    timelineSubtitle: "How AcademiaNexus orchestrates the lifecycle of scientific research from draft to global impact.",
+    timelineSubtitle: "How novaijournal orchestrates the lifecycle of scientific research from draft to global impact.",
     timeline: [
       { step: "01", title: "Submission & Pre-Check", desc: "The author submits their manuscript. The system automatically extracts metadata, validates files, runs plagiarism checks via webhooks, and blinds the document for peer review." },
       { step: "02", title: "Editorial Assessment & Assignment", desc: "The section editor reviews the initial validation and assigns matching peer reviewers using an AI-assisted suggestion engine based on academic interest tags." },
@@ -60,19 +60,19 @@ const dict = {
     faqTitle: "Frequently Asked Questions",
     faqSubtitle: "Detailed insights into our architecture, security, and integration capabilities.",
     faqs: [
-      { q: "How does the multi-tenant system work?", a: "AcademiaNexus utilizes a multi-tenant PostgreSQL schema linked with Supabase. Each journal operates on its own secure subdomain or slug (e.g., /journal-of-tech), possessing independent editorial boards, reviewers, and theme customizers, while sharing a robust core API." },
+      { q: "How does the multi-tenant system work?", a: "novaijournal utilizes a multi-tenant PostgreSQL schema linked with Supabase. Each journal operates on its own secure subdomain or slug (e.g., /journal-of-tech), possessing independent editorial boards, reviewers, and theme customizers, while sharing a robust core API." },
       { q: "Is the peer review process truly anonymous?", a: "Yes. Our system strips all document metadata (author names, institutions, document properties) during the submission pre-check. Reviewers communicate via secure messaging threads where identities are cryptographically masked." },
       { q: "Can we integrate with custom indexing systems?", a: "Absolutely. Our platform is built with a webhook-driven architecture. Whenever a paper is marked as 'Published', XML metadata is automatically compiled and pushed to registries like Crossref, Sobiad, and customizable citation endpoints." },
       { q: "What format standards do you support for galleys?", a: "We support PDF, HTML, and JATS XML. The system contains an experimental parser that converts structured Word/Markdown documents into standard JATS XML to ensure long-term digital preservation." }
     ]
   },
   TR: {
-    badge: "AcademiaNexus Altyapısı",
+    badge: "novaijournal Altyapısı",
     title: "Akademik Yayımcılığın Geleceği",
     subtitle: "Modern küresel araştırmalar için güvenli, merkeziyetsiz ve yüksek düzeyde otomatikleştirilmiş yayın ekosistemlerine öncülük ediyoruz.",
     
     sectionMission: "Misyonumuz ve Vizyonumuz",
-    missionText1: "AcademiaNexus olarak, bilimsel bilginin küresel bir kamu yararı olduğuna inanıyoruz. Misyonumuz, akademik kurumlara, araştırma merkezlerine ve bağımsız yayıncılara tüm editoryal yaşam döngüsünü kolaylaştıran modern ve çok kiracılı (multi-tenant) yazılımlar sunarak geleneksel yayıncılığın engellerini ortadan kaldırmaktır.",
+    missionText1: "novaijournal olarak, bilimsel bilginin küresel bir kamu yararı olduğuna inanıyoruz. Misyonumuz, akademik kurumlara, araştırma merkezlerine ve bağımsız yayıncılara tüm editoryal yaşam döngüsünü kolaylaştıran modern ve çok kiracılı (multi-tenant) yazılımlar sunarak geleneksel yayıncılığın engellerini ortadan kaldırmaktır.",
     missionText2: "Üstveri kaydını, çift-kör hakem atamalarını, benzerlik endeksi kontrollerini ve veritabanı indekslemelerini otomatikleştirerek, editoryal kurulların yalnızca en önemli konuya odaklanmasını sağlıyoruz: yüksek etkili bilimsel çalışmaları seçmek ve geliştirmek.",
     
     pillarsTitle: "Temel Çalışma İlkelerimiz",
@@ -112,7 +112,7 @@ const dict = {
     },
 
     timelineTitle: "Makalenin Yaşam Döngüsü",
-    timelineSubtitle: "AcademiaNexus'un bilimsel araştırmaları taslaktan küresel etkiye ulaştırırken izlediği aşamalar.",
+    timelineSubtitle: "novaijournal'un bilimsel araştırmaları taslaktan küresel etkiye ulaştırırken izlediği aşamalar.",
     timeline: [
       { step: "01", title: "Gönderim ve Ön Değerlendirme", desc: "Yazar çalışmasını sisteme yükler. Sistem otomatik olarak üstverileri ayıklar, dosyaları doğrular, web hook'lar aracılığıyla intihal kontrolünü çalıştırır ve hakem değerlendirmesi için dosyayı kimlikten arındırır." },
       { step: "02", title: "Editoryal İnceleme ve Atama", desc: "Alan editörü ilk doğrulama raporunu inceler ve akademik ilgi alanlarına göre yapay zeka destekli öneri motorunu kullanarak makaleye en uygun hakemleri belirler." },
@@ -123,7 +123,7 @@ const dict = {
     faqTitle: "Sıkça Sorulan Sorular",
     faqSubtitle: "Mimarimiz, güvenliğimiz ve entegrasyon yeteneklerimiz hakkında detaylı bilgiler.",
     faqs: [
-      { q: "Çok kiracılı (multi-tenant) sistem nasıl çalışır?", a: "AcademiaNexus, Supabase ile bağlantılı çok kiracılı bir PostgreSQL şeması kullanır. Her dergi kendi güvenli alt alan adında (örneğin /dergi-adi) çalışır; bağımsız editör kurullarına, hakemlere ve arayüz özelleştiricilerine sahiptir, ancak güçlü bir merkezi API altyapısını paylaşır." },
+      { q: "Çok kiracılı (multi-tenant) sistem nasıl çalışır?", a: "novaijournal, Supabase ile bağlantılı çok kiracılı bir PostgreSQL şeması kullanır. Her dergi kendi güvenli alt alan adında (örneğin /dergi-adi) çalışır; bağımsız editör kurullarına, hakemlere ve arayüz özelleştiricilerine sahiptir, ancak güçlü bir merkezi API altyapısını paylaşır." },
       { q: "Hakem değerlendirme süreci gerçekten anonim mi?", a: "Evet. Sistemimiz gönderim ön değerlendirmesinde dosyanın tüm üstverilerini (yazar adları, kurumlar, dosya özellikleri) temizler. Hakemler ve yazarlar, kimliklerin kriptografik olarak gizlendiği güvenli mesajlaşma kanalları üzerinden iletişim kurar." },
       { q: "Özel indeksleme sistemlerini entegre edebilir miyiz?", a: "Kesinlikle. Platformumuz webhook tabanlı bir mimariye sahiptir. Bir makale 'Yayınlandı' olarak işaretlendiğinde, XML üstverileri otomatik olarak derlenir ve Crossref, Sobiad ve özelleştirilmiş atıf uç noktalarına gönderilir." },
       { q: "Makale formatları için hangi standartları destekliyorsunuz?", a: "PDF, HTML ve JATS XML formatlarını destekliyoruz. Sistemimiz, uzun vadeli dijital koruma sağlamak amacıyla yapılandırılmış Word/Markdown belgelerini standart JATS XML formatına dönüştüren deneysel bir dönüştürücü içerir." }

@@ -1,8 +1,60 @@
 import { motion } from 'framer-motion';
-import { Link2, Shield, Database, Mail, ArrowRight, Sparkles, BarChart3, Globe, BookOpen, Zap, CheckCircle2 } from 'lucide-react';
+import { Link2, Shield, Database, Mail, ArrowRight, Sparkles, BarChart3, Globe, BookOpen, Zap, CheckCircle2, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+const dict = {
+  EN: {
+    hero: {
+      tag: "Version 3.0 Platform Live",
+      title1: "The New Standard in",
+      title2: "Academic Publishing",
+      desc: "An enterprise-grade, multi-tenant journal management platform. Experience double-blind peer review, automated DOIs, and global indexing in one unified ecosystem.",
+      btn1: "Submit Manuscript",
+      btn2: "Explore Journals",
+      searchPlaceholder: "Search articles, authors, or DOI...",
+      searchBtn: "Search",
+    },
+    stats: { j: "HOSTED JOURNALS", r: "VERIFIED REVIEWERS", a: "OPEN-ACCESS ARTICLES", d: "ACTIVE DOIS MINTED" },
+    featured: { tag: "Top Tier Publications", title: "Featured Journals", desc: "Explore the highest-impact publications hosted on our multi-tenant infrastructure.", btn: "View Directory" },
+    market: { tag: "Core Integrations", title: "Integrated Academic Marketplace", desc: "Everything required to run a high-impact journal, seamlessly bundled into a single streamlined architecture." },
+    cards: {
+      c1: "Crossref DOI Automation", d1: "Auto-mint and register Digital Object Identifiers instantly upon publication approval. Completely native integration.",
+      c2: "Anti-Plagiarism", t2: "iThenticate Webhooks", d2: "Automated plagiarism detection pipeline natively integrated into the pre-check flow.",
+      c3: "Indexing Gateways", t3: "Sobiad Indexing", d3: "Direct metadata push to citation indexing gateways.",
+      c4: "Communication", t4: "Mass Mailer Engine", d4: "High-deliverability encrypted hub for reviewer invitations."
+    }
+  },
+  TR: {
+    hero: {
+      tag: "Sürüm 3.0 Platformu Yayında",
+      title1: "Akademik Yayıncılıkta",
+      title2: "Yeni Standart",
+      desc: "Kurumsal düzeyde, çok kiracılı dergi yönetim platformu. Çift kör hakem değerlendirmesi, otomatik DOI'ler ve küresel indekslemeyi tek bir birleşik ekosistemde deneyimleyin.",
+      btn1: "Makale Gönder",
+      btn2: "Dergileri Keşfet",
+      searchPlaceholder: "Makale, yazar veya DOI arayın...",
+      searchBtn: "Ara",
+    },
+    stats: { j: "BARINDIRILAN DERGİ", r: "ONAYLI HAKEM", a: "AÇIK ERİŞİMLİ MAKALE", d: "AKTİF DOI" },
+    featured: { tag: "Üst Düzey Yayınlar", title: "Öne Çıkan Dergiler", desc: "Çok kiracılı altyapımızda barındırılan en yüksek etkili yayınları keşfedin.", btn: "Dizini Görüntüle" },
+    market: { tag: "Temel Entegrasyonlar", title: "Entegre Akademik Pazar Yeri", desc: "Yüksek etkili bir dergi yönetmek için gereken her şey, sorunsuz bir şekilde tek bir aerodinamik mimaride toplandı." },
+    cards: {
+      c1: "Crossref DOI Otomasyonu", d1: "Yayın onayından hemen sonra Dijital Nesne Tanımlayıcıları otomatik oluşturun ve kaydedin. Tamamen yerel entegrasyon.",
+      c2: "İntihal Karşıtı", t2: "iThenticate Webhook'ları", d2: "Ön kontrol akışına yerel olarak entegre edilmiş otomatik intihal tespiti hattı.",
+      c3: "İndeksleme Ağ Geçitleri", t3: "Sobiad İndeksleme", d3: "Atıf indeksleme ağ geçitlerine doğrudan üst veri gönderimi.",
+      c4: "İletişim", t4: "Toplu Posta Motoru", d4: "Hakem davetleri için yüksek teslim edilebilir şifreli merkez."
+    }
+  }
+};
 
 export default function Home() {
-
+  const [lang, setLang] = useState<'EN' | 'TR'>(() => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR');
+  useEffect(() => {
+    const handleLang = () => setLang((localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR');
+    window.addEventListener('lang-change', handleLang);
+    return () => window.removeEventListener('lang-change', handleLang);
+  }, []);
+  const t = dict[lang];
 
   const journals = [
     { id: 'JS', name: 'Journal of Space Exploration', tr: 'Uzay Keşifleri Dergisi', issn: '2845-901X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop' },
@@ -28,7 +80,7 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100/80 text-indigo-700 text-xs font-semibold tracking-wide"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Version 3.0 Platform Live</span>
+              <span>{t.hero.tag}</span>
             </motion.div>
 
             <motion.h1
@@ -37,9 +89,9 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 font-serif leading-[1.15]"
             >
-              The New Standard in <br />
+              {t.hero.title1} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500">
-                Academic Publishing
+                {t.hero.title2}
               </span>
             </motion.h1>
 
@@ -49,7 +101,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-slate-500 text-base md:text-lg leading-relaxed font-normal"
             >
-              An enterprise-grade, multi-tenant journal management platform. Experience double-blind peer review, automated DOIs, and global indexing in one unified ecosystem.
+              {t.hero.desc}
             </motion.p>
 
             {/* Actions */}
@@ -60,11 +112,33 @@ export default function Home() {
               className="flex flex-wrap items-center gap-4"
             >
               <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer">
-                Submit Manuscript
+                {t.hero.btn1}
               </button>
               <button className="px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all shadow-sm cursor-pointer">
-                Explore Journals
+                {t.hero.btn2}
               </button>
+            </motion.div>
+
+            {/* Search Field */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="mt-8 relative max-w-lg"
+            >
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder={t.hero.searchPlaceholder}
+                className="block w-full pl-11 pr-24 py-3.5 bg-white border border-slate-200 rounded-xl text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700"
+              />
+              <div className="absolute inset-y-0 right-2 flex items-center">
+                <button className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-sm">
+                  {t.hero.searchBtn}
+                </button>
+              </div>
             </motion.div>
 
             {/* Micro stats under actions */}

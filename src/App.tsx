@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import JournalLayout from './layouts/JournalLayout';
 import DashboardLayout from './layouts/DashboardLayout';
+import DashboardGuard from './components/DashboardGuard';
 
 // Public Pages
 import Home from './pages/public/Home';
@@ -11,7 +12,40 @@ import Integrations from './pages/public/Integrations';
 import Auth from './pages/public/Auth';
 import About from './pages/public/About';
 
+// Dashboard Shared Pages
+import RoleSelector from './pages/dashboard/RoleSelector';
+import Profile from './pages/dashboard/Profile';
+import Messages from './pages/dashboard/Messages';
+
+// Editor Pages
+import EditorOverview from './pages/dashboard/editor/Overview';
+import EditorArticles from './pages/dashboard/editor/Articles';
+import EditorIssues from './pages/dashboard/editor/Issues';
+import EditorSettings from './pages/dashboard/editor/Settings';
+
+// Author Pages
+import AuthorSubmissions from './pages/dashboard/author/Submissions';
+import AuthorSubmitWizard from './pages/dashboard/author/SubmitWizard';
+import AuthorTrack from './pages/dashboard/author/Track';
+
+// Reviewer Pages
+import ReviewerAssigned from './pages/dashboard/reviewer/Assigned';
+import ReviewerEvaluate from './pages/dashboard/reviewer/Evaluate';
+
+// Layout Editor Pages
+import LayoutQueue from './pages/dashboard/layout/Queue';
+import LayoutProofs from './pages/dashboard/layout/Proofs';
+
+import { useEffect } from 'react';
+import { useAuthStore } from './store/useAuthStore';
+
 export default function App() {
+  const { initAuth } = useAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, [initAuth]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -25,30 +59,41 @@ export default function App() {
           <Route path="/about" element={<About />} />
         </Route>
 
-        {/* --- 2. Individual Tenant Gateway (Journal Pages) --- */}
+        {/* --- 2. Secured Role-Based Dashboards --- */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardGuard />} />
+          
+          {/* Shared Routes */}
+          <Route path="role-selector" element={<RoleSelector />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="messages" element={<Messages />} />
+
+          {/* Editor Routes */}
+          <Route path="editor/overview" element={<EditorOverview />} />
+          <Route path="editor/articles" element={<EditorArticles />} />
+          <Route path="editor/issues" element={<EditorIssues />} />
+          <Route path="editor/settings" element={<EditorSettings />} />
+
+          {/* Author Routes */}
+          <Route path="yazar/submissions" element={<AuthorSubmissions />} />
+          <Route path="yazar/submit-wizard" element={<AuthorSubmitWizard />} />
+          <Route path="yazar/track/:id" element={<AuthorTrack />} />
+
+          {/* Reviewer Routes */}
+          <Route path="reviewer/assigned" element={<ReviewerAssigned />} />
+          <Route path="reviewer/evaluate/:id" element={<ReviewerEvaluate />} />
+
+          {/* Layout Editor Routes */}
+          <Route path="layout/queue" element={<LayoutQueue />} />
+          <Route path="layout/proofs" element={<LayoutProofs />} />
+        </Route>
+
+        {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}
         <Route path="/:tenant_slug" element={<JournalLayout />}>
           <Route index element={<div>Journal Homepage</div>} />
           <Route path="current" element={<div>Current Issue</div>} />
           <Route path="archives" element={<div>Archives</div>} />
           <Route path="article/:id" element={<div>Article Details</div>} />
-        </Route>
-
-        {/* --- 3. Secured Role-Based Dashboards --- */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="/dashboard/role-selector" replace />} />
-          <Route path="role-selector" element={<div>Role Selector Workspace</div>} />
-          <Route path="profile" element={<div>User Profile</div>} />
-
-          {/* Editor Routes */}
-          <Route path="editor/overview" element={<div>Editor Analytics</div>} />
-          <Route path="editor/articles" element={<div>Manuscript Pool</div>} />
-
-          {/* Author Routes */}
-          <Route path="yazar/submissions" element={<div>My Articles</div>} />
-          <Route path="yazar/submit-wizard" element={<div>Submission Engine</div>} />
-
-          {/* Reviewer Routes */}
-          <Route path="reviewer/assigned" element={<div>Reviewer Queue</div>} />
         </Route>
       </Routes>
     </BrowserRouter>

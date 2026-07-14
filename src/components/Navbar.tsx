@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Globe, Check, ChevronDown } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Globe, Check, ChevronDown, LogOut } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 const dict = {
   EN: {
-    nav: { journals: "Directory", sys: "System Features", early: "Early Access", pricing: "Pricing", login: "Log In", apply: "Author Application", about: "About Us" }
+    nav: { journals: "Directory", sys: "System Features", early: "Early Access", pricing: "Pricing", login: "Log In", apply: "Author Application", about: "About Us", dashboard: "Dashboard" }
   },
   TR: {
-    nav: { journals: "Dergiler Dizini", sys: "Sistem Özellikleri", early: "Erken Erişim", pricing: "Fiyatlandırma", login: "Giriş Yap", apply: "Yazar Başvurusu", about: "Hakkımızda" }
+    nav: { journals: "Dergiler Dizini", sys: "Sistem Özellikleri", early: "Erken Erişim", pricing: "Fiyatlandırma", login: "Giriş Yap", apply: "Yazar Başvurusu", about: "Hakkımızda", dashboard: "Kontrol Paneli" }
   }
 };
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const { isAuthenticated, logout, activeRole } = useAuthStore();
   const [lang, setLangState] = useState<'EN' | 'TR'>(
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
@@ -49,7 +52,7 @@ export default function Navbar() {
           <div className="w-1.5 h-6 bg-indigo-300 rounded-full group-hover:h-5 group-hover:bg-indigo-200 transition-all duration-300 delay-150" />
         </div>
         <span className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-950 transition-colors">
-          Academia<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-500 animate-gradient-x bg-[length:200%_auto]">Nexus</span>
+          novaijournal
         </span>
       </Link>
 
@@ -82,14 +85,40 @@ export default function Navbar() {
           </div>
         </div>
 
-        <Link to="/auth" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-black tracking-widest uppercase rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-          {t.nav.login}
-        </Link>
-        <Link to="/early-access" className="relative group overflow-hidden px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <span className="relative z-10 flex items-center gap-2">{t.nav.apply}</span>
-        </Link>
+        {!isAuthenticated ? (
+          <>
+            <Link to="/auth" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-black tracking-widest uppercase rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              {t.nav.login}
+            </Link>
+            <Link to="/auth" className="relative group overflow-hidden px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative z-10 flex items-center gap-2">{t.nav.apply}</span>
+            </Link>
+          </>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { logout(); navigate('/auth'); }}
+              className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              title={lang === 'TR' ? 'Çıkış Yap' : 'Log Out'}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+            <Link to="/dashboard" className="relative group overflow-hidden px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] relative z-10" />
+              <span className="relative z-10 flex items-center gap-2">
+                {activeRole ? (lang === 'TR' ?
+                  (activeRole === 'author' ? 'Yazar' :
+                    activeRole === 'editor' ? 'Editör' :
+                      activeRole === 'reviewer' ? 'Hakem' :
+                        activeRole === 'layout_editor' ? 'Mizanpaj' : 'Panel') :
+                  activeRole.charAt(0).toUpperCase() + activeRole.slice(1).replace('_', ' ')) : ''} {t.nav.dashboard}
+              </span>
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );

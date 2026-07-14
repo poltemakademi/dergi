@@ -903,7 +903,7 @@ export default function SystemFeatures() {
             </div>
             <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-white/60 border border-slate-200/60 rounded-md shadow-sm text-[10px] font-bold text-slate-500">
               <Lock className="w-3 h-3 text-slate-400" />
-              app.academianexus.com
+              app.novaijournal.com
             </div>
             <div className="w-16" /> {/* Placeholder for balance */}
           </div>

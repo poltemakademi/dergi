@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Globe, Check, ChevronDown, 
-  Mail, Lock, User, ArrowRight, Fingerprint, Shield
+  Mail, Lock, User, ArrowRight, Shield, Briefcase
 } from 'lucide-react';
 
 const dict = {
@@ -12,7 +13,7 @@ const dict = {
       loginTitle: "Welcome Back",
       loginSubtitle: "Enter your credentials to access your academic dashboard.",
       registerTitle: "Create Account",
-      registerSubtitle: "Join AcademiaNexus and transform your publishing workflow.",
+      registerSubtitle: "Join novaijournal and transform your publishing workflow.",
       email: "Email Address",
       password: "Password",
       name: "Full Name",
@@ -25,7 +26,12 @@ const dict = {
       loginLink: "Log in instead",
       or: "Or continue with",
       github: "GitHub",
-      google: "Google"
+      google: "Google",
+      roleLabel: "Role / Account Type",
+      roleAuthor: "Author",
+      roleReviewer: "Reviewer",
+      roleEditor: "Editor",
+      roleLayout: "Layout Editor"
     },
     footer: {
       platform: "Platform", sys: "System Features", int: "Integrations", early: "Early Access",
@@ -39,7 +45,7 @@ const dict = {
       loginTitle: "Tekrar Hoş Geldiniz",
       loginSubtitle: "Akademik panelinize erişmek için bilgilerinizi girin.",
       registerTitle: "Hesap Oluştur",
-      registerSubtitle: "AcademiaNexus'a katılın ve yayın iş akışınızı dönüştürün.",
+      registerSubtitle: "novaijournal'a katılın ve yayın iş akışınızı dönüştürün.",
       email: "E-posta Adresi",
       password: "Şifre",
       name: "Ad Soyad",
@@ -52,7 +58,12 @@ const dict = {
       loginLink: "Bunun yerine giriş yapın",
       or: "Veya şununla devam edin",
       github: "GitHub",
-      google: "Google"
+      google: "Google",
+      roleLabel: "Hesap Türü / Rol",
+      roleAuthor: "Yazar",
+      roleReviewer: "Hakem",
+      roleEditor: "Editör",
+      roleLayout: "Mizanpaj Editörü"
     },
     footer: {
       platform: "Platform", sys: "Sistem Özellikleri", int: "Entegrasyonlar", early: "Erken Erişim",
@@ -72,11 +83,6 @@ export default function Auth() {
   const [lang, setLangState] = useState<'EN' | 'TR'>(
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
-  const setLang = (l: 'EN' | 'TR') => {
-    localStorage.setItem('app_lang', l);
-    setLangState(l);
-    window.dispatchEvent(new Event('lang-change'));
-  };
 
   useEffect(() => {
     const handleLangChange = () => {
@@ -85,15 +91,67 @@ export default function Auth() {
     window.addEventListener('lang-change', handleLangChange);
     return () => window.removeEventListener('lang-change', handleLangChange);
   }, []);
-
-  const [scrolled, setScrolled] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
 
+  // Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('author');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  
+  const navigate = useNavigate();
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      // DEMO ACCOUNTS BYPASS (No database modification)
+      const demoEmailMatch = email.match(/^(author|reviewer|editor|layout)@demo\.com$/);
+      if (demoEmailMatch && password === 'demo') {
+        const { useAuthStore } = await import('../../store/useAuthStore');
+        const demoRole = demoEmailMatch[1] === 'layout' ? 'layout_editor' : demoEmailMatch[1];
+        useAuthStore.getState().setDemoUser({
+          id: `demo-${demoRole}-123`,
+          name: `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1).replace('_', ' ')}`,
+          email: email
+        }, demoRole as any);
+        navigate('/dashboard');
+        return;
+      }
+
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        navigate('/dashboard');
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: name, role: role } }
+        });
+        if (error) throw error;
+        if (!data.session) {
+          setSuccessMsg(lang === 'TR' ? 'Kayıt başarılı! Lütfen giriş yapmadan önce e-posta adresinize gelen bağlantıyı doğrulayın.' : 'Registration successful! Please confirm the link sent to your email address before logging in.');
+          setIsLogin(true);
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
     window.scrollTo(0, 0);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const t = dict[lang];
@@ -133,14 +191,34 @@ export default function Auth() {
                   <p className="text-sm font-medium text-slate-500">{t.auth.loginSubtitle}</p>
                 </div>
 
-                <div className="flex flex-col gap-5 mb-6">
+                {errorMsg && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+                    {errorMsg}
+                  </div>
+                )}
+                
+                {successMsg && (
+                  <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium border border-emerald-200">
+                    {successMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleAuth}>
+                  <div className="flex flex-col gap-5 mb-6">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t.auth.email}</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Mail className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input type="email" className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" placeholder="academic@university.edu" />
+                      <input 
+                        type="email" 
+                        required
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" 
+                        placeholder="academic@university.edu" 
+                      />
                     </div>
                   </div>
 
@@ -153,14 +231,26 @@ export default function Auth() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input type="password" className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" placeholder="••••••••" />
+                      <input 
+                        type="password" 
+                        required
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" 
+                        placeholder="••••••••" 
+                      />
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 hover:shadow-[0_10px_25px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 mb-6">
-                  {t.auth.loginBtn} <ArrowRight className="w-4 h-4" />
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 hover:shadow-[0_10px_25px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 mb-6 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : t.auth.loginBtn} <ArrowRight className="w-4 h-4" />
                 </button>
+                </form>
 
                 <div className="relative flex items-center justify-center mb-6">
                   <div className="absolute inset-0 flex items-center">
@@ -209,14 +299,28 @@ export default function Auth() {
                   <p className="text-sm font-medium text-slate-500">{t.auth.registerSubtitle}</p>
                 </div>
 
-                <div className="flex flex-col gap-4 mb-6">
+                {errorMsg && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+                    {errorMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleAuth}>
+                  <div className="flex flex-col gap-4 mb-6">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t.auth.name}</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <User className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input type="text" className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" placeholder="Dr. Jane Doe" />
+                      <input 
+                        type="text" 
+                        required
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" 
+                        placeholder="Dr. Jane Doe" 
+                      />
                     </div>
                   </div>
 
@@ -226,7 +330,14 @@ export default function Auth() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Mail className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input type="email" className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" placeholder="academic@university.edu" />
+                      <input 
+                        type="email" 
+                        required
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" 
+                        placeholder="academic@university.edu" 
+                      />
                     </div>
                   </div>
 
@@ -236,14 +347,46 @@ export default function Auth() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-slate-400" />
                       </div>
-                      <input type="password" className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" placeholder="••••••••" />
+                      <input 
+                        type="password" 
+                        required
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800" 
+                        placeholder="••••••••" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t.auth.roleLabel}</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Briefcase className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <select 
+                        required
+                        value={role}
+                        onChange={e => setRole(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-slate-800 appearance-none" 
+                      >
+                        <option value="author">{t.auth.roleAuthor}</option>
+                        <option value="reviewer">{t.auth.roleReviewer}</option>
+                        <option value="editor">{t.auth.roleEditor}</option>
+                        <option value="layout_editor">{t.auth.roleLayout}</option>
+                      </select>
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 hover:shadow-[0_10px_25px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 mb-6">
-                  {t.auth.registerBtn} <ArrowRight className="w-4 h-4" />
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-indigo-600 hover:shadow-[0_10px_25px_rgba(79,70,229,0.3)] transition-all flex items-center justify-center gap-2 mb-6 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : t.auth.registerBtn} <ArrowRight className="w-4 h-4" />
                 </button>
+                </form>
 
                 <div className="text-center text-sm font-medium text-slate-500">
                   {t.auth.hasAccount} <button onClick={() => setIsLogin(true)} className="text-indigo-600 hover:text-indigo-700 font-bold ml-1">{t.auth.loginLink}</button>

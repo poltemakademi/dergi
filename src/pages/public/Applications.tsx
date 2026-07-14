@@ -9,7 +9,7 @@ const dict = {
   EN: {
     nav: { journals: "Journals Directory", sys: "System Features", early: "Early Access", pricing: "Pricing", login: "Log In", apply: "Submit Manuscript" },
     hero: {
-      title: "Join AcademiaNexus for Free",
+      title: "Join novaijournal for Free",
       subtitle: "Experience the next generation of academic publishing. 100% free enterprise hosting for your journal."
     },
     platform: {
@@ -36,7 +36,7 @@ const dict = {
   TR: {
     nav: { journals: "Dergiler Dizini", sys: "Sistem Özellikleri", early: "Erken Erişim", pricing: "Fiyatlandırma", login: "Giriş Yap", apply: "Yazar Başvurusu" },
     hero: {
-      title: "AcademiaNexus'a Ücretsiz Katılın",
+      title: "novaijournal'a Ücretsiz Katılın",
       subtitle: "Akademik yayıncılığın yeni neslini deneyimleyin. Derginiz için %100 ücretsiz kurumsal barındırma."
     },
     platform: {

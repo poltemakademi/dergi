@@ -1,0 +1,103 @@
+import { useAuthStore } from '../../store/useAuthStore';
+import { useLocaleStore } from '../../store/useLocaleStore';
+import { ArrowRight, BookOpen, Users, LayoutDashboard, PenTool, CheckSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+export default function RoleSelector() {
+  const { setActiveRole, setActiveTenant, user } = useAuthStore();
+  const { t } = useLocaleStore();
+  const navigate = useNavigate();
+
+  const mockWorkspaces = [
+    { id: '1', role: 'editor', tenantName: 'Journal of Modern Science', tenantSlug: 'jms', lastActive: '2 hours ago', stat: `42 ${t('stat.pending')}` },
+    { id: '2', role: 'reviewer', tenantName: 'Journal of Modern Science', tenantSlug: 'jms', lastActive: '1 day ago', stat: `2 ${t('stat.assigned')}` },
+    { id: '3', role: 'author', tenantName: 'International Physics Review', tenantSlug: 'ipr', lastActive: '5 days ago', stat: `1 ${t('stat.inReview')}` },
+  ];
+
+  const handleSelect = (workspace: any) => {
+    setActiveRole(workspace.role);
+    setActiveTenant({ id: workspace.id, name: workspace.tenantName, slug: workspace.tenantSlug });
+    navigate(`/dashboard/${workspace.role === 'author' ? 'yazar' : workspace.role}/${workspace.role === 'editor' ? 'overview' : workspace.role === 'reviewer' ? 'assigned' : 'submissions'}`);
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch(role) {
+      case 'editor': return <LayoutDashboard className="w-5 h-5 text-slate-700" />;
+      case 'author': return <PenTool className="w-5 h-5 text-slate-700" />;
+      case 'reviewer': return <CheckSquare className="w-5 h-5 text-slate-700" />;
+      case 'layout_editor': return <BookOpen className="w-5 h-5 text-slate-700" />;
+      default: return <Users className="w-5 h-5 text-slate-700" />;
+    }
+  };
+
+  const getRoleTranslation = (role: string) => {
+    switch(role) {
+      case 'editor': return t('role.editor');
+      case 'author': return t('role.author');
+      case 'reviewer': return t('role.reviewer');
+      case 'layout_editor': return t('role.layout_editor');
+      default: return role;
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto py-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mb-12"
+      >
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">{t('roleSelect.welcome')}, {user?.name?.split(' ')[0]}</h1>
+        <p className="text-slate-500 font-medium max-w-2xl">
+          {t('roleSelect.subtitle')}
+        </p>
+      </motion.div>
+
+      <motion.div 
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+          }
+        }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
+        {mockWorkspaces.map((ws) => (
+          <motion.button
+            key={ws.id}
+            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+            whileHover={{ y: -2 }}
+            onClick={() => handleSelect(ws)}
+            className="group text-left bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between min-h-[220px]"
+          >
+            <div className="flex justify-between items-start mb-6 w-full">
+              <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center">
+                {getRoleIcon(ws.role)}
+              </div>
+              <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+                {t('roleSelect.lastActive')}: {ws.lastActive}
+              </span>
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-slate-900 capitalize mb-1">{getRoleTranslation(ws.role)}</h3>
+              <p className="text-sm text-slate-500 font-medium line-clamp-1">{ws.tenantName}</p>
+            </div>
+
+            <div className="flex items-center justify-between w-full pt-4 border-t border-slate-100">
+              <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">{ws.stat}</span>
+              <div className="flex items-center text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
+                {t('roleSelect.enter')} <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </motion.button>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
