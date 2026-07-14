@@ -26,33 +26,131 @@ The frontend must strictly track, visualize, and enforce the following sequentia
 ## 3. Client-Side Routing Configuration (Vite + React Router)
 
 ### 🌐 Public Marketing & Indexing Routes (No Auth)
-* `/` : Unified search deck to query across all hosted journals by DOI, Author, or Title keywords[cite: 6].
-* `/early-access` : Public timeline indexing articles published in press (minted DOIs without issue binding)[cite: 6].
-* `/sistem-ozellikleri` : High-conversion SaaS overview page displaying system dashboard features[cite: 6].
-* `/entegrasyonlar` : Structural pages details integrations like Sobiad indexing, Crossref DOI, Turnitin, and mass email gateways[cite: 6].
-* `/basvurular` : Dynamic multi-step enrollment form layouts for new journal applications and DOI packages[cite: 6].
 
-### 🛠️ Secured Dashboard Spaces (`/dashboard/*`)
+#### `/` (Platform Homepage)
+* **UI/UX:** Features the fullscreen split Hero Section, dynamic 3D Journal Slider, and the infinite scrolling Marquee of hosted journals. Includes a global search bar.
+* **Backend/Logic:** Triggers a `GET /api/global/search` to query articles and journals across all tenants. Uses Zustand to manage the slider state.
 
-#### 1. Executive Editor Core (`/dashboard/editor`)
-* `Journal Settings` : Interface managing specific journal metadata (ISSN, double-language headers, logos, and locale parameter boundaries)[cite: 6].
-* `Issue Studio` : Visual kanban interface creating issues, uploading generic templates (Jenerik), sorting article indexing pagination, and generating Table of Contents lists[cite: 6].
-* `CMS Editor Block` : Minimal text/block compiler letting editors construct isolated static info sections[cite: 6].
-* `Analytics Metrics` : Interactive graphical reporting visualizing data loads, item updates, and PDF file downloads[cite: 6].
+#### `/sistem-ozellikleri` (System Features)
+* **UI/UX:** High-conversion SaaS landing page displaying AI workflow automation and dashboard capabilities using responsive glassmorphic cards.
+* **Backend/Logic:** Completely static CSR route.
 
-#### 2. Layout Editor Workspace (`/dashboard/layout`)
-* `Production Line` : Monitoring terminal pulling files currently stuck in `IN_COPYEDITING` status[cite: 6].
-* `Proof Manager` : Layout uploading typeset Galley Proof assets (final PDFs) and closing version tracking logs[cite: 6].
+#### `/entegrasyonlar` (Integrations)
+* **UI/UX:** Grid layout showcasing partner logos (Crossref, Turnitin, Sobiad, DOAJ) with detailed technical explanations.
+* **Backend/Logic:** Static content rendering.
 
-#### 3. Peer Review Studio (`/dashboard/reviewer`)
-* `Evaluation Deck` : Anonymized layout rendering a secure document preview module side-by-side with score evaluation textareas[cite: 6].
+#### `/early-access` (Articles in Press)
+* **UI/UX:** A timeline list or grid of articles that are accepted and have a minted DOI but are not yet assigned to a specific issue.
+* **Backend/Logic:** `GET /api/global/early-access`. Fetches articles with status: `PUBLISHED` but `issue_id: null`.
 
-#### 4. Researcher Panel (`/dashboard/yazar`)
-* `Submission Wizard` : Multi-step wizard capturing double-language string text metrics, co-author lists, and blinded initial file uploads[cite: 6].
-* `Manuscript Tracker` : Visual workflow timeline monitoring live statuses, revision requirements, and final acceptance results[cite: 6].
+#### `/basvurular/dergi` (Journal Application Form)
+* **UI/UX:** A multi-step, validated form capturing editor details, ISSN, and institutional affiliation.
+* **Backend/Logic:** Validates fields via Zod/Yup, then triggers `POST /api/applications/journal`.
 
-#### 5. Safe Mail Hub (`/dashboard/messages`)
-* Isolated, multi-role internal messaging component encrypting communication lines between Author, Editor, and Reviewer entities to enforce blinding rules[cite: 6].
+#### `/basvurular/doi` (DOI Package Application)
+* **UI/UX:** Financial and technical form to request Crossref DOI integration packages.
+* **Backend/Logic:** `POST /api/applications/doi`.
+
+### 🏛️ Individual Tenant Gateway (Public Journal Pages)
+**Domain:** `/:tenant_slug` (e.g., smac.dergiplatformu.com)
+This dynamic route serves the specific content of a single hosted journal.
+
+#### `/:tenant_slug/` (Journal Homepage)
+* **UI/UX:** Displays the specific journal's cover, ISSN, Aim & Scope widget, and a grid of "Featured Articles".
+* **Backend/Logic:** On mount, `GET /api/tenant/:slug/metadata` to load the brand colors, logo, and active issue.
+
+#### `/:tenant_slug/current` (Current Issue)
+* **UI/UX:** Lists all articles in the latest published issue, separated by categories (e.g., Research Articles, Review Articles).
+* **Backend/Logic:** `GET /api/tenant/:slug/issues/latest`.
+
+#### `/:tenant_slug/archives` (Issue Archives)
+* **UI/UX:** An accordion or tree-view layout grouping past issues by Year and Volume.
+* **Backend/Logic:** `GET /api/tenant/:slug/issues/archive`.
+
+#### `/:tenant_slug/article/:id` (Article Detail Page)
+* **UI/UX:** Displays dual-language Abstract, Keywords, Author list, DOI link, and a prominent "Download PDF" button.
+* **Backend/Logic:** `GET /api/tenant/:slug/articles/:id`. Clicking download triggers `POST /api/metrics/download/:id` to increment the analytics counter before fetching the PDF blob.
+
+#### `/:tenant_slug/policies` & `/:tenant_slug/board` (CMS Pages)
+* **UI/UX:** Rich text pages displaying editorial boards and ethical guidelines (Double-blind policy, Open Access).
+* **Backend/Logic:** Fetched dynamically via `GET /api/tenant/:slug/pages/:page_alias`.
+
+### 🔐 Authentication & Onboarding Route: `/auth/*`
+
+#### `/auth/login` (Unified Login)
+* **UI/UX:** Minimalist, centered glassmorphic login card.
+* **Backend/Logic:** `POST /api/auth/login`. Returns a JWT and an array of RBAC (Role-Based Access Control) claims. Zustand `useAuthStore` saves the token and user roles.
+
+#### `/auth/register` (Academic Registration)
+* **UI/UX:** Registration form requesting Name, Institutional Email, University, and ORCID ID (with strict format masking: XXXX-XXXX-XXXX-XXXX).
+* **Backend/Logic:** `POST /api/auth/register`. Requires email verification logic setup.
+
+### 🛠️ Secured Role-Based Dashboards Route: `/dashboard/*`
+Protected routes that require a valid JWT. Includes a persistent floating UI bar in dev mode to switch roles (Super Admin, Editor, Reviewer, Author).
+
+#### 4.1 Shared Spaces (All Roles)
+
+**`/dashboard/role-selector`**
+* **UI/UX:** If a user has multiple roles (e.g., Editor in Journal A, Author in Journal B), they select their active workspace here.
+* **Backend/Logic:** Updates the `activeRole` and `activeTenant` in Zustand.
+
+**`/dashboard/profile`**
+* **UI/UX:** Form to update academic titles, IBAN for payments, and contact info.
+* **Backend/Logic:** `PUT /api/user/profile`.
+
+**`/dashboard/messages` (Safe Mail Hub)**
+* **UI/UX:** An isolated inbox for system notifications and encrypted cross-role communication.
+* **Backend/Logic:** Messages are fetched via `GET /api/messages`. The backend masks sender identities based on the active role (e.g., displaying "Reviewer 1" instead of the real name).
+
+#### 4.2 Executive Editor (`/dashboard/editor`)
+
+**`/dashboard/editor/overview` (Analytics)**
+* **UI/UX:** Charts (Recharts/Chart.js) showing submission trends, acceptance rates, and PDF downloads.
+* **Backend/Logic:** `GET /api/editor/analytics`.
+
+**`/dashboard/editor/articles` (Manuscript Pool)**
+* **UI/UX:** A data table with tabs filtering articles by status (PENDING_PRE_CHECK, IN_REVIEW, ACCEPTED, PUBLISHED).
+* **Backend/Logic:** `GET /api/editor/articles?status=...`.
+
+**`/dashboard/editor/issues` (Issue Studio)**
+* **UI/UX:** Kanban board to drag-and-drop accepted articles into a new issue. Dropzones for uploading Generic info ("Jenerik") and TOC files.
+* **Backend/Logic:** `POST /api/editor/issues/create` using multipart/form-data.
+
+**`/dashboard/editor/settings` (Journal Settings)**
+* **UI/UX:** Configuration form for ISSN, DOAJ API keys, and drag-and-drop zones for Logos and Covers.
+* **Backend/Logic:** `PUT /api/journal/settings`.
+
+#### 4.3 Author/Researcher (`/dashboard/yazar`)
+
+**`/dashboard/yazar/submissions` (My Articles)**
+* **UI/UX:** Grid of cards showing the current status of the author's submitted manuscripts.
+* **Backend/Logic:** `GET /api/author/submissions`.
+
+**`/dashboard/yazar/submit-wizard` (Submission Engine)**
+* **UI/UX:** A multi-step wizard. Step 1: Dual-language metadata. Step 2: Co-authors. Step 3: Blinded PDF Upload.
+* **Backend/Logic:** Uses Zustand to cache steps locally. On completion, `POST /api/author/submit` (multipart).
+
+**`/dashboard/yazar/track/:id` (Manuscript Tracker)**
+* **UI/UX:** A visual stepper tracking the pipeline. Includes a "Withdraw" emergency button.
+* **Backend/Logic:** Listens for status changes. Withdrawal triggers `POST /api/author/withdraw/:id`.
+
+#### 4.4 Peer Reviewer (`/dashboard/reviewer`)
+
+**`/dashboard/reviewer/assigned` (Queue)**
+* **UI/UX:** List of manuscripts awaiting evaluation.
+
+**`/dashboard/reviewer/evaluate/:id` (Evaluation Deck)**
+* **UI/UX:** Side-by-side layout. Left: PDF preview. Right: Scoring form and textareas for revision notes.
+* **Backend/Logic:** **CRITICAL:** Frontend interceptor runs here. The `GET /api/reviewer/article/:id` request is stripped of any author metadata in the Zustand store before rendering to guarantee the Double-Blind shield. Form submission triggers `POST /api/reviewer/evaluate/:id`.
+
+#### 4.5 Layout Editor (`/dashboard/layout`)
+
+**`/dashboard/layout/queue` (Production Line)**
+* **UI/UX:** List of articles in `IN_COPYEDITING`.
+
+**`/dashboard/layout/proofs` (Proof Manager)**
+* **UI/UX:** Interface to upload the final, typeset Galley Proof (PDF) that will be visible to the public.
+* **Backend/Logic:** `POST /api/layout/upload-proof` updates the state to `READY_FOR_PRODUCTION`.
 
 ## 4. Engineering Development Rules for the AI Agent
 * **Role Simulation Controller:** You must implement and persist a fixed floating bar layout on the screen in development mode to simulate role switches dynamically (`super_admin`, `editor`, `layout_editor`, `reviewer`, `author`)[cite: 6].
