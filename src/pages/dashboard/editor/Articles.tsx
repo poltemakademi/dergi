@@ -1,4 +1,4 @@
-import { Search, Filter, MoreVertical, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Search, Filter, MoreVertical, CheckCircle, Clock } from 'lucide-react';
 
 const mockArticles = [
   { id: 'JMS-2025-045', title: 'Advancements in Quantum Computing Architecture', author: 'Blind Review', status: 'IN_REVIEW', date: 'Oct 12, 2025', category: 'Research Article' },

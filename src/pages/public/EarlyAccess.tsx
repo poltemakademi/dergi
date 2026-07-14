@@ -6,9 +6,7 @@ import {
   ArrowRight,
   Filter,
   Check,
-  ArrowUpRight,
-  Fingerprint,
-  Globe
+  ArrowUpRight
 } from 'lucide-react';
 
 const dict = {
@@ -74,16 +72,10 @@ const ARTICLES = [
 ];
 
 export default function EarlyAccess() {
-  const [scrolled, setScrolled] = useState(false);
   const [openAccessOnly, setOpenAccessOnly] = useState(false);
   const [lang, setLangState] = useState<'EN' | 'TR'>(
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
-  const setLang = (l: 'EN' | 'TR') => {
-    localStorage.setItem('app_lang', l);
-    setLangState(l);
-    window.dispatchEvent(new Event('lang-change'));
-  };
 
   useEffect(() => {
     const handleLangChange = () => {
@@ -95,14 +87,8 @@ export default function EarlyAccess() {
 
   const t = dict[lang];
 
-  // Handle scroll for navbar glassmorphism
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
     window.scrollTo(0, 0);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (

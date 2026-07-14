@@ -7,7 +7,6 @@ import {
   SlidersHorizontal,
   X,
   CheckCircle2,
-  Zap,
   LayoutGrid,
   ArrowRight
 } from 'lucide-react';

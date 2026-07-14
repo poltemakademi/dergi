@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  Globe, Check, ChevronDown, CheckCircle2,
-  Fingerprint, Network, Database, Shield, Activity, RefreshCw, Send,
+  Globe, CheckCircle2,
+  Network, Database, Shield, Activity, RefreshCw, Send,
   Cpu, FileCode, CheckSquare, Mail, Eye
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -68,11 +68,6 @@ export default function Integrations() {
   const [lang, setLangState] = useState<'EN' | 'TR'>(
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
-  const setLang = (l: 'EN' | 'TR') => {
-    localStorage.setItem('app_lang', l);
-    setLangState(l);
-    window.dispatchEvent(new Event('lang-change'));
-  };
 
   useEffect(() => {
     const handleLangChange = () => {
@@ -81,16 +76,12 @@ export default function Integrations() {
     window.addEventListener('lang-change', handleLangChange);
     return () => window.removeEventListener('lang-change', handleLangChange);
   }, []);
-  const [scrolled, setScrolled] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const t = dict[lang];
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
     window.scrollTo(0, 0);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {

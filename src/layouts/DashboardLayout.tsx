@@ -1,42 +1,18 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useLocaleStore } from '../store/useLocaleStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
-  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, ChevronDown, LogOut
+  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut
 } from 'lucide-react';
 
 export default function DashboardLayout() {
-  const { activeRole, user, activeTenant, roles, setActiveRole, logout } = useAuthStore();
+  const { activeRole, user, activeTenant, roles, logout } = useAuthStore();
   const { locale, setLocale, t } = useLocaleStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const switchRole = (role: string) => {
-    setActiveRole(role as any);
-    setIsDropdownOpen(false);
-    switch (role) {
-      case 'editor': navigate('/dashboard/editor/overview'); break;
-      case 'author': navigate('/dashboard/yazar/submissions'); break;
-      case 'reviewer': navigate('/dashboard/reviewer/assigned'); break;
-      case 'layout_editor': navigate('/dashboard/layout/queue'); break;
-      default: navigate('/dashboard/role-selector');
-    }
-  };
 
   const isActive = (path: string) => location.pathname.includes(path);
 

@@ -1,4 +1,4 @@
-import { Clock, Book, AlertCircle, ArrowRight } from 'lucide-react';
+import { Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const productionQueue = [

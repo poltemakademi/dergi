@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Link2, Shield, Database, Mail, ArrowRight, Sparkles, BarChart3, Globe, BookOpen, Zap, CheckCircle2, Search } from 'lucide-react';
+import { Link2, Shield, Database, Mail, ArrowRight, BarChart3, Globe, BookOpen, CheckCircle2, Search } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { MOCK_JOURNALS } from '../../lib/mockData';
 

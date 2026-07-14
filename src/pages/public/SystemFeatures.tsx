@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Globe, Check, ChevronDown,
+  Check,
   KanbanSquare, Settings, Activity, MessageSquare, Layers,
   Plus, MoreHorizontal, FileText, UploadCloud, Users,
   Search, Paperclip, Send, AlertCircle, Calendar, BarChart3, TrendingUp,
-  Bell, ChevronRight, Sparkles, Lock, Fingerprint
+  Bell, ChevronRight, Sparkles, Lock
 } from 'lucide-react';
 
 const dict = {
@@ -797,11 +797,6 @@ export default function SystemFeatures() {
   const [lang, setLangState] = useState<'EN' | 'TR'>(
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
-  const setLang = (l: 'EN' | 'TR') => {
-    localStorage.setItem('app_lang', l);
-    setLangState(l);
-    window.dispatchEvent(new Event('lang-change'));
-  };
 
   useEffect(() => {
     const handleLangChange = () => {
@@ -811,7 +806,6 @@ export default function SystemFeatures() {
     return () => window.removeEventListener('lang-change', handleLangChange);
   }, []);
   const [activeTab, setActiveTab] = useState(TABS_CONFIG[0].id);
-  const [scrolled, setScrolled] = useState(false);
   const [isAutopilot, setIsAutopilot] = useState(true);
 
   // Mouse Glow Spotlight
@@ -851,10 +845,7 @@ export default function SystemFeatures() {
   }, [isAutopilot]);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
     window.scrollTo(0, 0);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const renderActiveTab = () => {

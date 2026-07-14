@@ -1,4 +1,4 @@
-import { Shield, Send, Check } from 'lucide-react';
+import { Shield, Send } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 
 export default function Evaluate() {
