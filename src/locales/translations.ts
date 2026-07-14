@@ -91,7 +91,7 @@ export const translations = {
       'Crossref Pending': 'Crossref Pending'
     } as Record<string, string>,
     journal: {
-      back: "Return to Directory",
+      back: "Go Back",
       portal: "Portal",
       indexStatus: "Index Status",
       verifiedTenant: "Verified Tenant",
@@ -235,7 +235,7 @@ export const translations = {
       'Crossref Pending': 'Crossref Beklemede'
     } as Record<string, string>,
     journal: {
-      back: "Dizin Sayfasına Dön",
+      back: "Geri Dön",
       portal: "Portal",
       indexStatus: "İndeks Durumu",
       verifiedTenant: "Doğrulanmış Dergi",

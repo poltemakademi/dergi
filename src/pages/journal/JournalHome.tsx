@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
@@ -22,10 +22,16 @@ import {
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function JournalHome() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Anasayfa');
   const [expandedAbstract, setExpandedAbstract] = useState<number | null>(null);
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
+
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -144,13 +150,13 @@ export default function JournalHome() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
         {/* Back to Directory Link */}
         <div className="mb-6">
-          <Link
-            to="/directory"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group"
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
             {t.journal.back}
-          </Link>
+          </button>
         </div>
 
         <AnimatePresence mode="wait">

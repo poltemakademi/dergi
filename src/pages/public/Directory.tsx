@@ -45,15 +45,17 @@ export default function Directory() {
       {/* Back button and page intro */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-b border-slate-100 pb-8">
         <div className="max-w-2xl text-left">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors mb-6 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            {t.directory.back}
-          </Link>
-          <div className="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm tracking-wider uppercase mb-3">
-            <Zap className="w-4 h-4 animate-pulse" /> {t.directory.sub}
+          <div className="flex flex-row items-center gap-4 mb-3">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group w-fit"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              {t.directory.back}
+            </Link>
+            <div className="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm tracking-wider uppercase">
+              {t.directory.sub}
+            </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
             {t.directory.title}
