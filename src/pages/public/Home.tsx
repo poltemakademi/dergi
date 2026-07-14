@@ -209,12 +209,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4 px-8 md:px-4">
           <div className="max-w-2xl text-left">
             <div className="inline-flex items-center gap-2 text-indigo-600 font-bold text-sm tracking-wider uppercase mb-3">
-              <Zap className="w-4 h-4" /> {t.marquee.sub}
+              {t.marquee.sub}
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">{t.marquee.title}</h2>
             <p className="text-xl text-slate-500 font-medium">{t.marquee.desc}</p>
           </div>
-          <Link to="/directory" className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
+          <Link to="/directory" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })} className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
             {t.marquee.btn} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -325,7 +325,6 @@ export default function Home() {
           className="text-center mb-16 max-w-3xl mx-auto"
         >
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs mb-4 uppercase tracking-widest">
-            <Zap className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
             {t.bento.sub}
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight font-serif">
