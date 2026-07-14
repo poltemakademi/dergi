@@ -1,5 +1,12 @@
 export const translations = {
   EN: {
+    roles: {
+      author: "Author",
+      editor: "Editor",
+      reviewer: "Reviewer",
+      layout_editor: "Layout Editor",
+      super_admin: "Super Admin"
+    },
     nav: {
       journals: "Directory",
       sys: "System Features",
@@ -7,7 +14,8 @@ export const translations = {
       pricing: "Pricing",
       login: "Log In",
       apply: "Author Application",
-      about: "About Us"
+      about: "About Us",
+      dashboard: "Dashboard"
     },
     hero: {
       version: "Version 3.0 Platform Live",
@@ -144,6 +152,13 @@ export const translations = {
     }
   },
   TR: {
+    roles: {
+      author: "Yazar",
+      editor: "Editör",
+      reviewer: "Hakem",
+      layout_editor: "Mizanpaj Editörü",
+      super_admin: "Süper Yönetici"
+    },
     nav: {
       journals: "Dergiler Dizini",
       sys: "Sistem Özellikleri",
@@ -151,7 +166,8 @@ export const translations = {
       pricing: "Fiyatlandırma",
       login: "Giriş Yap",
       apply: "Yazar Başvurusu",
-      about: "Hakkımızda"
+      about: "Hakkımızda",
+      dashboard: "Kontrol Paneli"
     },
     hero: {
       version: "Sürüm 3.0 Platformu Canlı",
