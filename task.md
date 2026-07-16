@@ -1,5 +1,6 @@
 # 🚀 Phase 2: Comprehensive API Integration Plan
 
+<!--
 ## 🌐 1. Public Marketing & Indexing Routes
 - `[/]` **Global Platform Connections**
   - `[ ]` **Platform Homepage (`/`)**
@@ -24,7 +25,7 @@
     - `[ ]` Implement `POST /api/metrics/download/:id` for PDF download analytics.
   - `[ ]` **CMS Pages (`/policies` & `/board`)**
     - `[ ]` Fetch `GET /api/tenant/:slug/pages/:page_alias`.
-
+                 later-->
 ## 🛠️ 3. Secured Role-Based Dashboards
 - `[ ]` **Shared Spaces**
   - `[ ]` **Profile (`/profile`)**: Connect `PUT /api/user/profile` for IBAN and contact updates.

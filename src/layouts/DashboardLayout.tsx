@@ -1,18 +1,20 @@
+import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useLocaleStore } from '../store/useLocaleStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
-  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut
+  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut, Menu, X
 } from 'lucide-react';
+import NotificationDropdown from '../components/NotificationDropdown';
 
 export default function DashboardLayout() {
   const { activeRole, user, activeTenant, roles, logout } = useAuthStore();
   const { locale, setLocale, t } = useLocaleStore();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname.includes(path);
 
@@ -36,25 +38,43 @@ export default function DashboardLayout() {
     visible: { opacity: 1, x: 0 }
   };
 
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="min-h-screen bg-transparent flex text-slate-800 font-sans selection:bg-slate-200 selection:text-slate-900">
       
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Enterprise Sidebar */}
       <motion.aside 
         initial="hidden"
         animate="visible"
         variants={sidebarVariants}
-        className="w-72 bg-white flex flex-col z-20 border-r border-slate-200/80 shadow-[4px_0_24px_rgba(0,0,0,0.01)]"
+        className={`fixed inset-y-0 left-0 w-72 bg-white flex flex-col z-30 border-r border-slate-200/80 shadow-[4px_0_24px_rgba(0,0,0,0.01)] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <Link to="/" className="p-6 border-b border-slate-100 flex items-center gap-3 hover:bg-slate-50 transition-colors group">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
-            <BookOpen className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors">novaijournal</h2>
-            <span className="text-[10px] text-slate-500 font-medium tracking-wide mt-1 block">{t('nav.enterprise')}</span>
-          </div>
-        </Link>
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <Link to="/" onClick={closeSidebar} className="flex items-center gap-3 hover:bg-slate-50 transition-colors group">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
+              <BookOpen className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors">novaijournal</h2>
+              <span className="text-[10px] text-slate-500 font-medium tracking-wide mt-1 block">{t('nav.enterprise')}</span>
+            </div>
+          </Link>
+          <button 
+            className="lg:hidden p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50"
+            onClick={closeSidebar}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-1 custom-scrollbar">
           <motion.div variants={itemVariants} className="mb-2 px-4 mt-2">
@@ -63,21 +83,21 @@ export default function DashboardLayout() {
           
           {roles.length > 1 && (
             <motion.div variants={itemVariants}>
-              <Link to="/dashboard/role-selector" className={navLinkClass('/dashboard/role-selector')}>
+              <Link to="/dashboard/role-selector" onClick={closeSidebar} className={navLinkClass('/dashboard/role-selector')}>
                 <LayoutDashboard className={`w-4 h-4 ${isActive('/dashboard/role-selector') ? 'text-slate-900' : 'text-slate-400'}`} />
                 <span className="text-sm">{t('nav.contextMatrix')}</span>
               </Link>
             </motion.div>
           )}
           <motion.div variants={itemVariants}>
-            <Link to="/dashboard/messages" className={navLinkClass('/dashboard/messages')}>
+            <Link to="/dashboard/messages" onClick={closeSidebar} className={navLinkClass('/dashboard/messages')}>
               <Inbox className={`w-4 h-4 ${isActive('/dashboard/messages') ? 'text-slate-900' : 'text-slate-400'}`} />
               <span className="text-sm">{t('nav.communications')}</span>
               <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">3</span>
             </Link>
           </motion.div>
           <motion.div variants={itemVariants}>
-            <Link to="/dashboard/profile" className={navLinkClass('/dashboard/profile')}>
+            <Link to="/dashboard/profile" onClick={closeSidebar} className={navLinkClass('/dashboard/profile')}>
               <Users className={`w-4 h-4 ${isActive('/dashboard/profile') ? 'text-slate-900' : 'text-slate-400'}`} />
               <span className="text-sm">{t('nav.profile')}</span>
             </Link>
@@ -96,19 +116,19 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.executiveEditor')}</p>
                 </div>
-                <Link to="/dashboard/editor/overview" className={navLinkClass('/dashboard/editor/overview')}>
+                <Link to="/dashboard/editor/overview" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/overview')}>
                   <BarChart3 className={`w-4 h-4 ${isActive('/dashboard/editor/overview') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.analytics')}</span>
                 </Link>
-                <Link to="/dashboard/editor/articles" className={navLinkClass('/dashboard/editor/articles')}>
+                <Link to="/dashboard/editor/articles" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/articles')}>
                   <FileText className={`w-4 h-4 ${isActive('/dashboard/editor/articles') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.manuscripts')}</span>
                 </Link>
-                <Link to="/dashboard/editor/issues" className={navLinkClass('/dashboard/editor/issues')}>
+                <Link to="/dashboard/editor/issues" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/issues')}>
                   <BookOpen className={`w-4 h-4 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.issueStudio')}</span>
                 </Link>
-                <Link to="/dashboard/editor/settings" className={navLinkClass('/dashboard/editor/settings')}>
+                <Link to="/dashboard/editor/settings" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/settings')}>
                   <Settings className={`w-4 h-4 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.configuration')}</span>
                 </Link>
@@ -127,12 +147,12 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.author')}</p>
                 </div>
-                <Link to="/dashboard/yazar/submissions" className={navLinkClass('/dashboard/yazar/submissions')}>
+                <Link to="/dashboard/yazar/submissions" onClick={closeSidebar} className={navLinkClass('/dashboard/yazar/submissions')}>
                   <FileText className={`w-4 h-4 ${isActive('/dashboard/yazar/submissions') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.mySubmissions')}</span>
                 </Link>
                 <div className="mt-4 px-4">
-                  <Link to="/dashboard/yazar/submit-wizard" className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 rounded-lg text-white text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+                  <Link to="/dashboard/yazar/submit-wizard" onClick={closeSidebar} className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 rounded-lg text-white text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
                     <PenTool className="w-4 h-4" />
                     <span>{t('nav.newSubmission')}</span>
                   </Link>
@@ -152,7 +172,7 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.reviewer')}</p>
                 </div>
-                <Link to="/dashboard/reviewer/assigned" className={navLinkClass('/dashboard/reviewer/assigned')}>
+                <Link to="/dashboard/reviewer/assigned" onClick={closeSidebar} className={navLinkClass('/dashboard/reviewer/assigned')}>
                   <CheckSquare className={`w-4 h-4 ${isActive('/dashboard/reviewer/assigned') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.reviewQueue')}</span>
                   <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">2</span>
@@ -172,11 +192,11 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.layoutEditor')}</p>
                 </div>
-                <Link to="/dashboard/layout/queue" className={navLinkClass('/dashboard/layout/queue')}>
+                <Link to="/dashboard/layout/queue" onClick={closeSidebar} className={navLinkClass('/dashboard/layout/queue')}>
                   <Inbox className={`w-4 h-4 ${isActive('/dashboard/layout/queue') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.productionLine')}</span>
                 </Link>
-                <Link to="/dashboard/layout/proofs" className={navLinkClass('/dashboard/layout/proofs')}>
+                <Link to="/dashboard/layout/proofs" onClick={closeSidebar} className={navLinkClass('/dashboard/layout/proofs')}>
                   <BookOpen className={`w-4 h-4 ${isActive('/dashboard/layout/proofs') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.galleyProofs')}</span>
                 </Link>
@@ -222,14 +242,21 @@ export default function DashboardLayout() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Minimal Header */}
-        <header className="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-8 shrink-0 z-10 shadow-[0_4px_24px_rgba(0,0,0,0.01)]">
+        <header className="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 shadow-[0_4px_24px_rgba(0,0,0,0.01)]">
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-bold text-slate-900 capitalize">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <h1 className="text-lg font-bold text-slate-900 capitalize hidden sm:block">
               {location.pathname.split('/').pop()?.replace('-', ' ')}
             </h1>
             
             {activeTenant && (
-              <div className="h-4 w-px bg-slate-200 mx-2" />
+              <div className="hidden sm:block h-4 w-px bg-slate-200 mx-2" />
             )}
             
             {activeTenant && (
@@ -237,7 +264,7 @@ export default function DashboardLayout() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 key={activeTenant.id}
-                className="text-xs font-semibold text-slate-500 flex items-center gap-2"
+                className="hidden sm:flex text-xs font-semibold text-slate-500 items-center gap-2"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                 {activeTenant.name}
@@ -245,13 +272,13 @@ export default function DashboardLayout() {
             )}
           </div>
           
-          <div className="flex items-center gap-6">
-            <div className="relative group">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="relative group hidden sm:block">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
               <input 
                 type="text" 
                 placeholder={t('header.search')} 
-                className="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all w-64"
+                className="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all w-48 lg:w-64"
               />
             </div>
             
@@ -264,15 +291,12 @@ export default function DashboardLayout() {
               {locale === 'en' ? 'EN' : 'TR'}
             </button>
 
-            <button className="relative text-slate-400 hover:text-slate-900 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-slate-900 rounded-full border border-white"></span>
-            </button>
+            <NotificationDropdown />
           </div>
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

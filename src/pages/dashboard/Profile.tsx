@@ -1,15 +1,30 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Save, User, Mail, Link, CreditCard, Building } from 'lucide-react';
+import { Save, User, Mail, Link, Building } from 'lucide-react';
+import { apiClient } from '../../services/api/client';
+import { toast } from 'sonner';
 
 export default function Profile() {
   const { user } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    institution: 'University of Science',
+    orcid: '0000-0002-1825-0097'
+  });
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1000);
+    try {
+      await apiClient.put('/api/user/profile', formData);
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -31,35 +46,48 @@ export default function Profile() {
               <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <User className="w-4 h-4 text-slate-400" /> Full Name
               </label>
-              <input type="text" defaultValue={user?.name} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+              <input 
+                type="text" 
+                value={formData.name} 
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" 
+              />
             </div>
             
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" /> Email Address
               </label>
-              <input type="email" defaultValue={user?.email} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+              <input 
+                type="email" 
+                value={formData.email} 
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" 
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Building className="w-4 h-4 text-slate-400" /> Institution
               </label>
-              <input type="text" defaultValue="University of Science" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" />
+              <input 
+                type="text" 
+                value={formData.institution} 
+                onChange={(e) => setFormData({...formData, institution: e.target.value})}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors" 
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Link className="w-4 h-4 text-slate-400" /> ORCID iD
               </label>
-              <input type="text" defaultValue="0000-0002-1825-0097" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors font-mono text-sm" />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-slate-400" /> IBAN (For Reviewer Payments)
-              </label>
-              <input type="text" placeholder="TR00 0000 0000 0000 0000 0000 00" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors font-mono text-sm" />
+              <input 
+                type="text" 
+                value={formData.orcid} 
+                onChange={(e) => setFormData({...formData, orcid: e.target.value})}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors font-mono text-sm" 
+              />
             </div>
           </div>
 

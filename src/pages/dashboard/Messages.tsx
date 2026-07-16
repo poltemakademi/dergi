@@ -1,12 +1,30 @@
-import { Search, Star, Inbox as InboxIcon, Send } from 'lucide-react';
-
-const mockMessages = [
-  { id: 1, sender: 'System', subject: 'Manuscript Status Updated', preview: 'Your manuscript "Modern Applications..." has moved to IN_REVIEW.', date: '10:30 AM', unread: true },
-  { id: 2, sender: 'Reviewer 1', subject: 'Revision Notes Available', preview: 'Please see the attached structural revision requirements.', date: 'Yesterday', unread: true },
-  { id: 3, sender: 'Executive Editor', subject: 'Welcome to the Platform', preview: 'Thank you for registering. Please complete your ORCID profile.', date: 'Oct 12', unread: false },
-];
+import { useState, useEffect } from 'react';
+import { Search, Star, Inbox as InboxIcon, Send, AlertCircle } from 'lucide-react';
+import { apiClient } from '../../services/api/client';
 
 export default function Messages() {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await apiClient.get('/api/messages');
+        setMessages(response.data);
+        setError(null);
+      } catch (err: any) {
+        console.error('Failed to fetch messages:', err);
+        setError('Failed to load messages. Please try again.');
+        // Fallback to empty if failed, or could use mock data in dev
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, []);
+
   return (
     <div className="h-[calc(100vh-10rem)] bg-white rounded-2xl border border-slate-200 shadow-sm flex overflow-hidden">
       {/* Sidebar */}
@@ -19,7 +37,7 @@ export default function Messages() {
         <div className="p-2 space-y-1">
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white text-indigo-600 font-bold shadow-sm border border-slate-100">
             <InboxIcon className="w-5 h-5" /> Inbox
-            <span className="ml-auto bg-indigo-100 text-indigo-600 text-xs px-2 py-0.5 rounded-full">2</span>
+            <span className="ml-auto bg-indigo-100 text-indigo-600 text-xs px-2 py-0.5 rounded-full">{messages.filter(m => m.unread).length || 0}</span>
           </button>
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors">
             <Send className="w-5 h-5 text-slate-400" /> Sent
@@ -40,21 +58,31 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {mockMessages.map(msg => (
-            <div key={msg.id} className={`p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex gap-4 transition-colors ${msg.unread ? 'bg-indigo-50/30' : ''}`}>
-              <button className="mt-1 text-slate-300 hover:text-amber-400 transition-colors">
-                <Star className="w-5 h-5" />
-              </button>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className={`text-sm ${msg.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{msg.sender}</h4>
-                  <span className={`text-xs ${msg.unread ? 'font-bold text-indigo-600' : 'text-slate-500'}`}>{msg.date}</span>
-                </div>
-                <h5 className={`text-sm mb-1 ${msg.unread ? 'font-bold text-slate-800' : 'text-slate-700'}`}>{msg.subject}</h5>
-                <p className="text-sm text-slate-500 truncate">{msg.preview}</p>
-              </div>
+          {isLoading ? (
+            <div className="p-8 flex justify-center items-center text-slate-400">Loading messages...</div>
+          ) : error ? (
+            <div className="p-8 flex justify-center items-center text-red-500 gap-2">
+              <AlertCircle className="w-5 h-5" /> {error}
             </div>
-          ))}
+          ) : messages.length === 0 ? (
+            <div className="p-8 flex justify-center items-center text-slate-400">No messages found.</div>
+          ) : (
+            messages.map(msg => (
+              <div key={msg.id} className={`p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex gap-4 transition-colors ${msg.unread ? 'bg-indigo-50/30' : ''}`}>
+                <button className="mt-1 text-slate-300 hover:text-amber-400 transition-colors">
+                  <Star className="w-5 h-5" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className={`text-sm ${msg.unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{msg.sender}</h4>
+                    <span className={`text-xs ${msg.unread ? 'font-bold text-indigo-600' : 'text-slate-500'}`}>{msg.date || 'Today'}</span>
+                  </div>
+                  <h5 className={`text-sm mb-1 ${msg.unread ? 'font-bold text-slate-800' : 'text-slate-700'}`}>{msg.subject}</h5>
+                  <p className="text-sm text-slate-500 truncate">{msg.preview || msg.content}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
