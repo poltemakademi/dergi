@@ -1,13 +1,95 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Link2, Shield, Database, Mail, ArrowRight, BarChart3, Globe, BookOpen, CheckCircle2, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Link2, 
+  Shield, 
+  Database, 
+  Mail, 
+  ArrowRight, 
+  BarChart3, 
+  Globe, 
+  BookOpen, 
+  CheckCircle2, 
+  Search,
+  X,
+  Loader2,
+  AlertCircle,
+  FileText
+} from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
-import { MOCK_JOURNALS } from '../../lib/mockData';
+import { apiClient } from '../../services/api/client';
+import { useJournalStore } from '../../store/useJournalStore';
 
 export default function Home() {
   const { t } = useTranslation();
+  const { journals, fetchJournals, isLoading } = useJournalStore();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ articles: any[]; journals: any[] } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
-  const journals = MOCK_JOURNALS;
+  useEffect(() => {
+    fetchJournals();
+  }, [fetchJournals]);
+
+  const handleSearch = async (queryText: string) => {
+    if (!queryText.trim()) {
+      setSearchResults(null);
+      setShowResults(false);
+      return;
+    }
+    setIsSearching(true);
+    setShowResults(true);
+    try {
+      const response = await apiClient.get('/api/global/search', {
+        params: { q: queryText }
+      });
+      const data = response.data;
+      if (data && (Array.isArray(data.articles) || Array.isArray(data.journals))) {
+        setSearchResults({
+          articles: Array.isArray(data.articles) ? data.articles : [],
+          journals: Array.isArray(data.journals) ? data.journals : []
+        });
+      } else if (Array.isArray(data)) {
+        setSearchResults({
+          articles: data,
+          journals: []
+        });
+      } else {
+        setSearchResults({ articles: [], journals: [] });
+      }
+    } catch (err: any) {
+      console.warn('Search API failed, running fallback client-side search:', err);
+      // Fail-safe search fallback
+      const q = queryText.toLowerCase();
+      const matchedJournals = journals.filter(j => 
+        j.name.toLowerCase().includes(q) || 
+        j.tr.toLowerCase().includes(q) ||
+        j.issn.toLowerCase().includes(q)
+      );
+      
+      const matchedArticles = journals.flatMap(j => j.articles || []).filter((a: any) => 
+        (a.title || '').toLowerCase().includes(q) || 
+        (a.author || '').toLowerCase().includes(q)
+      );
+      
+      setSearchResults({
+        articles: matchedArticles.map(a => ({
+          id: a.id,
+          title: a.title,
+          author: a.author,
+          doi: a.doi,
+          journalName: journals.find(j => j.articles.includes(a))?.name || 'Academic Journal',
+          journalSlug: journals.find(j => j.articles.includes(a))?.slug || 'js'
+        })),
+        journals: matchedJournals
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   return (
     <main className="pb-24 pt-24">
@@ -67,14 +149,136 @@ export default function Home() {
               </div>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value === '') {
+                    setSearchResults(null);
+                    setShowResults(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(searchQuery);
+                  }
+                }}
                 placeholder={t.hero.searchPlaceholder}
                 className="block w-full pl-11 pr-24 py-3.5 bg-white border border-slate-200 rounded-xl text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700"
               />
-              <div className="absolute inset-y-0 right-2 flex items-center">
-                <button className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-sm">
+              <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
+                {searchQuery && (
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults(null);
+                      setShowResults(false);
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors flex items-center justify-center"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button 
+                  onClick={() => handleSearch(searchQuery)}
+                  className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-sm"
+                >
                   {t.hero.searchBtn}
                 </button>
               </div>
+
+              {/* Search Results Dropdown/Panel */}
+              <AnimatePresence>
+                {showResults && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute left-0 right-0 mt-3 p-6 bg-white/95 backdrop-blur-xl border border-slate-200/85 rounded-2xl shadow-xl z-50 overflow-hidden max-h-[480px] overflow-y-auto text-left"
+                  >
+                    {isSearching ? (
+                      <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                        <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Searching across all journals...</p>
+                      </div>
+                    ) : searchResults && (searchResults.articles.length > 0 || searchResults.journals.length > 0) ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-200/50">
+                        {/* Journals Column */}
+                        <div className="space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-indigo-500" /> Matches in Journals ({searchResults.journals.length})
+                          </h4>
+                          {searchResults.journals.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2">
+                              {searchResults.journals.map((journal: any) => (
+                                <Link
+                                  key={journal.id}
+                                  to={`/${journal.slug || journal.id.toLowerCase()}`}
+                                  onClick={() => setShowResults(false)}
+                                  className="flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 transition-all group"
+                                >
+                                  <div>
+                                    <div className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{journal.name}</div>
+                                    <div className="text-xs text-slate-400 font-medium italic">{journal.tr}</div>
+                                  </div>
+                                  <div className="text-xs text-slate-400 font-mono flex items-center gap-1 group-hover:text-indigo-600">
+                                    <span>Explore</span>
+                                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 italic py-2">No journals matched your search.</p>
+                          )}
+                        </div>
+
+                        {/* Articles Column */}
+                        <div className="space-y-4 md:pl-8 pt-4 md:pt-0">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-indigo-500" /> Matches in Articles ({searchResults.articles.length})
+                          </h4>
+                          {searchResults.articles.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2">
+                              {searchResults.articles.map((article: any) => (
+                                <Link
+                                  key={article.id}
+                                  to={`/${article.journalSlug || 'js'}/article/${article.id}`}
+                                  onClick={() => setShowResults(false)}
+                                  className="block p-3 rounded-xl hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 transition-all group"
+                                >
+                                  <div className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                                    {article.title}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                                    <span className="font-medium text-slate-600">{article.author}</span>
+                                    <span>•</span>
+                                    <span className="italic">{article.journalName || 'Academic Journal'}</span>
+                                    {article.doi && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.2 rounded">{article.doi}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 italic py-2">No articles matched your search.</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-10 space-y-2">
+                        <AlertCircle className="w-8 h-8 text-amber-500" />
+                        <p className="text-slate-800 font-bold text-sm">No Results Found</p>
+                        <p className="text-slate-400 text-xs">We couldn't find any articles or journals matching your search.</p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Micro stats under actions */}
@@ -232,101 +436,124 @@ export default function Home() {
             {t.marquee.btn} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
-
-        <div className="flex overflow-hidden group [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] pt-4 pb-16">
-          {/* First Marquee Group */}
-          <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max">
-            {journals.map((journal, i) => (
-              <Link
-                key={`${journal.id}-${i}`}
-                to={`/${journal.id.toLowerCase()}`}
-                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
+        {isLoading ? (
+          <div className="flex gap-8 px-8 overflow-x-auto pb-16 max-w-7xl mx-auto w-full justify-start md:justify-center scrollbar-hide">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 flex flex-col justify-between space-y-6 animate-pulse"
               >
-                {/* Journal Cover Area */}
-                <div className="h-48 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-slate-900">
-                    <img src={journal.cover} alt={journal.name} className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-110 transition-all duration-700" />
-                  </div>
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
-
-                  <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
-                      {journal.id}
-                    </div>
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="text-[10px] font-bold tracking-wide uppercase">{journal.index}</span>
-                    </div>
-                  </div>
+                <div>
+                  <div className="h-40 bg-slate-100 rounded-2xl w-full mb-6" />
+                  <div className="h-6 bg-slate-200 rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-slate-100 rounded w-1/2" />
                 </div>
-
-                {/* Content Area */}
-                <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
-                    <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
+                <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
+                  <div className="space-y-1 w-1/2">
+                    <div className="h-2 bg-slate-100 rounded w-1/3" />
+                    <div className="h-4 bg-slate-200 rounded w-3/4" />
                   </div>
-
-                  <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
-                      <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover/card:text-indigo-600 transition-colors group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5" />
-                    </div>
-                  </div>
+                  <div className="w-8 h-8 rounded-full bg-slate-100" />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
-
-          {/* Second Marquee Group (Duplicate for seamless loop) */}
-          <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max" aria-hidden="true">
-            {journals.map((journal, i) => (
-              <Link
-                key={`${journal.id}-dup-${i}`}
-                to={`/${journal.id.toLowerCase()}`}
-                className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
-              >
-                <div className="h-48 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-slate-900">
-                    <img src={journal.cover} alt={journal.name} className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-110 transition-all duration-700" />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
-
-                  <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
-                      {journal.id}
+        ) : (
+          <div className="flex overflow-hidden group [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] pt-4 pb-16">
+            {/* First Marquee Group */}
+            <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max">
+              {journals.map((journal, i) => (
+                <Link
+                  key={`${journal.id}-${i}`}
+                  to={`/${journal.id.toLowerCase()}`}
+                  className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
+                >
+                  {/* Journal Cover Area */}
+                  <div className="h-48 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-slate-900">
+                      <img src={journal.cover} alt={journal.name} className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-110 transition-all duration-700" />
                     </div>
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="text-[10px] font-bold tracking-wide uppercase">{journal.index}</span>
-                    </div>
-                  </div>
-                </div>
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
 
-                <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
-                    <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
-                  </div>
-
-                  <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
-                      <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover/card:text-indigo-600 transition-colors group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5" />
+                    <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
+                        {journal.id}
+                      </div>
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="text-[10px] font-bold tracking-wide uppercase">{journal.index}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+
+                  {/* Content Area */}
+                  <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
+                      <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
+                    </div>
+
+                    <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
+                        <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover/card:text-indigo-600 transition-colors group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Second Marquee Group (Duplicate for seamless loop) */}
+            <div className="flex gap-8 pr-8 animate-marquee group-hover:[animation-play-state:paused] w-max" aria-hidden="true">
+              {journals.map((journal, i) => (
+                <Link
+                  key={`${journal.id}-dup-${i}`}
+                  to={`/${journal.id.toLowerCase()}`}
+                  className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
+                >
+                  <div className="h-48 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-slate-900">
+                      <img src={journal.cover} alt={journal.name} className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-110 transition-all duration-700" />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+
+                    <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
+                        {journal.id}
+                      </div>
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="text-[10px] font-bold tracking-wide uppercase">{journal.index}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex flex-col flex-1 justify-between space-y-6">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight group-hover/card:text-indigo-700 transition-colors line-clamp-2">{journal.name}</h3>
+                      <p className="text-slate-500 font-medium text-sm italic">{journal.tr}</p>
+                    </div>
+
+                    <div className="mt-auto pt-6 border-t border-slate-100/80 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-0.5">{t.marquee.issn}</span>
+                        <span className="text-sm font-bold text-slate-700 font-mono">{journal.issn}</span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover/card:bg-indigo-50 group-hover/card:border-indigo-100 transition-colors">
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover/card:text-indigo-600 transition-colors group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* --- Bento Box Marketplace --- */}
