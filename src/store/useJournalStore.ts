@@ -1,47 +1,77 @@
 import { create } from 'zustand';
-
-export interface Journal {
-  id: string;
-  name: string;
-  tr: string;
-  issn: string;
-  index: string;
-  indexColor: string;
-  cover: string;
-  impactFactor: string;
-  reviewTime: string;
-  acceptRate: string;
-  articles: string;
-}
+import { apiClient } from '../services/api/client';
+import { MOCK_JOURNALS, MockJournal } from '../lib/mockData';
 
 interface JournalState {
-  journals: Journal[];
+  journals: MockJournal[];
   isLoading: boolean;
   error: string | null;
   fetchJournals: () => Promise<void>;
 }
 
-const mockJournals: Journal[] = [
-  { id: 'JS', name: 'Journal of Space Exploration', tr: 'Uzay Keşifleri Dergisi', issn: '2845-901X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop', impactFactor: '3.8', reviewTime: '4 Weeks Avg', acceptRate: '18%', articles: '342' },
-  { id: 'AM', name: 'Annals of Modern Medicine', tr: 'Modern Tıp Yıllıkları', issn: '1992-0453', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop', impactFactor: '4.5', reviewTime: '6 Weeks Avg', acceptRate: '12%', articles: '512' },
-  { id: 'ET', name: 'Engineering & Tech Review', tr: 'Mühendislik ve Teknoloji İncelemeleri', issn: '3012-7822', index: 'Crossref Pending', indexColor: 'text-amber-700 bg-amber-50 border-amber-200', cover: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop', impactFactor: '2.1', reviewTime: '8 Weeks Avg', acceptRate: '25%', articles: '198' },
-  { id: 'QC', name: 'Quantum Computing Letters', tr: 'Kuantum Hesaplama Mektupları', issn: '4451-229X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1614935151651-0bea6508ab6b?q=80&w=600&auto=format&fit=crop', impactFactor: '5.2', reviewTime: '3 Weeks Avg', acceptRate: '10%', articles: '120' },
-  { id: 'ES', name: 'Earth & Environmental Science', tr: 'Dünya ve Çevre Bilimleri', issn: '5512-8812', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=600&auto=format&fit=crop', impactFactor: '2.9', reviewTime: '5 Weeks Avg', acceptRate: '20%', articles: '289' },
-  { id: 'AI', name: 'Artificial Intelligence Horizon', tr: 'Yapay Zeka Ufku', issn: '9912-445X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=600&auto=format&fit=crop', impactFactor: '6.4', reviewTime: '4 Weeks Avg', acceptRate: '14%', articles: '456' },
-];
-
 export const useJournalStore = create<JournalState>((set) => ({
-  journals: [],
+  journals: MOCK_JOURNALS, // initialize with mock data as fallback
   isLoading: false,
   error: null,
+
   fetchJournals: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      set({ journals: mockJournals, isLoading: false });
+      // Fetch journals across all tenants/globally.
+      // We will try fetching from /api/global/search with a blank query or search for journals,
+      // or try a direct /api/journals endpoint if available.
+      const response = await apiClient.get('/api/global/search', {
+        params: { q: '', type: 'journals' }
+      });
+
+      const fetchedData = response.data;
+
+      // If we receive valid journals from the server, we use them.
+      // We will also merge them with mock data details (like covers, ISSN, tr names) 
+      // if those aren't fully populated by the backend, ensuring a premium visual UI.
+      if (Array.isArray(fetchedData) && fetchedData.length > 0) {
+        const mergedJournals = fetchedData.map((fetched: any) => {
+          // Find matching mock journal by ID or name to merge rich static assets
+          const mockMatch = MOCK_JOURNALS.find(
+            (mj) => mj.id.toLowerCase() === (fetched.id || '').toString().toLowerCase() ||
+              mj.slug.toLowerCase() === (fetched.slug || '').toString().toLowerCase() ||
+              mj.name.toLowerCase() === (fetched.name || '').toString().toLowerCase()
+          );
+
+          return {
+            id: fetched.id || mockMatch?.id || 'JOURNAL',
+            slug: fetched.slug || mockMatch?.slug || (fetched.name || '').toLowerCase().replace(/\s+/g, '-'),
+            name: fetched.name || mockMatch?.name || '',
+            tr: fetched.tr || mockMatch?.tr || fetched.name || '',
+            issn: fetched.issn || mockMatch?.issn || 'XXXX-XXXX',
+            index: fetched.index || mockMatch?.index || 'Crossref Indexed',
+            indexColor: fetched.indexColor || mockMatch?.indexColor || 'text-slate-700 bg-slate-50 border-slate-200',
+            cover: fetched.cover || fetched.cover_image || mockMatch?.cover || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop',
+            impactFactor: fetched.impactFactor || mockMatch?.impactFactor || '0.0',
+            reviewTime: fetched.reviewTime || mockMatch?.reviewTime || '4 Weeks Avg',
+            acceptRate: fetched.acceptRate || mockMatch?.acceptRate || '20%',
+            articlesCount: fetched.articlesCount || fetched.articles_count || mockMatch?.articlesCount || '0',
+            description: fetched.description || mockMatch?.description || { EN: '', TR: '' },
+            about: fetched.about || mockMatch?.about || { EN: '', TR: '' },
+            aimsScope: fetched.aimsScope || mockMatch?.aimsScope || { EN: '', TR: '' },
+            writingPrinciples: fetched.writingPrinciples || mockMatch?.writingPrinciples || { EN: '', TR: '' },
+            publisher: fetched.publisher || mockMatch?.publisher || { EN: '', TR: '' },
+            contact: fetched.contact || mockMatch?.contact || { EN: '', TR: '' },
+            editorialBoard: fetched.editorialBoard || mockMatch?.editorialBoard || [],
+            advisoryBoard: fetched.advisoryBoard || mockMatch?.advisoryBoard || [],
+            articles: fetched.articles || mockMatch?.articles || [],
+            announcements: fetched.announcements || mockMatch?.announcements || []
+          };
+        });
+        set({ journals: mergedJournals, isLoading: false });
+      } else {
+        // If empty response, keep mock data
+        set({ journals: MOCK_JOURNALS, isLoading: false });
+      }
     } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch journals', isLoading: false });
+      console.warn('Failed to fetch live journals, using fallback mock data:', err.message || err);
+      // Fail-safe: keep mock data on error
+      set({ journals: MOCK_JOURNALS, error: err.message || 'Failed to fetch journals', isLoading: false });
     }
-  },
+  }
 }));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   ChevronDown, 
   Copy, 
@@ -6,8 +6,12 @@ import {
   ArrowRight,
   Filter,
   Check,
-  ArrowUpRight
+  ArrowUpRight,
+  Loader2,
+  AlertCircle,
+  Download
 } from 'lucide-react';
+import { apiClient } from '../../services/api/client';
 
 const dict = {
   EN: {
@@ -77,6 +81,20 @@ export default function EarlyAccess() {
     () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
   );
 
+  const [articles, setArticles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedSubject, setSelectedSubject] = useState<string>('All');
+  const [sortOption, setSortOption] = useState<string>('Latest Minted');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   useEffect(() => {
     const handleLangChange = () => {
       setLangState((localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR');
@@ -89,7 +107,69 @@ export default function EarlyAccess() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+
+    const fetchEarlyAccess = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.get('/api/global/early-access');
+        const data = response.data;
+        if (Array.isArray(data) && data.length > 0) {
+          const mappedArticles = data.map((item: any) => ({
+            id: item.id || item.submission_id || Math.random().toString(),
+            doi: item.doi || `10.2845/ea.${item.id || 'proof'}`,
+            titleEn: item.title_english || item.titleEn || item.title || '',
+            titleTr: item.title_native || item.titleTr || item.title || '',
+            authors: item.authors || item.author_names || item.author || 'Unknown Author',
+            journal: item.journal_name || item.journal?.name || item.journal || 'Academic Journal',
+            mintedDate: item.published_at ? new Date(item.published_at).toLocaleDateString(lang === 'TR' ? 'tr-TR' : 'en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            }) : (item.mintedDate || 'Oct 12, 2026'),
+            isOpenAccess: item.is_open_access !== undefined ? item.is_open_access : (item.isOpenAccess || true),
+            subject: item.subject || ''
+          }));
+          setArticles(mappedArticles);
+        } else {
+          setArticles(ARTICLES);
+        }
+      } catch (err: any) {
+        console.warn('Failed to fetch early access articles, using fallback static data:', err.message || err);
+        setArticles(ARTICLES);
+        setError(err.message || 'Failed to fetch');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEarlyAccess();
+  }, [lang]);
+
+  const filteredArticles = useMemo(() => {
+    let result = [...articles];
+
+    if (openAccessOnly) {
+      result = result.filter(a => a.isOpenAccess);
+    }
+
+    if (selectedSubject !== 'All' && selectedSubject !== 'Hepsi' && selectedSubject !== '') {
+      result = result.filter(a => 
+        (a.subject || '').toLowerCase() === selectedSubject.toLowerCase() ||
+        (a.titleEn || '').toLowerCase().includes(selectedSubject.toLowerCase()) ||
+        (a.titleTr || '').toLowerCase().includes(selectedSubject.toLowerCase())
+      );
+    }
+
+    if (sortOption === 'Latest Minted' || sortOption === 'En Son Eklenen') {
+      result.sort((a, b) => new Date(b.mintedDate).getTime() - new Date(a.mintedDate).getTime());
+    } else if (sortOption === 'Most Viewed' || sortOption === 'En Çok Görüntülenen') {
+      // client-side views sorting mock
+      result.sort((a, b) => (b.id > a.id ? 1 : -1));
+    }
+
+    return result;
+  }, [articles, openAccessOnly, selectedSubject, sortOption]);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-indigo-100 selection:text-indigo-900 relative overflow-hidden flex flex-col">
@@ -121,15 +201,27 @@ export default function EarlyAccess() {
               <div className="relative group/dropdown">
                 <button className="flex items-center gap-2 text-[13px] font-semibold text-slate-600 hover:text-slate-900 transition-all cursor-pointer group">
                   <Filter className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  {t.filters.subject}
+                  {selectedSubject === 'All' ? t.filters.subject : selectedSubject}
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </button>
                 {/* Sleek Dropdown Panel */}
                 <div className="absolute top-full left-0 mt-3 w-56 bg-white border border-slate-100 rounded-xl shadow-[0_12px_24px_-4px_rgba(0,0,0,0.05)] opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-200 z-20 translate-y-2 group-hover/dropdown:translate-y-0">
                   <div className="p-1.5">
+                    <button 
+                      onClick={() => setSelectedSubject('All')}
+                      className="w-full text-left px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all cursor-pointer flex items-center justify-between"
+                    >
+                      {lang === 'TR' ? 'Hepsi' : 'All Subjects'}
+                      {selectedSubject === 'All' && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                    </button>
                     {t.filters.subjects.map((subject) => (
-                      <button key={subject} className="w-full text-left px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all cursor-pointer flex items-center justify-between">
+                      <button 
+                        key={subject} 
+                        onClick={() => setSelectedSubject(subject)}
+                        className="w-full text-left px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all cursor-pointer flex items-center justify-between"
+                      >
                         {subject}
+                        {selectedSubject === subject && <Check className="w-3.5 h-3.5 text-indigo-600" />}
                       </button>
                     ))}
                   </div>
@@ -157,14 +249,19 @@ export default function EarlyAccess() {
               <span className="text-[12px] font-medium text-slate-400 uppercase tracking-widest">{t.filters.sort}</span>
               <div className="relative group/sort">
                 <button className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-800 hover:text-slate-900 transition-colors cursor-pointer group">
-                  {t.filters.sortActive}
+                  {sortOption}
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </button>
                  <div className="absolute top-full right-0 mt-3 w-48 bg-white border border-slate-100 rounded-xl shadow-[0_12px_24px_-4px_rgba(0,0,0,0.05)] opacity-0 invisible group-hover/sort:opacity-100 group-hover/sort:visible transition-all duration-200 z-20 translate-y-2 group-hover/sort:translate-y-0">
                   <div className="p-1.5">
-                    {t.filters.sortOptions.map((sortOption) => (
-                      <button key={sortOption} className="w-full text-left px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all cursor-pointer">
-                        {sortOption}
+                    {t.filters.sortOptions.map((option) => (
+                      <button 
+                        key={option} 
+                        onClick={() => setSortOption(option)}
+                        className="w-full text-left px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all cursor-pointer flex items-center justify-between"
+                      >
+                        {option}
+                        {sortOption === option && <Check className="w-3.5 h-3.5 text-indigo-600" />}
                       </button>
                     ))}
                   </div>
@@ -175,67 +272,109 @@ export default function EarlyAccess() {
 
           {/* 3. LIST VIEW (Hyper-Professional Sleek Rows) */}
           <div className="flex flex-col animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            {ARTICLES.map((article) => (
-              <div 
-                key={article.id}
-                className="group relative border-b border-slate-200/70 py-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300 -mx-4 px-4 sm:mx-0 sm:px-2 rounded-xl"
-              >
-                
-                {/* Main Content Area */}
-                <div className="flex-1 min-w-0 pr-0 lg:pr-8">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="py-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6 -mx-4 px-4 sm:mx-0 sm:px-2 border-b border-slate-200/50">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 w-32 shimmer rounded" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                      <div className="h-4 w-24 shimmer rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 w-3/4 shimmer rounded" />
+                      <div className="h-4 w-1/2 shimmer rounded" />
+                    </div>
+                    <div className="h-4 w-40 shimmer rounded" />
+                  </div>
+                  <div className="shrink-0 flex flex-row lg:flex-col items-center lg:items-end gap-3 pt-4 lg:pt-0">
+                    <div className="h-4 w-28 shimmer rounded" />
+                    <div className="h-8 w-24 shimmer rounded-lg" />
+                  </div>
+                </div>
+              ))
+            ) : filteredArticles.length > 0 ? (
+              filteredArticles.map((article) => (
+                <div 
+                  key={article.id}
+                  className="group relative border-b border-slate-200/70 py-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300 -mx-4 px-4 sm:mx-0 sm:px-2 rounded-xl"
+                >
                   
-                  {/* Super Clean Meta Row */}
-                  <div className="flex flex-wrap items-center gap-3 mb-3 text-[12px] font-medium text-slate-500 uppercase tracking-wide">
-                    <span className="text-indigo-600 font-semibold">{article.journal}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {article.mintedDate}
-                    </span>
-                    {article.isOpenAccess && (
-                      <>
-                        <span className="w-1 h-1 rounded-full bg-slate-300" />
-                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                          <Check className="w-3 h-3" /> {t.articles.access}
+                  {/* Main Content Area */}
+                  <div className="flex-1 min-w-0 pr-0 lg:pr-8">
+                    
+                    {/* Super Clean Meta Row */}
+                    <div className="flex flex-wrap items-center gap-3 mb-3 text-[12px] font-medium text-slate-500 uppercase tracking-wide">
+                      <span className="text-indigo-600 font-semibold">{article.journal}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300" />
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {article.mintedDate}
+                      </span>
+                      {article.isOpenAccess && (
+                        <>
+                          <span className="w-1 h-1 rounded-full bg-slate-300" />
+                          <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" /> {t.articles.access}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Sleek Typography for Titles */}
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold text-slate-900 leading-snug tracking-tight mb-1.5 group-hover:text-indigo-600 transition-colors duration-200">
+                        {lang === 'EN' ? article.titleEn : article.titleTr}
+                      </h3>
+                      <h4 className="text-[14px] text-slate-500 leading-relaxed">
+                        {lang === 'EN' ? article.titleTr : article.titleEn}
+                      </h4>
+                    </div>
+
+                    {/* Authors */}
+                    <div className="text-[14px] text-slate-600">
+                      {article.authors}
+                    </div>
+                  </div>
+
+                  {/* Right Side Actions / DOI */}
+                  <div className="shrink-0 flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-4 pt-4 lg:pt-0 border-t border-slate-100 lg:border-t-0">
+                    {/* Minimal DOI string */}
+                    <div 
+                      onClick={() => handleCopy(article.id, article.doi)}
+                      className="flex items-center gap-2 group/doi cursor-pointer relative"
+                    >
+                      <span className="font-mono text-[11px] text-slate-400 group-hover/doi:text-slate-900 transition-colors">
+                        {article.doi}
+                      </span>
+                      <Copy className="w-3 h-3 text-slate-300 group-hover/doi:text-slate-900 transition-colors" />
+                      {copiedId === article.id && (
+                        <span className="absolute bottom-full right-0 mb-1.5 bg-slate-900 text-white text-[10px] font-semibold px-2 py-1 rounded shadow-lg z-10 animate-fade-in-up">
+                          Copied!
                         </span>
-                      </>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  {/* Sleek Typography for Titles */}
-                  <div className="mb-4">
-                    <h3 className="text-xl font-semibold text-slate-900 leading-snug tracking-tight mb-1.5 group-hover:text-indigo-600 transition-colors duration-200">
-                      {lang === 'EN' ? article.titleEn : article.titleTr}
-                    </h3>
-                    <h4 className="text-[14px] text-slate-500 leading-relaxed">
-                      {lang === 'EN' ? article.titleTr : article.titleEn}
-                    </h4>
-                  </div>
-
-                  {/* Authors */}
-                  <div className="text-[14px] text-slate-600">
-                    {article.authors}
+                    {/* Ghost Button for View */}
+                    <a 
+                      href={`https://doi.org/${article.doi}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all duration-200 cursor-pointer group"
+                    >
+                      <span>{t.articles.proof}</span>
+                      <Download className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    </a>
                   </div>
                 </div>
-
-                {/* Right Side Actions / DOI */}
-                <div className="shrink-0 flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-4 pt-4 lg:pt-0 border-t border-slate-100 lg:border-t-0">
-                  {/* Minimal DOI string */}
-                  <div className="flex items-center gap-2 group/doi cursor-pointer">
-                    <span className="font-mono text-[11px] text-slate-400 group-hover/doi:text-slate-900 transition-colors">
-                      {article.doi}
-                    </span>
-                    <Copy className="w-3 h-3 text-slate-300 group-hover/doi:text-slate-900 transition-colors" />
-                  </div>
-
-                  {/* Ghost Button for View */}
-                  <button className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all duration-200">
-                    {t.articles.proof}
-                    <ArrowUpRight className="w-4 h-4 opacity-50 group-hover:opacity-100" />
-                  </button>
-                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                <AlertCircle className="w-10 h-10 text-slate-300" />
+                <h3 className="text-lg font-bold text-slate-700">No Articles Found</h3>
+                <p className="text-slate-400 text-sm max-w-sm">We couldn't find any early access articles matching your filters.</p>
               </div>
-            ))}
+            )}
           </div>
 
           {/* 4. CALL TO ACTION CONTAINER (Ultimate Minimalist Aesthetic) */}
