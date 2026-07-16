@@ -6,7 +6,7 @@ import { isProfileComplete } from '../utils/profileValidation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
-  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut, Menu, X, AlertCircle
+  Inbox, BookOpen, PenTool, CheckSquare, Search, BarChart3, Globe, ArrowLeft, LogOut, Menu, X, AlertCircle
 } from 'lucide-react';
 import NotificationDropdown from '../components/NotificationDropdown';
 import Profile from '../pages/dashboard/Profile'; // Intercept component
@@ -18,7 +18,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const { isValid: isProfileValid, missingFields } = useMemo(() => isProfileComplete(activeRole, user), [activeRole, user]);
+  const { isValid: isProfileValid } = useMemo(() => isProfileComplete(activeRole, user), [activeRole, user]);
 
   const isActive = (path: string) => location.pathname.includes(path);
 
