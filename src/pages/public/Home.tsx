@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Link2, 
-  Shield, 
-  Database, 
-  Mail, 
-  ArrowRight, 
-  BarChart3, 
-  Globe, 
-  BookOpen, 
-  CheckCircle2, 
+import {
+  Link2,
+  Shield,
+  Database,
+  Mail,
+  ArrowRight,
+  BarChart3,
+  Globe,
+  BookOpen,
+  CheckCircle2,
   Search,
   X,
   Loader2,
   AlertCircle,
-  FileText
+  FileText,
+  Fingerprint
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiClient } from '../../services/api/client';
@@ -24,11 +25,12 @@ import { useJournalStore } from '../../store/useJournalStore';
 export default function Home() {
   const { t } = useTranslation();
   const { journals, fetchJournals, isLoading } = useJournalStore();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ articles: any[]; journals: any[] } | null>(null);
+  const [searchResults, setSearchResults] = useState<{ articles: any[]; journals: any[]; doiMatches?: any[] } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showAllResultsModal, setShowAllResultsModal] = useState(false);
 
   useEffect(() => {
     fetchJournals();
@@ -47,44 +49,56 @@ export default function Home() {
         params: { q: queryText }
       });
       const data = response.data;
+      let articlesList: any[] = [];
+      let journalsList: any[] = [];
+
       if (data && (Array.isArray(data.articles) || Array.isArray(data.journals))) {
-        setSearchResults({
-          articles: Array.isArray(data.articles) ? data.articles : [],
-          journals: Array.isArray(data.journals) ? data.journals : []
-        });
+        articlesList = Array.isArray(data.articles) ? data.articles : [];
+        journalsList = Array.isArray(data.journals) ? data.journals : [];
       } else if (Array.isArray(data)) {
-        setSearchResults({
-          articles: data,
-          journals: []
-        });
-      } else {
-        setSearchResults({ articles: [], journals: [] });
+        articlesList = data;
       }
+
+      const q = queryText.toLowerCase();
+      // Filter DOI matches from articles list
+      const doiMatches = articlesList.filter((a: any) => a.doi && a.doi.toLowerCase().includes(q));
+      const remainingArticles = articlesList.filter((a: any) => !doiMatches.some((d: any) => d.id === a.id));
+
+      setSearchResults({
+        articles: remainingArticles,
+        journals: journalsList,
+        doiMatches: doiMatches
+      });
     } catch (err: any) {
       console.warn('Search API failed, running fallback client-side search:', err);
       // Fail-safe search fallback
       const q = queryText.toLowerCase();
-      const matchedJournals = journals.filter(j => 
-        j.name.toLowerCase().includes(q) || 
+      const matchedJournals = journals.filter(j =>
+        j.name.toLowerCase().includes(q) ||
         j.tr.toLowerCase().includes(q) ||
         j.issn.toLowerCase().includes(q)
       );
-      
-      const matchedArticles = journals.flatMap(j => j.articles || []).filter((a: any) => 
-        (a.title || '').toLowerCase().includes(q) || 
-        (a.author || '').toLowerCase().includes(q)
+
+      const allArticles = journals.flatMap(j => j.articles || []).map(a => ({
+        id: a.id,
+        title: a.title,
+        author: a.author,
+        doi: a.doi,
+        journalName: journals.find(j => j.articles.includes(a))?.name || 'Academic Journal',
+        journalSlug: journals.find(j => j.articles.includes(a))?.slug || 'js'
+      }));
+
+      const doiMatches = allArticles.filter((a: any) => a.doi && a.doi.toLowerCase().includes(q));
+      const matchedArticles = allArticles.filter((a: any) =>
+        ((a.title || '').toLowerCase().includes(q) ||
+        (a.author || '').toLowerCase().includes(q)) &&
+        !doiMatches.some((d: any) => d.id === a.id)
       );
-      
+
       setSearchResults({
-        articles: matchedArticles.map(a => ({
-          id: a.id,
-          title: a.title,
-          author: a.author,
-          doi: a.doi,
-          journalName: journals.find(j => j.articles.includes(a))?.name || 'Academic Journal',
-          journalSlug: journals.find(j => j.articles.includes(a))?.slug || 'js'
-        })),
-        journals: matchedJournals
+        articles: matchedArticles,
+        journals: matchedJournals,
+        doiMatches: doiMatches
       });
     } finally {
       setIsSearching(false);
@@ -94,7 +108,7 @@ export default function Home() {
   return (
     <main className="pb-24 pt-24">
       {/* --- Hero Section --- */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 min-h-[calc(100vh-192px)] flex items-center border-b border-slate-100">
+      <section className="relative z-20 max-w-7xl mx-auto px-6 min-h-[calc(100vh-192px)] flex items-center border-b border-slate-100">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center py-12">
 
           {/* Left Column: Copywriting & Actions */}
@@ -167,7 +181,7 @@ export default function Home() {
               />
               <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
                 {searchQuery && (
-                  <button 
+                  <button
                     onClick={() => {
                       setSearchQuery('');
                       setSearchResults(null);
@@ -178,7 +192,7 @@ export default function Home() {
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <button 
+                <button
                   onClick={() => handleSearch(searchQuery)}
                   className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-sm"
                 >
@@ -194,80 +208,152 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.98 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute left-0 right-0 mt-3 p-6 bg-white/95 backdrop-blur-xl border border-slate-200/85 rounded-2xl shadow-xl z-50 overflow-hidden max-h-[480px] overflow-y-auto text-left"
+                    className="absolute left-0 right-0 md:-left-12 md:-right-12 mt-3 p-6 md:p-8 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] z-50 overflow-hidden max-h-[520px] overflow-y-auto text-left"
                   >
                     {isSearching ? (
                       <div className="flex flex-col items-center justify-center py-10 space-y-3">
                         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
                         <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Searching across all journals...</p>
                       </div>
-                    ) : searchResults && (searchResults.articles.length > 0 || searchResults.journals.length > 0) ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-200/50">
-                        {/* Journals Column */}
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5 text-indigo-500" /> Matches in Journals ({searchResults.journals.length})
-                          </h4>
-                          {searchResults.journals.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-2">
-                              {searchResults.journals.map((journal: any) => (
-                                <Link
-                                  key={journal.id}
-                                  to={`/${journal.slug || journal.id.toLowerCase()}`}
-                                  onClick={() => setShowResults(false)}
-                                  className="flex items-center justify-between p-3 rounded-xl hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 transition-all group"
-                                >
-                                  <div>
-                                    <div className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{journal.name}</div>
-                                    <div className="text-xs text-slate-400 font-medium italic">{journal.tr}</div>
-                                  </div>
-                                  <div className="text-xs text-slate-400 font-mono flex items-center gap-1 group-hover:text-indigo-600">
-                                    <span>Explore</span>
-                                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 italic py-2">No journals matched your search.</p>
-                          )}
-                        </div>
+                    ) : searchResults && (searchResults.articles.length > 0 || searchResults.journals.length > 0 || (searchResults.doiMatches && searchResults.doiMatches.length > 0)) ? (
+                      <div className="flex flex-col gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100/80 items-stretch">
+                          {/* Journals List (Left Column) */}
+                          <div className="space-y-4 flex flex-col h-full">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                              <BookOpen className="w-3.5 h-3.5 text-indigo-500" /> Matches in Journals ({searchResults.journals.length})
+                            </h4>
+                            {searchResults.journals.length > 0 ? (
+                              <div className="flex flex-col gap-3 flex-1">
+                                {searchResults.journals.slice(0, 2).map((journal: any) => {
+                                  // Attempt to match search result with store data to grab rich properties
+                                  const storeMatch = journals.find(j => j.id.toLowerCase() === journal.id.toLowerCase());
+                                  return (
+                                    <Link
+                                      key={journal.id}
+                                      to={`/${journal.slug || journal.id.toLowerCase()}`}
+                                      onClick={() => setShowResults(false)}
+                                      className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group text-left min-h-[110px] flex-1"
+                                    >
+                                      <div className="w-12 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50 group-hover:scale-105 transition-transform duration-300">
+                                        <img
+                                          src={journal.cover || storeMatch?.cover || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=100'}
+                                          alt={journal.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0 text-left">
+                                        <div className="font-extrabold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate">{journal.name}</div>
+                                        <div className="text-[11px] text-slate-400 font-medium italic mt-0.5 truncate">{journal.tr || storeMatch?.tr}</div>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                          <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-200/50 font-mono">
+                                            {journal.issn || storeMatch?.issn || 'XXXX-XXXX'}
+                                          </span>
+                                          <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md border border-indigo-100/50">
+                                            {journal.index || storeMatch?.index || 'Crossref Indexed'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 shrink-0 transition-colors">
+                                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors group-hover:translate-x-0.5" />
+                                      </div>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-slate-400 italic py-2 text-left">No journals matched your search.</p>
+                            )}
+                          </div>
 
-                        {/* Articles Column */}
-                        <div className="space-y-4 md:pl-8 pt-4 md:pt-0">
-                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-indigo-500" /> Matches in Articles ({searchResults.articles.length})
-                          </h4>
-                          {searchResults.articles.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-2">
-                              {searchResults.articles.map((article: any) => (
-                                <Link
-                                  key={article.id}
-                                  to={`/${article.journalSlug || 'js'}/article/${article.id}`}
-                                  onClick={() => setShowResults(false)}
-                                  className="block p-3 rounded-xl hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 transition-all group"
-                                >
-                                  <div className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                                    {article.title}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                                    <span className="font-medium text-slate-600">{article.author}</span>
-                                    <span>•</span>
-                                    <span className="italic">{article.journalName || 'Academic Journal'}</span>
+                          {/* Articles List (Right Column) */}
+                          <div className="space-y-4 md:pl-8 pt-6 md:pt-0 flex flex-col h-full">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-indigo-500" /> Matches in Articles ({searchResults.articles.length})
+                            </h4>
+                            {searchResults.articles.length > 0 ? (
+                              <div className="flex flex-col gap-3 flex-1">
+                                {searchResults.articles.slice(0, 2).map((article: any) => (
+                                  <Link
+                                    key={article.id}
+                                    to={`/${article.journalSlug || 'js'}/article/${article.id}`}
+                                    onClick={() => setShowResults(false)}
+                                    className="flex flex-col justify-between p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group text-left min-h-[110px] flex-1"
+                                  >
+                                    <div className="font-extrabold text-slate-800 text-xs md:text-sm leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                      {article.title}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 items-center mt-2 text-[10px]">
+                                      <span className="font-semibold text-slate-600">{article.author}</span>
+                                      <span className="w-1 h-1 rounded-full bg-slate-350" />
+                                      <span className="text-slate-400 font-medium italic truncate max-w-[150px]">{article.journalName || 'Academic Journal'}</span>
+                                    </div>
                                     {article.doi && (
-                                      <>
-                                        <span>•</span>
-                                        <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.2 rounded">{article.doi}</span>
-                                      </>
+                                      <div className="mt-3 flex items-center justify-between">
+                                        <span className="font-mono text-[9px] bg-slate-100 border border-slate-200/60 text-slate-500 px-1.5 py-0.5 rounded-md">
+                                          DOI: {article.doi}
+                                        </span>
+                                        <span className="text-[10px] text-indigo-500 font-bold opacity-0 group-hover:opacity-100 transition-all flex items-center gap-0.5">
+                                          Read Article <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                        </span>
+                                      </div>
                                     )}
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 italic py-2">No articles matched your search.</p>
-                          )}
+                                  </Link>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-slate-400 italic py-2 text-left">No articles matched your search.</p>
+                            )}
+                          </div>
+                      </div>
+
+                      {/* DOI Matches Section */}
+                      {searchResults.doiMatches && searchResults.doiMatches.length > 0 && (
+                        <div className="border-t border-slate-100/80 pt-6 mt-2">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                            <Fingerprint className="w-3.5 h-3.5 text-indigo-500" /> Matches by DOI ({searchResults.doiMatches.length})
+                          </h4>
+                          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                            {searchResults.doiMatches.slice(0, 5).map((article: any) => (
+                              <Link
+                                key={article.id}
+                                to={`/${article.journalSlug || 'js'}/article/${article.id}`}
+                                onClick={() => setShowResults(false)}
+                                className="flex-shrink-0 w-[280px] flex flex-col justify-between p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group text-left min-h-[110px]"
+                              >
+                                <div className="font-extrabold text-slate-800 text-xs leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                                  {article.title}
+                                </div>
+                                <div className="mt-3 flex items-center justify-between">
+                                  <span className="font-mono text-[9px] bg-slate-100 border border-slate-200/60 text-slate-500 px-1.5 py-0.5 rounded-md truncate max-w-[170px]">
+                                    {article.doi}
+                                  </span>
+                                  <span className="text-[10px] text-indigo-500 font-bold opacity-0 group-hover:opacity-100 transition-all flex items-center gap-0.5 shrink-0">
+                                    Read <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                  </span>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
                         </div>
+                      )}
+
+                      {/* See More Actions */}
+                      {(searchResults.journals.length > 2 || searchResults.articles.length > 2) && (
+                          <div className="border-t border-slate-100/80 pt-4 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAllResultsModal(true);
+                                setShowResults(false);
+                              }}
+                              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                              See More ({searchResults.journals.length + searchResults.articles.length} total results)
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-10 space-y-2">
@@ -737,6 +823,142 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* --- Search Results Modal --- */}
+      <AnimatePresence>
+        {showAllResultsModal && searchResults && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAllResultsModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200/80 w-full max-w-5xl h-[80vh] overflow-hidden flex flex-col relative z-10"
+            >
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div className="text-left">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                    Search Results
+                  </h3>
+                  <p className="text-sm text-slate-500 font-medium mt-1">
+                    Showing all matches for "<span className="text-indigo-600 font-bold">{searchQuery}</span>" ({searchResults.journals.length} journals, {searchResults.articles.length} articles)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAllResultsModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 border border-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content Grid */}
+              <div className="flex-1 overflow-y-auto p-8 md:p-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 divide-y md:divide-y-0 md:divide-x divide-slate-200/60">
+                  {/* Journals Column */}
+                  <div className="space-y-6 text-left">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-indigo-500" /> All Matches in Journals ({searchResults.journals.length})
+                    </h4>
+                    {searchResults.journals.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {searchResults.journals.map((journal: any) => {
+                          const storeMatch = journals.find(j => j.id.toLowerCase() === journal.id.toLowerCase());
+                          return (
+                            <Link
+                              key={journal.id}
+                              to={`/${journal.slug || journal.id.toLowerCase()}`}
+                              onClick={() => setShowAllResultsModal(false)}
+                              className="flex items-center gap-4 p-4 rounded-2xl hover:bg-indigo-50/40 border border-transparent hover:border-indigo-100/50 transition-all duration-300 group"
+                            >
+                              <div className="w-14 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50 group-hover:scale-105 transition-transform duration-300">
+                                <img
+                                  src={journal.cover || storeMatch?.cover || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=100'}
+                                  alt={journal.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-extrabold text-slate-800 text-sm md:text-base group-hover:text-indigo-600 transition-colors truncate">{journal.name}</div>
+                                <div className="text-xs text-slate-400 font-medium italic mt-1 truncate">{journal.tr || storeMatch?.tr}</div>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md border border-slate-200/50 font-mono">
+                                    {journal.issn || storeMatch?.issn || 'XXXX-XXXX'}
+                                  </span>
+                                  <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md border border-indigo-100/50">
+                                    {journal.index || storeMatch?.index || 'Crossref Indexed'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 shrink-0 transition-colors">
+                                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors group-hover:translate-x-0.5" />
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic py-4">No journals matched your search.</p>
+                    )}
+                  </div>
+
+                  {/* Articles Column */}
+                  <div className="space-y-6 md:pl-8 pt-6 md:pt-0 text-left">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-500" /> All Matches in Articles ({searchResults.articles.length})
+                    </h4>
+                    {searchResults.articles.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {searchResults.articles.map((article: any) => (
+                          <Link
+                            key={article.id}
+                            to={`/${article.journalSlug || 'js'}/article/${article.id}`}
+                            onClick={() => setShowAllResultsModal(false)}
+                            className="block p-5 rounded-2xl hover:bg-indigo-50/40 border border-transparent hover:border-indigo-100/50 transition-all duration-300 group text-left"
+                          >
+                            <div className="font-extrabold text-slate-800 text-sm md:text-base leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                              {article.title}
+                            </div>
+                            <div className="flex flex-wrap gap-2 items-center mt-2.5 text-xs">
+                              <span className="font-semibold text-slate-600">{article.author}</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-350" />
+                              <span className="text-slate-400 font-medium italic truncate max-w-[200px]">{article.journalName || 'Academic Journal'}</span>
+                            </div>
+                            {article.doi && (
+                              <div className="mt-4 flex items-center justify-between">
+                                <span className="font-mono text-[10px] bg-slate-100 border border-slate-200/60 text-slate-500 px-2 py-0.5 rounded-md">
+                                  DOI: {article.doi}
+                                </span>
+                                <span className="text-xs text-indigo-500 font-bold opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
+                                  Read Article <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                </span>
+                              </div>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic py-4">No articles matched your search.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
