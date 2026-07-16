@@ -13,6 +13,13 @@ import Auth from './pages/public/Auth';
 import About from './pages/public/About';
 import Directory from './pages/public/Directory';
 import JournalHome from './pages/journal/JournalHome';
+import AuthorApplications from './pages/public/AuthorApplications';
+import TechnicalDocs from './pages/public/TechnicalDocs';
+import ApiReference from './pages/public/ApiReference';
+import EthicalGuidelines from './pages/public/EthicalGuidelines';
+import OpenAccessPolicy from './pages/public/OpenAccessPolicy';
+import Kvkk from './pages/public/Kvkk';
+import SalesAgreement from './pages/public/SalesAgreement';
 
 // Dashboard Shared Pages
 import RoleSelector from './pages/dashboard/RoleSelector';
@@ -60,6 +67,13 @@ export default function App() {
           <Route path="/early-access" element={<EarlyAccess />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/about" element={<About />} />
+          <Route path="/author-applications" element={<AuthorApplications />} />
+          <Route path="/technical-docs" element={<TechnicalDocs />} />
+          <Route path="/api-reference" element={<ApiReference />} />
+          <Route path="/ethical-guidelines" element={<EthicalGuidelines />} />
+          <Route path="/open-access-policy" element={<OpenAccessPolicy />} />
+          <Route path="/kvkk" element={<Kvkk />} />
+          <Route path="/sales-agreement" element={<SalesAgreement />} />
         </Route>
 
         {/* --- 2. Secured Role-Based Dashboards --- */}

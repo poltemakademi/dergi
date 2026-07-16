@@ -20,23 +20,17 @@ import {
   Building
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useJournalTabStore } from '../../store/useJournalTabStore';
 
 export default function JournalHome() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Anasayfa');
+  const { activeTab } = useJournalTabStore();
   const [expandedAbstract, setExpandedAbstract] = useState<number | null>(null);
   const { t } = useTranslation();
-  const [scrolled, setScrolled] = useState(false);
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Tab definitions
@@ -118,36 +112,8 @@ export default function JournalHome() {
         </div>
       </section>
 
-      {/* Sub-navigation tabs with Framer Motion LayoutId */}
-      <nav className={`bg-white/90 backdrop-blur-md border-b border-slate-200 sticky z-30 shadow-sm overflow-x-auto scrollbar-none transition-all duration-300 ${scrolled ? 'top-[72px]' : 'top-[88px]'}`}>
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-start gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                window.scrollTo({ top: 300, behavior: 'smooth' });
-              }}
-              className={`relative py-4 px-2 text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${activeTab === tab.id
-                ? 'text-indigo-600 font-extrabold'
-                : 'text-slate-500 hover:text-slate-900'
-                }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
-
       {/* 4. Tab Content Wrapper */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+      <div id="journal-content" className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
         {/* Back to Directory Link */}
         <div className="mb-6">
           <button
