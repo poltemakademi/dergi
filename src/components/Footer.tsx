@@ -1,9 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Fingerprint, X, Info,
   Cpu, Link2, Clock, Mail, FileEdit, BookOpen, Terminal, Scale, Globe, ShieldCheck, FileText
 } from 'lucide-react';
+
+// Import actual page components to render inside popup modals
+import AuthorApplications from '../pages/public/AuthorApplications';
+import TechnicalDocs from '../pages/public/TechnicalDocs';
+import ApiReference from '../pages/public/ApiReference';
+import EthicalGuidelines from '../pages/public/EthicalGuidelines';
+import OpenAccessPolicy from '../pages/public/OpenAccessPolicy';
+import Kvkk from '../pages/public/Kvkk';
+import SalesAgreement from '../pages/public/SalesAgreement';
+import TermsOfService from '../pages/public/TermsOfService';
+import PrivacyPolicy from '../pages/public/PrivacyPolicy';
+import CookieSettings from '../pages/public/CookieSettings';
 
 const dict = {
   EN: {
@@ -55,6 +68,22 @@ export default function Footer() {
   const openModal = (e: React.MouseEvent, title: string, id: string) => {
     e.preventDefault();
     setActiveModal({ title, id });
+  };
+
+  const renderModalContent = (id: string) => {
+    switch (id) {
+      case 'apply': return <AuthorApplications />;
+      case 'docs': return <TechnicalDocs />;
+      case 'api': return <ApiReference />;
+      case 'ethics': return <EthicalGuidelines />;
+      case 'openAccess': return <OpenAccessPolicy />;
+      case 'kvkk': return <Kvkk />;
+      case 'sales': return <SalesAgreement />;
+      case 'terms': return <TermsOfService />;
+      case 'privacy': return <PrivacyPolicy />;
+      case 'cookies': return <CookieSettings />;
+      default: return <p className="text-slate-600 leading-relaxed text-lg p-8">{t.modal.desc}</p>;
+    }
   };
 
   return (
@@ -207,40 +236,39 @@ export default function Footer() {
       </footer>
 
       {/* Legal/Construction Modal */}
-      {activeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" onClick={() => setActiveModal(null)}>
-          <div
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
-              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-                <Info className="w-5 h-5 text-indigo-600" />
-                {activeModal.title}
-              </h3>
-              <button
-                onClick={() => setActiveModal(null)}
-                className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-8">
-              <p className="text-slate-600 leading-relaxed text-lg">
-                {t.modal.desc}
-              </p>
-            </div>
-            <div className="p-6 border-t border-slate-200 bg-slate-50/50 flex justify-end">
-              <button
-                onClick={() => setActiveModal(null)}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)]"
-              >
-                {t.modal.close}
-              </button>
-            </div>
+      <AnimatePresence>
+        {activeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-sm" onClick={() => setActiveModal(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="bg-white border border-slate-200/80 rounded-[2rem] w-full max-w-5xl h-[80vh] shadow-2xl overflow-hidden flex flex-col"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50 shrink-0">
+                <h3 className="text-xl font-bold text-slate-900 font-serif flex items-center gap-3">
+                  <Info className="w-5 h-5 text-indigo-600" />
+                  {activeModal.title}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-slate-50 relative">
+                {/* Offset the pt-32 padding of the imported subpages inside modal */}
+                <div className="-mt-24">
+                  {renderModalContent(activeModal.id)}
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

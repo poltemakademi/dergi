@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useLocaleStore } from '../store/useLocaleStore';
+import { isProfileComplete } from '../utils/profileValidation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
-  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut, Menu, X
+  Inbox, BookOpen, PenTool, CheckSquare, Search, Bell, BarChart3, Globe, ArrowLeft, LogOut, Menu, X, AlertCircle
 } from 'lucide-react';
 import NotificationDropdown from '../components/NotificationDropdown';
+import Profile from '../pages/dashboard/Profile'; // Intercept component
 
 export default function DashboardLayout() {
   const { activeRole, user, activeTenant, roles, logout } = useAuthStore();
@@ -16,12 +18,16 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const { isValid: isProfileValid, missingFields } = useMemo(() => isProfileComplete(activeRole, user), [activeRole, user]);
+
   const isActive = (path: string) => location.pathname.includes(path);
 
   const navLinkClass = (path: string) => `px-4 py-2.5 flex items-center gap-3 rounded-lg transition-all duration-200 ${
-    isActive(path) 
-      ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' 
-      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+    !isProfileValid && path !== '/dashboard/profile'
+      ? 'opacity-40 pointer-events-none'
+      : isActive(path) 
+        ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' 
+        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
   }`;
 
   const sidebarVariants = {
@@ -64,7 +70,7 @@ export default function DashboardLayout() {
               <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors">novaijournal</h2>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors font-serif">novaijournal</h2>
               <span className="text-[10px] text-slate-500 font-medium tracking-wide mt-1 block">{t('nav.enterprise')}</span>
             </div>
           </Link>
@@ -83,14 +89,22 @@ export default function DashboardLayout() {
           
           {roles.length > 1 && (
             <motion.div variants={itemVariants}>
-              <Link to="/dashboard/role-selector" onClick={closeSidebar} className={navLinkClass('/dashboard/role-selector')}>
+              <Link 
+                to={!isProfileValid ? '#' : "/dashboard/role-selector"} 
+                onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} 
+                className={navLinkClass('/dashboard/role-selector')}
+              >
                 <LayoutDashboard className={`w-4 h-4 ${isActive('/dashboard/role-selector') ? 'text-slate-900' : 'text-slate-400'}`} />
                 <span className="text-sm">{t('nav.contextMatrix')}</span>
               </Link>
             </motion.div>
           )}
           <motion.div variants={itemVariants}>
-            <Link to="/dashboard/messages" onClick={closeSidebar} className={navLinkClass('/dashboard/messages')}>
+            <Link 
+              to={!isProfileValid ? '#' : "/dashboard/messages"} 
+              onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} 
+              className={navLinkClass('/dashboard/messages')}
+            >
               <Inbox className={`w-4 h-4 ${isActive('/dashboard/messages') ? 'text-slate-900' : 'text-slate-400'}`} />
               <span className="text-sm">{t('nav.communications')}</span>
               <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">3</span>
@@ -98,8 +112,11 @@ export default function DashboardLayout() {
           </motion.div>
           <motion.div variants={itemVariants}>
             <Link to="/dashboard/profile" onClick={closeSidebar} className={navLinkClass('/dashboard/profile')}>
-              <Users className={`w-4 h-4 ${isActive('/dashboard/profile') ? 'text-slate-900' : 'text-slate-400'}`} />
+              <Users className={`w-4 h-4 ${isActive('/dashboard/profile') || !isProfileValid ? 'text-slate-900' : 'text-slate-400'}`} />
               <span className="text-sm">{t('nav.profile')}</span>
+              {!isProfileValid && (
+                <div className="ml-auto w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              )}
             </Link>
           </motion.div>
 
@@ -116,19 +133,19 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.executiveEditor')}</p>
                 </div>
-                <Link to="/dashboard/editor/overview" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/overview')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/overview"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/overview')}>
                   <BarChart3 className={`w-4 h-4 ${isActive('/dashboard/editor/overview') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.analytics')}</span>
                 </Link>
-                <Link to="/dashboard/editor/articles" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/articles')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/articles"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/articles')}>
                   <FileText className={`w-4 h-4 ${isActive('/dashboard/editor/articles') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.manuscripts')}</span>
                 </Link>
-                <Link to="/dashboard/editor/issues" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/issues')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/issues"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/issues')}>
                   <BookOpen className={`w-4 h-4 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.issueStudio')}</span>
                 </Link>
-                <Link to="/dashboard/editor/settings" onClick={closeSidebar} className={navLinkClass('/dashboard/editor/settings')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/settings"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/settings')}>
                   <Settings className={`w-4 h-4 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.configuration')}</span>
                 </Link>
@@ -147,12 +164,16 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.author')}</p>
                 </div>
-                <Link to="/dashboard/yazar/submissions" onClick={closeSidebar} className={navLinkClass('/dashboard/yazar/submissions')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/yazar/submissions"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/yazar/submissions')}>
                   <FileText className={`w-4 h-4 ${isActive('/dashboard/yazar/submissions') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.mySubmissions')}</span>
                 </Link>
                 <div className="mt-4 px-4">
-                  <Link to="/dashboard/yazar/submit-wizard" onClick={closeSidebar} className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 rounded-lg text-white text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+                  <Link 
+                    to={!isProfileValid ? '#' : "/dashboard/yazar/submit-wizard"} 
+                    onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} 
+                    className={`w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 rounded-lg text-white text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2 ${!isProfileValid ? 'opacity-40 pointer-events-none' : ''}`}
+                  >
                     <PenTool className="w-4 h-4" />
                     <span>{t('nav.newSubmission')}</span>
                   </Link>
@@ -172,7 +193,7 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.reviewer')}</p>
                 </div>
-                <Link to="/dashboard/reviewer/assigned" onClick={closeSidebar} className={navLinkClass('/dashboard/reviewer/assigned')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/assigned"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/reviewer/assigned')}>
                   <CheckSquare className={`w-4 h-4 ${isActive('/dashboard/reviewer/assigned') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.reviewQueue')}</span>
                   <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">2</span>
@@ -192,11 +213,11 @@ export default function DashboardLayout() {
                 <div className="mt-8 mb-2 px-4 border-t border-slate-100 pt-6">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.layoutEditor')}</p>
                 </div>
-                <Link to="/dashboard/layout/queue" onClick={closeSidebar} className={navLinkClass('/dashboard/layout/queue')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/layout/queue"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/layout/queue')}>
                   <Inbox className={`w-4 h-4 ${isActive('/dashboard/layout/queue') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.productionLine')}</span>
                 </Link>
-                <Link to="/dashboard/layout/proofs" onClick={closeSidebar} className={navLinkClass('/dashboard/layout/proofs')}>
+                <Link to={!isProfileValid ? '#' : "/dashboard/layout/proofs"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/layout/proofs')}>
                   <BookOpen className={`w-4 h-4 ${isActive('/dashboard/layout/proofs') ? 'text-slate-900' : 'text-slate-400'}`} />
                   <span className="text-sm">{t('nav.galleyProofs')}</span>
                 </Link>
@@ -279,6 +300,7 @@ export default function DashboardLayout() {
                 type="text" 
                 placeholder={t('header.search')} 
                 className="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all w-48 lg:w-64"
+                disabled={!isProfileValid}
               />
             </div>
             
@@ -295,18 +317,46 @@ export default function DashboardLayout() {
           </div>
         </header>
 
+        {/* Profile Completion Gate Warning Banner */}
+        <AnimatePresence>
+          {!isProfileValid && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-gradient-to-r from-amber-50 to-rose-50 border-b border-amber-200/50"
+            >
+              <div className="px-4 sm:px-8 py-3 flex items-start sm:items-center gap-3">
+                <div className="p-1.5 bg-amber-100 rounded-md shrink-0">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                </div>
+                <p className="text-sm font-medium text-amber-800">
+                  {locale === 'tr' 
+                    ? "Lütfen devam etmek için aktif rolünüzün gerektirdiği zorunlu alanları doldurun." 
+                    : "Please complete required fields for your active role to unlock navigation."}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
-              key={location.pathname}
+              key={!isProfileValid ? 'profile-lock' : location.pathname}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               className="h-full"
             >
-              <Outlet />
+              {/* Force intercept if profile is incomplete */}
+              {!isProfileValid ? (
+                <Profile />
+              ) : (
+                <Outlet />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

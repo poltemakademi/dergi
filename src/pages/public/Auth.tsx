@@ -143,7 +143,7 @@ export default function Auth() {
         toast.success(lang === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
         navigate('/dashboard');
       } else {
-        const response = await apiClient.post('/api/auth/register', { 
+        await apiClient.post('/api/auth/register', { 
           email, 
           password, 
           full_name: name, 

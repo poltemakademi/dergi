@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,24 +8,26 @@ import {
   X,
   CheckCircle2,
   LayoutGrid,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useJournalStore } from '../../store/useJournalStore';
 
 export default function Directory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<string>('All');
   const { t } = useTranslation();
   const labels = t.indexLabels;
+  const { journals, isLoading, fetchJournals } = useJournalStore();
 
-  const journals = [
-    { id: 'JS', name: 'Journal of Space Exploration', tr: 'Uzay Keşifleri Dergisi', issn: '2845-901X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop', impactFactor: '3.8', reviewTime: '4 Weeks Avg', acceptRate: '18%', articles: '342' },
-    { id: 'AM', name: 'Annals of Modern Medicine', tr: 'Modern Tıp Yıllıkları', issn: '1992-0453', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop', impactFactor: '4.5', reviewTime: '6 Weeks Avg', acceptRate: '12%', articles: '512' },
-    { id: 'ET', name: 'Engineering & Tech Review', tr: 'Mühendislik ve Teknoloji İncelemeleri', issn: '3012-7822', index: 'Crossref Pending', indexColor: 'text-amber-700 bg-amber-50 border-amber-200', cover: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop', impactFactor: '2.1', reviewTime: '8 Weeks Avg', acceptRate: '25%', articles: '198' },
-    { id: 'QC', name: 'Quantum Computing Letters', tr: 'Kuantum Hesaplama Mektupları', issn: '4451-229X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1614935151651-0bea6508ab6b?q=80&w=600&auto=format&fit=crop', impactFactor: '5.2', reviewTime: '3 Weeks Avg', acceptRate: '10%', articles: '120' },
-    { id: 'ES', name: 'Earth & Environmental Science', tr: 'Dünya ve Çevre Bilimleri', issn: '5512-8812', index: 'Web of Science', indexColor: 'text-blue-700 bg-blue-50 border-blue-200', cover: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=600&auto=format&fit=crop', impactFactor: '2.9', reviewTime: '5 Weeks Avg', acceptRate: '20%', articles: '289' },
-    { id: 'AI', name: 'Artificial Intelligence Horizon', tr: 'Yapay Zeka Ufku', issn: '9912-445X', index: 'Scopus Indexed', indexColor: 'text-emerald-700 bg-emerald-50 border-emerald-200', cover: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=600&auto=format&fit=crop', impactFactor: '6.4', reviewTime: '4 Weeks Avg', acceptRate: '14%', articles: '456' },
-  ];
+  useEffect(() => {
+    fetchJournals();
+  }, [fetchJournals]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const filteredJournals = useMemo(() => {
     return journals.filter((journal) => {
@@ -37,7 +39,7 @@ export default function Directory() {
       const matchesIndex = selectedIndex === 'All' || journal.index === selectedIndex;
       return matchesSearch && matchesIndex;
     });
-  }, [searchQuery, selectedIndex]);
+  }, [journals, searchQuery, selectedIndex]);
 
   return (
     <main className="pb-24 pt-32 max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
@@ -113,7 +115,7 @@ export default function Directory() {
                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
                   }`}
               >
-                {labels[indexType] || indexType}
+                {labels?.[indexType] || indexType}
               </button>
             ))}
           </div>
@@ -121,7 +123,17 @@ export default function Directory() {
 
         {/* Grid Layout */}
         <AnimatePresence mode="popLayout">
-          {filteredJournals.length > 0 ? (
+          {isLoading ? (
+            <motion.div
+              key="loading-state"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-center py-20"
+            >
+              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            </motion.div>
+          ) : filteredJournals.length > 0 ? (
             <motion.div
               layout
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -213,3 +225,4 @@ export default function Directory() {
     </main>
   );
 }
+
