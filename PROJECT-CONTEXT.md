@@ -5,7 +5,7 @@ This is the standalone frontend repository for an enterprise-grade multi-tenant 
 
 * **Platform Nature:** Multi-tenant infrastructure hosting hundreds of independent journals dynamically[cite: 6].
 * **Core Tech Stack:** Vite, React, TypeScript, Tailwind CSS, Shadcn UI, Zustand (for mock global states and tenant/role switching mechanics).
-* **Note on Backend/Database:** Excluded from current scope. The frontend must implement full dynamic client-side simulation layers (mock stores) until backend contracts are integrated.
+* **Note on Backend/Database:** The project is now connected to a LIVE real backend (Node.js/Express API) and a real database. The frontend must make actual HTTP requests to the provided API endpoints using an API client (like Axios). Zustand should only be used for UI state and Auth persistence, NOT for mocking data.
 
 ## 2. Dynamic State Machine & Rules
 The frontend must strictly track, visualize, and enforce the following sequential submission pipeline states[cite: 6]:

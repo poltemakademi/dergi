@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { apiClient } from '../../services/api/client';
+import { toast } from 'sonner';
+import { useAuthStore } from '../../store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, Lock, User, ArrowRight, Shield, Briefcase
@@ -111,40 +113,30 @@ export default function Auth() {
     setSuccessMsg('');
 
     try {
-      // DEMO ACCOUNTS BYPASS (No database modification)
-      const demoEmailMatch = email.match(/^(author|reviewer|editor|layout)@demo\.com$/);
-      if (demoEmailMatch && password === 'demo') {
-        const { useAuthStore } = await import('../../store/useAuthStore');
-        const demoRole = demoEmailMatch[1] === 'layout' ? 'layout_editor' : demoEmailMatch[1];
-        useAuthStore.getState().setDemoUser({
-          id: `demo-${demoRole}-123`,
-          name: `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1).replace('_', ' ')}`,
-          email: email
-        }, demoRole as any);
-        navigate('/dashboard');
-        return;
-      }
-
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const response = await apiClient.post('/api/auth/login', { email, password });
+        // Expected response format: { token: string, user: User, roles: Role[] }
+        const { token, user, roles } = response.data;
+        
+        useAuthStore.getState().setAuth(token, user, roles);
+        toast.success(lang === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
         navigate('/dashboard');
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: name, role: role } }
+        const response = await apiClient.post('/api/auth/register', { 
+          email, 
+          password, 
+          full_name: name, 
+          role: role 
         });
-        if (error) throw error;
-        if (!data.session) {
-          setSuccessMsg(lang === 'TR' ? 'Kayıt başarılı! Lütfen giriş yapmadan önce e-posta adresinize gelen bağlantıyı doğrulayın.' : 'Registration successful! Please confirm the link sent to your email address before logging in.');
-          setIsLogin(true);
-        } else {
-          navigate('/dashboard');
-        }
+        
+        setSuccessMsg(lang === 'TR' ? 'Kayıt başarılı! Giriş yapabilirsiniz.' : 'Registration successful! You can now log in.');
+        toast.success(lang === 'TR' ? 'Kayıt başarılı!' : 'Registration successful!');
+        setIsLogin(true);
       }
     } catch (err: any) {
-      setErrorMsg(err.message);
+      const message = err.response?.data?.message || err.message || 'An error occurred';
+      setErrorMsg(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

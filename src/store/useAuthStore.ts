@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '../lib/supabase';
 
 export type Role = 'super_admin' | 'editor' | 'layout_editor' | 'reviewer' | 'author';
 
@@ -18,6 +17,7 @@ interface Tenant {
 }
 
 interface AuthState {
+  token: string | null;
   user: User | null;
   roles: Role[];
   activeRole: Role | null;
@@ -27,16 +27,16 @@ interface AuthState {
   
   // Actions
   initAuth: () => void;
-  logout: () => Promise<void>;
+  setAuth: (token: string, user: User, roles: Role[]) => void;
+  logout: () => void;
   setActiveRole: (role: Role) => void;
   setActiveTenant: (tenant: Tenant) => void;
-  setRoles: (roles: Role[]) => void;
-  setDemoUser: (user: User, role: Role) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
+      token: null,
       user: null,
       roles: [],
       activeRole: null,
@@ -44,97 +44,54 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true, // Start loading
 
-      setDemoUser: (user: User, role: Role) => {
+      initAuth: () => {
+        // With pure Zustand persist, the state is loaded synchronously from localStorage
+        // Just set loading to false. We could add token expiration validation here later.
+        const state = get();
+        if (state.token && state.user) {
+          set({ isAuthenticated: true, isLoading: false });
+        } else {
+          set({ isAuthenticated: false, isLoading: false });
+        }
+      },
+
+      setAuth: (token: string, user: User, roles: Role[]) => {
         set({
+          token,
           user,
-          roles: [role],
-          activeRole: role,
+          roles,
+          activeRole: roles[0] || 'author',
           isAuthenticated: true,
           isLoading: false
         });
       },
 
-      initAuth: () => {
-        // Check active session on mount
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) {
-            set({
-              user: {
-                id: session.user.id,
-                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-                email: session.user.email || '',
-              },
-              roles: session.user.user_metadata?.role ? [session.user.user_metadata.role] : ['author'],
-              activeRole: session.user.user_metadata?.role || 'author',
-              isAuthenticated: true,
-              isLoading: false
-            });
-          } else {
-            const state = get();
-            if (!state.user?.id.startsWith('demo-')) {
-              set({ isLoading: false });
-            } else {
-              set({ isLoading: false }); // ensure loading is false for demo users
-            }
-          }
+      logout: () => {
+        set({
+          token: null,
+          user: null,
+          roles: [],
+          activeRole: null,
+          activeTenant: null,
+          isAuthenticated: false,
         });
-
-        // Listen for auth changes (login/logout/token refresh)
-        supabase.auth.onAuthStateChange((_event, session) => {
-          if (session?.user) {
-            set({
-              user: {
-                id: session.user.id,
-                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-                email: session.user.email || '',
-              },
-              roles: session.user.user_metadata?.role ? [session.user.user_metadata.role] : ['author'],
-              activeRole: session.user.user_metadata?.role || 'author',
-              isAuthenticated: true,
-            });
-          } else {
-            const state = get();
-            // Don't overwrite if it's a demo session!
-            if (!state.user?.id.startsWith('demo-')) {
-              set({
-                user: null,
-                roles: [],
-                activeRole: null,
-                activeTenant: null,
-                isAuthenticated: false,
-              });
-            }
-          }
-        });
-      },
-
-      logout: async () => {
-        const state = get();
-        if (state.user?.id.startsWith('demo-')) {
-          set({
-            user: null,
-            roles: [],
-            activeRole: null,
-            activeTenant: null,
-            isAuthenticated: false,
-          });
-        } else {
-          await supabase.auth.signOut();
-        }
       },
       
       setActiveRole: (role) => set({ activeRole: role }),
       setActiveTenant: (tenant) => set({ activeTenant: tenant }),
-      setRoles: (roles) => set({ roles, activeRole: roles[0] || null }),
     }),
     {
       name: 'auth-storage',
+      // We persist all auth state except isLoading
       partialize: (state) => ({ 
-        user: state.user?.id.startsWith('demo-') ? state.user : null, 
-        roles: state.user?.id.startsWith('demo-') ? state.roles : [],
-        activeRole: state.user?.id.startsWith('demo-') ? state.activeRole : null,
-        isAuthenticated: state.user?.id.startsWith('demo-') ? state.isAuthenticated : false,
-      }), // Only persist demo users
+        token: state.token,
+        user: state.user,
+        roles: state.roles,
+        activeRole: state.activeRole,
+        activeTenant: state.activeTenant,
+        isAuthenticated: state.isAuthenticated
+      }),
     }
   )
 );
+

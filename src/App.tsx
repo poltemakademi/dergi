@@ -12,7 +12,15 @@ import Integrations from './pages/public/Integrations';
 import Auth from './pages/public/Auth';
 import About from './pages/public/About';
 import Directory from './pages/public/Directory';
+import Applications from './pages/public/Applications';
+import DoiApplication from './pages/public/DoiApplication';
+
+// Journal Pages
 import JournalHome from './pages/journal/JournalHome';
+import CurrentIssue from './pages/journal/CurrentIssue';
+import Archives from './pages/journal/Archives';
+import ArticleDetail from './pages/journal/ArticleDetail';
+import CMSPage from './pages/journal/CMSPage';
 
 // Dashboard Shared Pages
 import RoleSelector from './pages/dashboard/RoleSelector';
@@ -39,6 +47,7 @@ import LayoutQueue from './pages/dashboard/layout/Queue';
 import LayoutProofs from './pages/dashboard/layout/Proofs';
 
 import { useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { useAuthStore } from './store/useAuthStore';
 
 export default function App() {
@@ -49,56 +58,63 @@ export default function App() {
   }, [initAuth]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* --- 1. Global Platform Routes (No-Auth) --- */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/directory" element={<Directory />} />
-          <Route path="/sistem-ozellikleri" element={<SystemFeatures />} />
-          <Route path="/entegrasyonlar" element={<Integrations />} />
-          <Route path="/early-access" element={<EarlyAccess />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/about" element={<About />} />
-        </Route>
+    <>
+      <Toaster position="top-center" richColors />
+      <BrowserRouter>
+        <Routes>
+          {/* --- 1. Global Platform Routes (No-Auth) --- */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/directory" element={<Directory />} />
+            <Route path="/sistem-ozellikleri" element={<SystemFeatures />} />
+            <Route path="/entegrasyonlar" element={<Integrations />} />
+            <Route path="/early-access" element={<EarlyAccess />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/basvurular/dergi" element={<Applications />} />
+            <Route path="/basvurular/doi" element={<DoiApplication />} />
+          </Route>
 
-        {/* --- 2. Secured Role-Based Dashboards --- */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardGuard />} />
-          
-          {/* Shared Routes */}
-          <Route path="role-selector" element={<RoleSelector />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="messages" element={<Messages />} />
+          {/* --- 2. Secured Role-Based Dashboards --- */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardGuard />} />
+            
+            {/* Shared Routes */}
+            <Route path="role-selector" element={<RoleSelector />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="messages" element={<Messages />} />
 
-          {/* Editor Routes */}
-          <Route path="editor/overview" element={<EditorOverview />} />
-          <Route path="editor/articles" element={<EditorArticles />} />
-          <Route path="editor/issues" element={<EditorIssues />} />
-          <Route path="editor/settings" element={<EditorSettings />} />
+            {/* Editor Routes */}
+            <Route path="editor/overview" element={<EditorOverview />} />
+            <Route path="editor/articles" element={<EditorArticles />} />
+            <Route path="editor/issues" element={<EditorIssues />} />
+            <Route path="editor/settings" element={<EditorSettings />} />
 
-          {/* Author Routes */}
-          <Route path="yazar/submissions" element={<AuthorSubmissions />} />
-          <Route path="yazar/submit-wizard" element={<AuthorSubmitWizard />} />
-          <Route path="yazar/track/:id" element={<AuthorTrack />} />
+            {/* Author Routes */}
+            <Route path="yazar/submissions" element={<AuthorSubmissions />} />
+            <Route path="yazar/submit-wizard" element={<AuthorSubmitWizard />} />
+            <Route path="yazar/track/:id" element={<AuthorTrack />} />
 
-          {/* Reviewer Routes */}
-          <Route path="reviewer/assigned" element={<ReviewerAssigned />} />
-          <Route path="reviewer/evaluate/:id" element={<ReviewerEvaluate />} />
+            {/* Reviewer Routes */}
+            <Route path="reviewer/assigned" element={<ReviewerAssigned />} />
+            <Route path="reviewer/evaluate/:id" element={<ReviewerEvaluate />} />
 
-          {/* Layout Editor Routes */}
-          <Route path="layout/queue" element={<LayoutQueue />} />
-          <Route path="layout/proofs" element={<LayoutProofs />} />
-        </Route>
+            {/* Layout Editor Routes */}
+            <Route path="layout/queue" element={<LayoutQueue />} />
+            <Route path="layout/proofs" element={<LayoutProofs />} />
+          </Route>
 
-        {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}
-        <Route path="/:tenant_slug" element={<JournalLayout />}>
-          <Route index element={<JournalHome />} />
-          <Route path="current" element={<div>Current Issue</div>} />
-          <Route path="archives" element={<div>Archives</div>} />
-          <Route path="article/:id" element={<div>Article Details</div>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}
+          <Route path="/:tenant_slug" element={<JournalLayout />}>
+            <Route index element={<JournalHome />} />
+            <Route path="current" element={<CurrentIssue />} />
+            <Route path="archives" element={<Archives />} />
+            <Route path="article/:id" element={<ArticleDetail />} />
+            <Route path="policies" element={<CMSPage type="policies" />} />
+            <Route path="board" element={<CMSPage type="board" />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
