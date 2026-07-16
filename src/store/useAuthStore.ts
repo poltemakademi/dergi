@@ -31,6 +31,7 @@ interface AuthState {
   logout: () => void;
   setActiveRole: (role: Role) => void;
   setActiveTenant: (tenant: Tenant) => void;
+  setRoles: (roles: Role[]) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -79,6 +80,13 @@ export const useAuthStore = create<AuthState>()(
       
       setActiveRole: (role) => set({ activeRole: role }),
       setActiveTenant: (tenant) => set({ activeTenant: tenant }),
+      setRoles: (roles) => set({
+        roles,
+        activeRole: roles[0] || 'author',
+        isAuthenticated: true,
+        token: 'demo-token',
+        user: { id: 'demo-user-id', name: 'Demo User', email: 'demo@example.com' }
+      }),
     }),
     {
       name: 'auth-storage',

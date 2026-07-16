@@ -21,6 +21,13 @@ import CurrentIssue from './pages/journal/CurrentIssue';
 import Archives from './pages/journal/Archives';
 import ArticleDetail from './pages/journal/ArticleDetail';
 import CMSPage from './pages/journal/CMSPage';
+import AuthorApplications from './pages/public/AuthorApplications';
+import TechnicalDocs from './pages/public/TechnicalDocs';
+import ApiReference from './pages/public/ApiReference';
+import EthicalGuidelines from './pages/public/EthicalGuidelines';
+import OpenAccessPolicy from './pages/public/OpenAccessPolicy';
+import Kvkk from './pages/public/Kvkk';
+import SalesAgreement from './pages/public/SalesAgreement';
 
 // Dashboard Shared Pages
 import RoleSelector from './pages/dashboard/RoleSelector';
@@ -73,6 +80,13 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/basvurular/dergi" element={<Applications />} />
             <Route path="/basvurular/doi" element={<DoiApplication />} />
+            <Route path="/author-applications" element={<AuthorApplications />} />
+            <Route path="/technical-docs" element={<TechnicalDocs />} />
+            <Route path="/api-reference" element={<ApiReference />} />
+            <Route path="/ethical-guidelines" element={<EthicalGuidelines />} />
+            <Route path="/open-access-policy" element={<OpenAccessPolicy />} />
+            <Route path="/kvkk" element={<Kvkk />} />
+            <Route path="/sales-agreement" element={<SalesAgreement />} />
           </Route>
 
           {/* --- 2. Secured Role-Based Dashboards --- */}
