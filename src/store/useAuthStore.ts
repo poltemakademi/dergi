@@ -3,11 +3,17 @@ import { persist } from 'zustand/middleware';
 
 export type Role = 'super_admin' | 'editor' | 'layout_editor' | 'reviewer' | 'author';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  phone?: string;
+  institution?: string;
+  department?: string;
+  title_field?: string;
+  orcid?: string;
+  bio?: string;
 }
 
 interface Tenant {
@@ -28,6 +34,7 @@ interface AuthState {
   // Actions
   initAuth: () => void;
   setAuth: (token: string, user: User, roles: Role[]) => void;
+  updateUser: (userUpdates: Partial<User>) => void;
   logout: () => void;
   setActiveRole: (role: Role) => void;
   setActiveTenant: (tenant: Tenant) => void;
@@ -67,6 +74,13 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      updateUser: (userUpdates: Partial<User>) => {
+        const { user } = get();
+        if (user) {
+          set({ user: { ...user, ...userUpdates } });
+        }
+      },
+
       logout: () => {
         set({
           token: null,
@@ -85,7 +99,7 @@ export const useAuthStore = create<AuthState>()(
         activeRole: roles[0] || 'author',
         isAuthenticated: true,
         token: 'demo-token',
-        user: { id: 'demo-user-id', name: 'Demo User', email: 'demo@example.com' }
+        user: { id: 'demo-user-id', name: 'Demo User', email: 'demo@example.com', institution: '', orcid: '' } // Provide some defaults for mock demo
       }),
     }),
     {

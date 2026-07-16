@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../../services/api/client';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 export default function Submissions() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t, locale } = useLocaleStore();
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -16,24 +18,24 @@ export default function Submissions() {
         setError(null);
       } catch (err: any) {
         console.error('Failed to fetch submissions:', err);
-        setError('Failed to load submissions.');
+        setError(t('dashboard.error'));
       } finally {
         setIsLoading(false);
       }
     };
     fetchSubmissions();
-  }, []);
+  }, [t]);
 
   const getStatusInfo = (status: string) => {
     switch(status) {
       case 'IN_REVIEW': 
-        return { color: 'text-amber-600 bg-amber-50 border-amber-200', icon: <Clock className="w-4 h-4" />, text: 'In Review' };
+        return { color: 'text-amber-600 bg-amber-50 border-amber-200', icon: <Clock className="w-4 h-4" />, text: t('stat.inReview') };
       case 'REVISION_REQUIRED': 
-        return { color: 'text-rose-600 bg-rose-50 border-rose-200', icon: <AlertCircle className="w-4 h-4" />, text: 'Revision' };
+        return { color: 'text-rose-600 bg-rose-50 border-rose-200', icon: <AlertCircle className="w-4 h-4" />, text: locale === 'tr' ? 'Revizyon' : 'Revision' };
       case 'PENDING_PRE_CHECK':
-        return { color: 'text-sky-600 bg-sky-50 border-sky-200', icon: <FileText className="w-4 h-4" />, text: 'Pre-Check' };
+        return { color: 'text-sky-600 bg-sky-50 border-sky-200', icon: <FileText className="w-4 h-4" />, text: locale === 'tr' ? 'Ön Kontrol' : 'Pre-Check' };
       case 'ACCEPTED':
-        return { color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: <FileText className="w-4 h-4" />, text: 'Accepted' };
+        return { color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: <FileText className="w-4 h-4" />, text: locale === 'tr' ? 'Kabul Edildi' : 'Accepted' };
       default: 
         return { color: 'text-slate-600 bg-slate-50 border-slate-200', icon: <FileText className="w-4 h-4" />, text: status || 'Unknown' };
     }
@@ -43,11 +45,11 @@ export default function Submissions() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-black text-slate-800">My Submissions</h2>
-          <p className="text-slate-500">Track the status of your active manuscripts.</p>
+          <h2 className="text-2xl font-black text-slate-800">{t('sub.mySubmissions')}</h2>
+          <p className="text-slate-500">{locale === 'tr' ? 'Aktif makalelerinizin durumunu takip edin.' : 'Track the status of your active manuscripts.'}</p>
         </div>
         <Link to="/dashboard/yazar/submit-wizard" className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all">
-          New Submission
+          {t('sub.new')}
         </Link>
       </div>
 
@@ -60,16 +62,16 @@ export default function Submissions() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-xs uppercase tracking-widest text-slate-500">
                 <th className="p-4 font-bold rounded-tl-2xl">ID</th>
-                <th className="p-4 font-bold">Title</th>
-                <th className="p-4 font-bold">Date</th>
-                <th className="p-4 font-bold">Status</th>
-                <th className="p-4 font-bold text-right rounded-tr-2xl">Action</th>
+                <th className="p-4 font-bold">{locale === 'tr' ? 'Başlık' : 'Title'}</th>
+                <th className="p-4 font-bold">{locale === 'tr' ? 'Tarih' : 'Date'}</th>
+                <th className="p-4 font-bold">{locale === 'tr' ? 'Durum' : 'Status'}</th>
+                <th className="p-4 font-bold text-right rounded-tr-2xl">{locale === 'tr' ? 'İşlem' : 'Action'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">Loading submissions...</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">{t('dashboard.loading')}</td>
                 </tr>
               ) : error ? (
                 <tr>
@@ -79,7 +81,7 @@ export default function Submissions() {
                 </tr>
               ) : submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">No active submissions found.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">{t('dashboard.noData')}</td>
                 </tr>
               ) : (
                 submissions.map((sub: any) => {
@@ -101,7 +103,7 @@ export default function Submissions() {
                         </div>
                       </td>
                       <td className="p-4 text-right">
-                        <Link to={`/dashboard/yazar/track/${sub.id}`} className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors group-hover:shadow-sm border border-transparent hover:border-indigo-100">
+                        <Link to={`/dashboard/yazar/track/${sub.id}`} className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors group-hover:shadow-sm border border-transparent hover:border-indigo-100" title={t('sub.track')}>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </td>

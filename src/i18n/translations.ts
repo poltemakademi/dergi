@@ -37,6 +37,60 @@ export const translations = {
     'role.layout_editor': 'Layout Editor',
     'role.super_admin': 'System Admin',
     
+    // Dashboard Global
+    'dashboard.loading': 'Loading data...',
+    'dashboard.error': 'Failed to load data. Please try again.',
+    'dashboard.noData': 'No data found.',
+    'dashboard.save': 'Save Changes',
+    'dashboard.cancel': 'Cancel',
+
+    // Overview
+    'overview.title': 'Platform Analytics',
+    'overview.totalSubmissions': 'Total Submissions',
+    'overview.acceptanceRate': 'Acceptance Rate',
+    'overview.avgReviewTime': 'Avg. Review Time',
+    'overview.totalDownloads': 'Total Downloads',
+    'overview.velocityTitle': 'Submission Velocity (2025)',
+    'overview.yoy': 'YoY Comparison',
+    'overview.pipeline': 'Pipeline Distribution',
+    
+    // Messages
+    'msg.compose': 'Compose',
+    'msg.inbox': 'Inbox',
+    'msg.sent': 'Sent',
+    'msg.starred': 'Starred',
+    'msg.search': 'Search messages...',
+    'msg.noMessages': 'No messages found.',
+
+    // Profile
+    'profile.title': 'Academic Profile',
+    'profile.subtitle': 'Manage your personal information and academic credentials.',
+    'profile.personalInfo': 'Personal Information',
+    'profile.fullName': 'Full Name',
+    'profile.email': 'Email Address',
+    'profile.phone': 'Phone Number',
+    'profile.academicInfo': 'Academic Information',
+    'profile.institution': 'Institution / University',
+    'profile.department': 'Department',
+    'profile.title_field': 'Academic Title',
+    'profile.orcid': 'ORCID iD',
+    'profile.bio': 'Biography',
+    
+    // Settings
+    'settings.title': 'Journal Configuration',
+    'settings.general': 'General Settings',
+    'settings.journalName': 'Journal Name',
+    'settings.issn': 'ISSN',
+    'settings.frequency': 'Publication Frequency',
+    
+    // Submissions & Track
+    'sub.mySubmissions': 'My Submissions',
+    'sub.new': 'New Submission',
+    'sub.track': 'Track Submission',
+    
+    // Activity
+    'activity.title': 'Activity Log',
+    
     // Status Labels
     'stat.pending': 'Pending',
     'stat.assigned': 'Assigned',
@@ -80,6 +134,60 @@ export const translations = {
     'role.layout_editor': 'Mizanpaj Editörü',
     'role.super_admin': 'Sistem Yöneticisi',
     
+    // Dashboard Global
+    'dashboard.loading': 'Veriler yükleniyor...',
+    'dashboard.error': 'Veri yüklenemedi. Lütfen tekrar deneyin.',
+    'dashboard.noData': 'Veri bulunamadı.',
+    'dashboard.save': 'Değişiklikleri Kaydet',
+    'dashboard.cancel': 'İptal',
+
+    // Overview
+    'overview.title': 'Platform Analitiği',
+    'overview.totalSubmissions': 'Toplam Gönderi',
+    'overview.acceptanceRate': 'Kabul Oranı',
+    'overview.avgReviewTime': 'Ortalama İnceleme Süresi',
+    'overview.totalDownloads': 'Toplam İndirme',
+    'overview.velocityTitle': 'Gönderi Hızı (2025)',
+    'overview.yoy': 'Yıllık Karşılaştırma',
+    'overview.pipeline': 'Süreç Dağılımı',
+
+    // Messages
+    'msg.compose': 'Yeni Mesaj',
+    'msg.inbox': 'Gelen Kutusu',
+    'msg.sent': 'Gönderilenler',
+    'msg.starred': 'Yıldızlılar',
+    'msg.search': 'Mesajlarda ara...',
+    'msg.noMessages': 'Mesaj bulunamadı.',
+
+    // Profile
+    'profile.title': 'Akademik Profil',
+    'profile.subtitle': 'Kişisel bilgilerinizi ve akademik unvanlarınızı yönetin.',
+    'profile.personalInfo': 'Kişisel Bilgiler',
+    'profile.fullName': 'Ad Soyad',
+    'profile.email': 'E-posta Adresi',
+    'profile.phone': 'Telefon Numarası',
+    'profile.academicInfo': 'Akademik Bilgiler',
+    'profile.institution': 'Kurum / Üniversite',
+    'profile.department': 'Bölüm',
+    'profile.title_field': 'Akademik Unvan',
+    'profile.orcid': 'ORCID iD',
+    'profile.bio': 'Biyografi',
+
+    // Settings
+    'settings.title': 'Dergi Yapılandırması',
+    'settings.general': 'Genel Ayarlar',
+    'settings.journalName': 'Dergi Adı',
+    'settings.issn': 'ISSN',
+    'settings.frequency': 'Yayın Sıklığı',
+
+    // Submissions & Track
+    'sub.mySubmissions': 'Gönderilerim',
+    'sub.new': 'Yeni Gönderi',
+    'sub.track': 'Gönderi Takibi',
+
+    // Activity
+    'activity.title': 'Aktivite Geçmişi',
+
     // Status Labels
     'stat.pending': 'Bekliyor',
     'stat.assigned': 'Atandı',

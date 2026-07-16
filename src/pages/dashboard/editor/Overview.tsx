@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Download, CheckCircle, Clock, BarChart3, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { apiClient } from '../../../services/api/client';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 export default function Overview() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLocaleStore();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -16,13 +18,13 @@ export default function Overview() {
         setError(null);
       } catch (err: any) {
         console.error('Failed to fetch analytics:', err);
-        setError('Failed to load analytics data.');
+        setError(t('dashboard.error'));
       } finally {
         setIsLoading(false);
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [t]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -38,7 +40,7 @@ export default function Overview() {
   };
 
   if (isLoading) {
-    return <div className="p-12 text-center text-slate-500">Loading analytics...</div>;
+    return <div className="p-12 text-center text-slate-500">{t('dashboard.loading')}</div>;
   }
 
   if (error) {
@@ -59,16 +61,16 @@ export default function Overview() {
     >
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className="w-5 h-5 text-slate-400" />
-        <h2 className="text-xl font-bold text-slate-900">Platform Analytics</h2>
+        <h2 className="text-xl font-bold text-slate-900">{t('overview.title')}</h2>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: 'Total Submissions', value: analytics?.totalSubmissions || '0', icon: FileText, trend: analytics?.trends?.submissions || '+0%' },
-          { title: 'Acceptance Rate', value: analytics?.acceptanceRate || '0%', icon: CheckCircle, trend: analytics?.trends?.acceptance || '+0%' },
-          { title: 'Avg. Review Time', value: analytics?.avgReviewTime || '0 Days', icon: Clock, trend: analytics?.trends?.reviewTime || '-0 Days' },
-          { title: 'Total Downloads', value: analytics?.totalDownloads || '0', icon: Download, trend: analytics?.trends?.downloads || '+0%' }
+          { title: t('overview.totalSubmissions'), value: analytics?.totalSubmissions || '0', icon: FileText, trend: analytics?.trends?.submissions || '+0%' },
+          { title: t('overview.acceptanceRate'), value: analytics?.acceptanceRate || '0%', icon: CheckCircle, trend: analytics?.trends?.acceptance || '+0%' },
+          { title: t('overview.avgReviewTime'), value: analytics?.avgReviewTime || '0', icon: Clock, trend: analytics?.trends?.reviewTime || '-0' },
+          { title: t('overview.totalDownloads'), value: analytics?.totalDownloads || '0', icon: Download, trend: analytics?.trends?.downloads || '+0%' }
         ].map((kpi, i) => (
           <motion.div 
             key={i} 
@@ -93,9 +95,9 @@ export default function Overview() {
         {/* Trend Chart Mockup (Pure CSS) */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-base font-bold text-slate-900">Submission Velocity (2025)</h3>
+            <h3 className="text-base font-bold text-slate-900">{t('overview.velocityTitle')}</h3>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
-              <TrendingUp className="w-4 h-4 text-slate-400" /> YoY Comparison
+              <TrendingUp className="w-4 h-4 text-slate-400" /> {t('overview.yoy')}
             </div>
           </div>
           
@@ -111,7 +113,7 @@ export default function Overview() {
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 font-semibold">
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
+                  {i + 1}
                 </span>
               </div>
             ))}
@@ -120,14 +122,14 @@ export default function Overview() {
 
         {/* Status Distribution */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm flex flex-col">
-          <h3 className="text-base font-bold text-slate-900 mb-6">Pipeline Distribution</h3>
+          <h3 className="text-base font-bold text-slate-900 mb-6">{t('overview.pipeline')}</h3>
           
           <div className="space-y-6 flex-1 flex flex-col justify-center">
             {(analytics?.distribution || [
-              { label: 'In Review', count: 45, color: 'bg-indigo-500', pct: 45 },
+              { label: t('stat.inReview'), count: 45, color: 'bg-indigo-500', pct: 45 },
               { label: 'Revision Required', count: 12, color: 'bg-rose-500', pct: 12 },
               { label: 'Accepted', count: 28, color: 'bg-emerald-500', pct: 28 },
-              { label: 'Pending Pre-check', count: 8, color: 'bg-slate-400', pct: 8 }
+              { label: t('stat.pending'), count: 8, color: 'bg-slate-400', pct: 8 }
             ]).map((stat: any, i: number) => (
               <div key={i}>
                 <div className="flex justify-between items-end mb-2">

@@ -14,3 +14,12 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     window.dispatchEvent(new Event('lang-change'));
   },
 }));
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('lang-change', () => {
+    const appLang = localStorage.getItem('app_lang') as 'EN' | 'TR' || 'TR';
+    if (useLanguageStore.getState().lang !== appLang) {
+      useLanguageStore.setState({ lang: appLang });
+    }
+  });
+}

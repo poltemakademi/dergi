@@ -53,12 +53,12 @@
   - `[ ]` Ensure dual-language forms and wizard steppers (`/yazar/submit-wizard`) stack gracefully on mobile devices.
 
 ## 🔔 5. Real-Time Notifications & Activity Feed (Refined Architecture)
-- `[ ]` **Notification Center (`/notify` / or integrated into Header)**
-  - `[ ]` Fetch `GET /api/notifications?limit=15` to populate the bell icon dropdown with recent activities and support infinite scroll.
-  - `[ ]` Implement real-time push connection (**Server-Sent Events / SSE**) for instant updates without page refresh.
-  - `[ ]` Mark individual notifications as read via `PATCH /api/notifications/:id/read`.
-  - `[ ]` **[NEW]** Mark ALL notifications as read via `PATCH /api/notifications/read-all`.
-- `[ ]` **Dashboard Activities (`/dashboard/activity`)**
-  - `[ ]` Aggregate notifications and events into a single chronologically sorted feed, paginated for performance.
-  - `[ ]` **[NEW]** Inject visual Context Tags (e.g., "Role: Reviewer", "Type: System Alert") so the user knows exactly why they are receiving the alert.
-  - `[ ]` Trigger specific UI states based on notification type (e.g., pulsing/flashing the 'Pending Reviews' button if a new review is assigned).
+- `[x]` **Notification Center (`/notify` / or integrated into Header)**
+  - `[x]` Fetch `GET /api/notifications?limit=15` to populate the bell icon dropdown with recent activities and support infinite scroll.
+  - `[x]` Implement real-time push connection (**Server-Sent Events / SSE**) for instant updates without page refresh.
+  - `[x]` Mark individual notifications as read via `PATCH /api/notifications/:id/read`.
+  - `[x]` **[NEW]** Mark ALL notifications as read via `PATCH /api/notifications/read-all`.
+- `[x]` **Dashboard Activities (`/dashboard/activity`)**
+  - `[x]` Aggregate notifications and events into a single chronologically sorted feed, paginated for performance.
+  - `[x]` **[NEW]** Inject visual Context Tags (e.g., "Role: Reviewer", "Type: System Alert") so the user knows exactly why they are receiving the alert.
+  - `[x]` Trigger specific UI states based on notification type (e.g., pulsing/flashing the 'Pending Reviews' button if a new review is assigned).

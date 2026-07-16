@@ -9,6 +9,8 @@ export interface Notification {
   message: string;
   isRead: boolean;
   createdAt: string;
+  roleContext?: string;
+  alertType?: string;
 }
 
 export function useSSE() {
@@ -20,7 +22,7 @@ export function useSSE() {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
-      const response = await apiClient.get('/api/notifications');
+      const response = await apiClient.get('/api/notifications?limit=15');
       setNotifications(response.data);
       setUnreadCount(response.data.filter((n: Notification) => !n.isRead).length);
     } catch (error) {
@@ -99,7 +101,7 @@ export function useSSE() {
 
   const markAsRead = async (id: string) => {
     try {
-      await apiClient.put(`/api/notifications/${id}/read`);
+      await apiClient.patch(`/api/notifications/${id}/read`);
       setNotifications(prev => 
         prev.map(n => n.id === id ? { ...n, isRead: true } : n)
       );
@@ -111,7 +113,7 @@ export function useSSE() {
 
   const markAllAsRead = async () => {
     try {
-      await apiClient.put('/api/notifications/read-all');
+      await apiClient.patch('/api/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

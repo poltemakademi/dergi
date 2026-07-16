@@ -4,11 +4,13 @@ import { useSSE, type Notification } from '../../hooks/useSSE';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { apiClient } from '../../services/api/client';
+import { useLocaleStore } from '../../store/useLocaleStore';
 
 export default function Activity() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, refresh } = useSSE();
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t, locale } = useLocaleStore();
 
   const filteredNotifications = notifications.filter(n => filter === 'ALL' || !n.isRead);
 
@@ -34,14 +36,14 @@ export default function Activity() {
   };
 
   const clearAllHistory = async () => {
-    if (!window.confirm('Are you sure you want to clear all notification history?')) return;
+    if (!window.confirm(locale === 'tr' ? 'Tüm bildirim geçmişini silmek istediğinize emin misiniz?' : 'Are you sure you want to clear all notification history?')) return;
     setIsDeleting(true);
     try {
       await apiClient.delete('/api/notifications');
-      toast.success('Notification history cleared.');
+      toast.success(locale === 'tr' ? 'Bildirim geçmişi temizlendi.' : 'Notification history cleared.');
       refresh();
     } catch (err) {
-      toast.error('Failed to clear notifications.');
+      toast.error(t('dashboard.error'));
     } finally {
       setIsDeleting(false);
     }
@@ -53,9 +55,9 @@ export default function Activity() {
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
             <Bell className="w-7 h-7 text-indigo-500" />
-            Activity & Notifications
+            {t('activity.title')}
           </h2>
-          <p className="text-slate-500 mt-1">Review your recent platform activity and alerts.</p>
+          <p className="text-slate-500 mt-1">{locale === 'tr' ? 'Son platform aktivitelerinizi ve uyarılarınızı inceleyin.' : 'Review your recent platform activity and alerts.'}</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -64,13 +66,13 @@ export default function Activity() {
               onClick={() => setFilter('ALL')}
               className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors ${filter === 'ALL' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              All
+              {locale === 'tr' ? 'Tümü' : 'All'}
             </button>
             <button 
               onClick={() => setFilter('UNREAD')}
               className={`px-4 py-1.5 text-sm font-bold rounded-md transition-colors flex items-center gap-2 ${filter === 'UNREAD' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Unread
+              {locale === 'tr' ? 'Okunmamış' : 'Unread'}
               {unreadCount > 0 && (
                 <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{unreadCount}</span>
               )}
@@ -82,7 +84,7 @@ export default function Activity() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-            <Filter className="w-4 h-4" /> Showing {filteredNotifications.length} items
+            <Filter className="w-4 h-4" /> {locale === 'tr' ? `${filteredNotifications.length} öğe gösteriliyor` : `Showing ${filteredNotifications.length} items`}
           </div>
           <div className="flex items-center gap-4">
             {unreadCount > 0 && (
@@ -90,7 +92,7 @@ export default function Activity() {
                 onClick={markAllAsRead}
                 className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 transition-colors"
               >
-                <Check className="w-4 h-4" /> Mark all read
+                <Check className="w-4 h-4" /> {locale === 'tr' ? 'Tümünü okundu işaretle' : 'Mark all read'}
               </button>
             )}
             <button 
@@ -98,7 +100,7 @@ export default function Activity() {
               disabled={isDeleting || notifications.length === 0}
               className="text-sm font-semibold text-rose-500 hover:text-rose-600 flex items-center gap-1.5 transition-colors disabled:opacity-50"
             >
-              <Trash2 className="w-4 h-4" /> Clear History
+              <Trash2 className="w-4 h-4" /> {locale === 'tr' ? 'Geçmişi Temizle' : 'Clear History'}
             </button>
           </div>
         </div>
@@ -108,8 +110,8 @@ export default function Activity() {
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
               <Bell className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-lg font-bold text-slate-700">No Notifications</h3>
-            <p className="text-slate-500 mt-1">You're all caught up! New activity will appear here.</p>
+            <h3 className="text-lg font-bold text-slate-700">{locale === 'tr' ? 'Bildirim Yok' : 'No Notifications'}</h3>
+            <p className="text-slate-500 mt-1">{locale === 'tr' ? 'Her şey yolunda! Yeni aktiviteler burada görünecektir.' : "You're all caught up! New activity will appear here."}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -136,6 +138,22 @@ export default function Activity() {
                   <p className={`text-sm ${notification.isRead ? 'text-slate-500' : 'text-slate-700 font-medium'}`}>
                     {notification.message}
                   </p>
+                  
+                  {/* Visual Context Tags */}
+                  {(notification.roleContext || notification.alertType) && (
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      {notification.roleContext && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                          {locale === 'tr' ? 'Rol' : 'Role'}: {notification.roleContext}
+                        </span>
+                      )}
+                      {notification.alertType && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-indigo-50 text-indigo-600 border border-indigo-100/50">
+                          {locale === 'tr' ? 'Tür' : 'Type'}: {notification.alertType}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {!notification.isRead && (
                   <div className="shrink-0 flex items-center justify-center h-full ml-4">
