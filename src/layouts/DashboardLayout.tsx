@@ -51,7 +51,7 @@ export default function DashboardLayout() {
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors">novaijournal</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors font-serif">novaijournal</h2>
             <span className="text-[10px] text-slate-500 font-medium tracking-wide mt-1 block">{t('nav.enterprise')}</span>
           </div>
         </Link>
