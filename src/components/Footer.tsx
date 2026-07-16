@@ -50,16 +50,23 @@ const dict = {
 };
 
 export default function Footer() {
-  const [lang, setLangState] = useState<'EN' | 'TR'>(
-    () => (localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR'
-  );
+  const [lang, setLangState] = useState<'EN' | 'TR'>(() => {
+    const stored = localStorage.getItem('app_lang');
+    if (stored) {
+      const upper = stored.toUpperCase();
+      if (upper === 'EN' || upper === 'TR') return upper;
+    }
+    return 'TR';
+  });
   const [activeModal, setActiveModal] = useState<{ title: string, id: string } | null>(null);
 
-  const t = dict[lang];
+  const t = dict[lang] || dict.TR;
 
   useEffect(() => {
     const handleLangChange = () => {
-      setLangState((localStorage.getItem('app_lang') as 'EN' | 'TR') || 'TR');
+      const stored = localStorage.getItem('app_lang');
+      const upper = stored ? stored.toUpperCase() : 'TR';
+      setLangState((upper === 'EN' || upper === 'TR' ? upper : 'TR') as 'EN' | 'TR');
     };
     window.addEventListener('lang-change', handleLangChange);
     return () => window.removeEventListener('lang-change', handleLangChange);
