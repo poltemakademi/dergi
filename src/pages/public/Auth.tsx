@@ -113,6 +113,27 @@ export default function Auth() {
     setSuccessMsg('');
 
     try {
+      // DEMO ACCOUNTS BYPASS
+      const demoEmailMatch = email.match(/^(author|reviewer|editor|layout|super_admin)@demo\.com$/);
+      if (demoEmailMatch && password === 'demo') {
+        const demoRole = demoEmailMatch[1] === 'layout' ? 'layout_editor' : demoEmailMatch[1];
+        
+        // Mock a token and user for demo purposes
+        useAuthStore.getState().setAuth(
+          'demo-jwt-token-123',
+          {
+            id: `demo-${demoRole}-123`,
+            name: `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1).replace('_', ' ')}`,
+            email: email
+          },
+          [demoRole as any]
+        );
+        
+        toast.success(lang === 'TR' ? 'Demo girişi başarılı!' : 'Demo login successful!');
+        navigate('/dashboard');
+        return;
+      }
+
       if (isLogin) {
         const response = await apiClient.post('/api/auth/login', { email, password });
         // Expected response format: { token: string, user: User, roles: Role[] }
