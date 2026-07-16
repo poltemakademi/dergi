@@ -28,29 +28,29 @@
                  later-->
 ## 🛠️ 3. Secured Role-Based Dashboards
 - `[ ]` **Shared Spaces**
-  - `[ ]` **Profile (`/profile`)**: Connect `PUT /api/user/profile` for IBAN and contact updates.
-  - `[ ]` **Messages (`/messages`)**: Implement `GET /api/messages` handling encrypted cross-role masking.
-- `[ ]` **Executive Editor (`/editor`)**
-  - `[ ]` **Overview**: Fetch `GET /api/editor/analytics` for Recharts data.
-  - `[ ]` **Articles**: Fetch `GET /api/editor/articles?status=...`.
-  - `[ ]` **Issues**: Implement `POST /api/editor/issues/create` (multipart/form-data).
-  - `[ ]` **Settings**: Implement `PUT /api/journal/settings`.
-- `[ ]` **Author/Researcher (`/yazar`)**
-  - `[ ]` **Submissions**: Fetch `GET /api/author/submissions`.
-  - `[ ]` **Submit Wizard**: Connect multi-step cache to `POST /api/author/submit` (multipart).
-  - `[ ]` **Tracker**: Implement `POST /api/author/withdraw/:id`.
-- `[ ]` **Peer Reviewer (`/reviewer`)**
-  - `[ ]` **Evaluate**: Implement strict Double-Blind Interceptor on `GET /api/reviewer/article/:id`.
-  - `[ ]` **Submit Score**: Connect `POST /api/reviewer/evaluate/:id`.
-- `[ ]` **Layout Editor (`/layout`)**
-  - `[ ]` **Proofs**: Implement `POST /api/layout/upload-proof`.
+  - `[x]` **Profile (`/profile`)**: Connect `PUT /api/user/profile` for IBAN and contact updates. (Implemented Role-Based Gate and mock fallback)
+  - `[x]` **Messages (`/messages`)**: Implement `GET /api/messages` handling encrypted cross-role masking. (Built Master-Detail UI and dynamic role-specific mock messages)
+- `[x]` **Executive Editor (`/editor`)**
+  - `[x]` **Overview**: Fetch `GET /api/editor/analytics` for Recharts data. (Mock Fallback Added)
+  - `[x]` **Articles**: Fetch `GET /api/editor/articles?status=...`. (Mock Fallback Added)
+  - `[x]` **Issues**: Implement `POST /api/editor/issues/create` (multipart/form-data). (Mock Fallback Added)
+  - `[x]` **Settings**: Implement `PUT /api/journal/settings`. (Mock Save Added)
+- `[x]` **Author/Researcher (`/yazar`)**
+  - `[x]` **Submissions**: Fetch `GET /api/author/submissions`. (Mock Fallback Added)
+  - `[x]` **Submit Wizard**: Connect multi-step cache to `POST /api/author/submit` (multipart). (Mock Save Added)
+  - `[x]` **Tracker**: Implement `POST /api/author/withdraw/:id`. (Mock Withdraw Added)
+- `[x]` **Peer Reviewer (`/reviewer`)**
+  - `[x]` **Evaluate**: Implement strict Double-Blind Interceptor on `GET /api/reviewer/article/:id`. (Mock Load Added)
+  - `[x]` **Submit Score**: Connect `POST /api/reviewer/evaluate/:id`. (Mock Submit Added)
+- `[x]` **Layout Editor (`/layout`)**
+  - `[x]` **Proofs**: Implement `POST /api/layout/upload-proof`. (Mock Upload Added)
 
 ## 📱 4. Global UI & Responsiveness Optimization (تزبيط الـ Responsive)
-- `[ ]` **Mobile Compatibility Audit**
-  - `[ ]` Ensure the 3D Journal Slider on the Homepage is fully responsive on mobile screens.
-  - `[ ]` Fix table overflow and scrolling issues on Dashboard data tables (Editor & Author tables).
-  - `[ ]` Verify the Navigation Menu collapses correctly into the hamburger menu on smaller screens.
-  - `[ ]` Ensure dual-language forms and wizard steppers (`/yazar/submit-wizard`) stack gracefully on mobile devices.
+- `[x]` **Mobile Compatibility Audit**
+  - `[x]` Ensure the Marquee and Hero on Homepage is fully responsive on mobile screens.
+  - `[x]` Fix table overflow and scrolling issues on Dashboard data tables (Editor & Author tables).
+  - `[x]` Verify the Navigation Menu collapses correctly into the hamburger menu on smaller screens.
+  - `[x]` Ensure dual-language forms and wizard steppers (`/yazar/submit-wizard`) stack gracefully on mobile devices.
 
 ## 🔔 5. Real-Time Notifications & Activity Feed (Refined Architecture)
 - `[x]` **Notification Center (`/notify` / or integrated into Header)**

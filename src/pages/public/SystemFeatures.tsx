@@ -273,7 +273,7 @@ const SettingsTab = ({ isActive, t }: { isActive: boolean, t: any }) => {
       <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-8 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)]">
         <h3 className="text-xl font-bold text-slate-900 mb-6">{t.settings.title}</h3>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <motion.div variants={itemVariants} className="flex flex-col gap-2 relative">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.settings.nativeName}</label>
             <input
@@ -302,7 +302,7 @@ const SettingsTab = ({ isActive, t }: { isActive: boolean, t: any }) => {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div variants={itemVariants} className="flex flex-col gap-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.settings.cover}</label>
             <div className="h-32 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 flex flex-col items-center justify-center gap-2 text-indigo-500 transition-colors">
@@ -367,7 +367,7 @@ const KanbanTab = ({ isActive, t }: { isActive: boolean, t: any }) => {
   );
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="h-full flex gap-6 overflow-hidden pb-4">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="h-full flex gap-6 overflow-x-auto pb-4 snap-x">
       {/* Column 1 */}
       <motion.div variants={itemVariants} className="w-80 shrink-0 flex flex-col gap-4">
         <div className="flex items-center justify-between pb-2 border-b border-slate-200/50">
@@ -468,7 +468,7 @@ const AnalyticsTab = ({ isActive, t }: { isActive: boolean, t: any }) => {
           <p className="text-xs text-slate-500 font-medium mt-1">{t.analytics.totalUsersSub}</p>
         </motion.div>
 
-        <div className="col-span-2 grid grid-rows-2 gap-6">
+        <div className="md:col-span-2 grid grid-rows-2 gap-6">
           <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)] flex items-center justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center mb-3 border border-sky-100">
@@ -619,9 +619,9 @@ const MessengerTab = ({ isActive, t }: { isActive: boolean, t: any }) => {
 };
 
 const CompilerTab = ({ t }: { t: any }) => (
-  <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="flex gap-6 h-full">
+  <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="flex flex-col lg:flex-row gap-6 h-full">
     {/* Left Panel: Settings */}
-    <motion.div variants={itemVariants} className="w-80 shrink-0 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)] flex flex-col gap-6">
+    <motion.div variants={itemVariants} className="w-full lg:w-80 shrink-0 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)] flex flex-col gap-6">
       <div>
         <h3 className="text-lg font-bold text-slate-900 mb-1">{t.compiler.title}</h3>
         <p className="text-xs text-slate-500 font-medium">{t.compiler.sub}</p>
@@ -696,9 +696,9 @@ const CompilerTab = ({ t }: { t: any }) => (
 
 const AuthorTab = ({ t }: { isActive: boolean, t: any }) => (
   <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="flex flex-col gap-6 h-full">
-    <div className="flex items-center justify-between pb-4 border-b border-slate-200/50">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/50">
       <h3 className="text-xl font-bold text-slate-900">{t.author.mySubs}</h3>
-      <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20">
+      <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20">
         <Plus className="w-4 h-4" /> {t.author.newSub}
       </button>
     </div>
@@ -728,7 +728,7 @@ const AuthorTab = ({ t }: { isActive: boolean, t: any }) => (
 );
 
 const ReviewerTab = ({ isActive, t }: { isActive: boolean, t: any }) => (
-  <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="flex gap-6 h-full">
+  <motion.div variants={containerVariants} initial="hidden" animate="show" exit="exit" className="flex flex-col lg:flex-row gap-6 h-full">
     <motion.div variants={itemVariants} className="flex-1 bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-3xl p-6 shadow-sm flex flex-col gap-4 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 to-indigo-200" />
       <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -754,7 +754,7 @@ const ReviewerTab = ({ isActive, t }: { isActive: boolean, t: any }) => (
       </div>
     </motion.div>
 
-    <motion.div variants={itemVariants} className="w-80 shrink-0 bg-slate-900 rounded-3xl p-6 shadow-lg flex flex-col gap-6 text-white relative overflow-hidden">
+    <motion.div variants={itemVariants} className="w-full lg:w-80 shrink-0 bg-slate-900 rounded-3xl p-6 shadow-lg flex flex-col gap-6 text-white relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl" />
       <div>
         <h3 className="text-lg font-bold">{t.reviewer.score}</h3>
@@ -873,7 +873,7 @@ export default function SystemFeatures() {
       
 
       {/* Application Shell Workspace */}
-      <main className="pt-32 pb-12 flex-1 flex flex-col max-w-[1400px] w-full mx-auto px-6 z-10 min-h-screen">
+      <main className="pt-24 md:pt-32 pb-12 flex-1 flex flex-col max-w-[1400px] w-full mx-auto px-4 sm:px-6 z-10 min-h-screen">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-col items-start gap-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Enterprise Dashboard
@@ -884,9 +884,9 @@ export default function SystemFeatures() {
           </div>
         </motion.div>
 
-        <div className="flex-1 flex flex-col bg-slate-50 rounded-[2rem] border border-slate-200/60 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,1)_inset] overflow-hidden relative">
-          {/* macOS Top Bar */}
-          <div className="h-12 border-b border-slate-200/50 bg-slate-100/50 flex items-center px-4 justify-between backdrop-blur-md relative z-20">
+        <div className="flex-1 flex flex-col bg-slate-50/90 rounded-3xl md:rounded-[2rem] border border-slate-200/60 shadow-xl md:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,1)_inset] overflow-hidden relative backdrop-blur-xl">
+          {/* macOS Top Bar (Hidden on Mobile) */}
+          <div className="hidden sm:flex h-12 border-b border-slate-200/50 bg-slate-100/50 items-center px-4 justify-between backdrop-blur-md relative z-20">
             <div className="flex gap-2">
               <div className="w-3 h-3 rounded-full bg-rose-400 border border-rose-500 shadow-sm" />
               <div className="w-3 h-3 rounded-full bg-amber-400 border border-amber-500 shadow-sm" />
@@ -899,9 +899,9 @@ export default function SystemFeatures() {
             <div className="w-16" /> {/* Placeholder for balance */}
           </div>
 
-          <div className="flex flex-1 gap-8 min-h-0 p-4 md:p-6 bg-slate-50/50">
+          <div className="flex flex-col lg:flex-row flex-1 gap-4 md:gap-8 min-h-0 p-3 sm:p-4 md:p-6 bg-transparent md:bg-slate-50/50">
             {/* Left Sidebar Navigation */}
-            <aside className="w-72 shrink-0 flex flex-col gap-2">
+            <aside className="w-full lg:w-72 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-none snap-x relative z-10 px-1">
               {TABS_CONFIG.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -914,8 +914,8 @@ export default function SystemFeatures() {
                       setActiveTab(tab.id);
                       setIsAutopilot(false);
                     }}
-                    className={`group relative flex items-center px-4 py-4 rounded-2xl transition-all duration-300 text-left border overflow-hidden ${isActive
-                        ? 'bg-white border-indigo-200 shadow-[0_15px_35px_-10px_rgba(79,70,229,0.15)] scale-[1.02]'
+                    className={`group relative flex items-center px-3 md:px-4 py-2 md:py-4 rounded-xl md:rounded-2xl transition-all duration-300 text-left border overflow-hidden shrink-0 snap-center min-w-max lg:min-w-0 ${isActive
+                        ? 'bg-white border-indigo-200 shadow-[0_10px_25px_-5px_rgba(79,70,229,0.15)] scale-[1.02]'
                         : 'bg-transparent border-transparent hover:bg-white/50 hover:border-slate-200/50 hover:shadow-sm opacity-70 hover:opacity-100'
                       }`}
                   >
@@ -923,19 +923,19 @@ export default function SystemFeatures() {
                     {isActive && <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/50 to-transparent pointer-events-none" />}
 
                     <div className="flex items-center justify-between w-full relative z-10">
-                      <div className="flex gap-4">
-                        <div className={`mt-0.5 p-2 rounded-xl transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-[0_4px_15px_rgba(79,70,229,0.3)]' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-indigo-500'}`}>
+                      <div className="flex gap-3 md:gap-4">
+                        <div className={`mt-0.5 p-1.5 md:p-2 rounded-xl transition-colors shrink-0 ${isActive ? 'bg-indigo-600 text-white shadow-[0_4px_15px_rgba(79,70,229,0.3)]' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-indigo-500'}`}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col">
-                          <span className={`text-sm font-bold transition-colors ${isActive ? 'text-indigo-950' : 'text-slate-700'}`}>{tabData.title}</span>
-                          <span className={`text-[11px] font-bold tracking-wide transition-colors ${isActive ? 'text-indigo-500' : 'text-slate-400'}`}>
+                          <span className={`text-xs md:text-sm font-bold transition-colors ${isActive ? 'text-indigo-950' : 'text-slate-700'}`}>{tabData.title}</span>
+                          <span className={`hidden md:block text-[11px] font-bold tracking-wide transition-colors ${isActive ? 'text-indigo-500' : 'text-slate-400'}`}>
                             {tabData.sub}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 md:gap-3">
                         {tab.badge && (
                           <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black transition-colors ${isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-500'}`}>{tab.badge}</span>
                         )}
@@ -954,37 +954,43 @@ export default function SystemFeatures() {
             <section
               ref={workspaceRef}
               onMouseMove={handleMouseMove}
-              className="flex-1 min-h-0 bg-slate-100/40 backdrop-blur-3xl border border-slate-200/80 rounded-[2.5rem] p-2 shadow-[inset_0_2px_10px_rgba(255,255,255,0.7),0_30px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden relative group/workspace flex flex-col"
+              className="flex-1 min-h-0 bg-white/50 md:bg-slate-100/40 backdrop-blur-3xl border-0 md:border border-slate-200/80 rounded-[1.5rem] md:rounded-[2.5rem] p-0 md:p-2 shadow-sm md:shadow-[inset_0_2px_10px_rgba(255,255,255,0.7),0_30px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden relative group/workspace flex flex-col"
             >
               {/* Ambient Cursor Spotlight */}
               <div
-                className="pointer-events-none absolute inset-0 z-0 opacity-0 group-hover/workspace:opacity-100 transition-opacity duration-700 ease-out"
+                className="hidden md:block pointer-events-none absolute inset-0 z-0 opacity-0 group-hover/workspace:opacity-100 transition-opacity duration-700 ease-out"
                 style={{
                   background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.6), transparent 40%)`
                 }}
               />
 
               {/* Realism Header */}
-              <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200/50 bg-white/40 rounded-t-[2.2rem] backdrop-blur-md mb-4">
-                <div className="flex items-center gap-4 bg-white/60 border border-slate-200/60 rounded-xl px-4 py-2 w-72 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
+              <header className="relative z-10 flex flex-wrap items-center justify-between px-3 sm:px-6 py-3 border-b border-slate-200/50 bg-white/60 md:bg-white/40 rounded-t-[1.5rem] md:rounded-t-[2.2rem] backdrop-blur-md mb-2 md:mb-4 gap-3">
+                <div className="hidden md:flex items-center gap-4 bg-white/60 border border-slate-200/60 rounded-xl px-4 py-2 w-72 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
                   <Search className="w-4 h-4 text-slate-400" />
                   <input type="text" placeholder={t.header.search} className="bg-transparent text-sm font-medium focus:outline-none w-full placeholder:text-slate-400" />
                 </div>
 
-                <div className="flex items-center gap-5">
-                  <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-100" />
-                  </button>
-                  <div className="w-px h-6 bg-slate-200" />
-                  <div className="flex items-center gap-3 cursor-pointer group/user">
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-slate-800">{activeRole.name}</p>
-                      <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{activeRole.title}</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 p-[2px] shadow-sm">
-                      <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                        <img src={`https://ui-avatars.com/api/?name=${activeRole.avatar}&background=f8fafc&color=4f46e5&bold=true`} alt="Avatar" className="w-full h-full object-cover" />
+                <div className="flex items-center gap-3 sm:gap-5 w-full md:w-auto justify-between md:justify-end">
+                  <div className="md:hidden flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg">
+                    <Search className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs text-slate-400">{t.header.search}</span>
+                  </div>
+                  <div className="flex items-center gap-3 sm:gap-5">
+                    <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                      <Bell className="w-5 h-5" />
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-100" />
+                    </button>
+                    <div className="w-px h-6 bg-slate-200" />
+                    <div className="flex items-center gap-3 cursor-pointer group/user">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-sm font-bold text-slate-800">{activeRole.name}</p>
+                        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest hidden sm:block">{activeRole.title}</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 p-[2px] shadow-sm">
+                        <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
+                          <img src={`https://ui-avatars.com/api/?name=${activeRole.avatar}&background=f8fafc&color=4f46e5&bold=true`} alt="Avatar" className="w-full h-full object-cover" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -992,7 +998,7 @@ export default function SystemFeatures() {
               </header>
 
               {/* Content Area */}
-              <div className="relative z-10 flex-1 overflow-y-auto px-6 pb-6 custom-scrollbar">
+              <div className="relative z-10 flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 pb-4 md:pb-6 custom-scrollbar">
                 <AnimatePresence mode="wait">
                   {renderActiveTab()}
                 </AnimatePresence>

@@ -67,7 +67,7 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-center" richColors />
+      <Toaster position="bottom-center" richColors />
       <BrowserRouter>
         <Routes>
           {/* --- 1. Global Platform Routes (No-Auth) --- */}

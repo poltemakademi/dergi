@@ -162,7 +162,7 @@ export default function Home() {
                   </div>
 
                   {/* Sidebar stats panel */}
-                  <div className="w-48 border-l border-slate-100 bg-slate-50/50 p-5 flex flex-col justify-between shrink-0 text-left">
+                  <div className="hidden sm:flex w-48 border-l border-slate-100 bg-slate-50/50 p-5 flex-col justify-between shrink-0 text-left">
                     <div className="space-y-4">
                       <div>
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t.mockArticle.downloads}</span>

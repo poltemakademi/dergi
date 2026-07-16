@@ -104,7 +104,7 @@ export default function EarlyAccess() {
           
           {/* 1. HERO SECTION (Editorial Vibe) */}
           <header className="mb-12 animate-fade-in-up">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 mb-4 flex gap-2">
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 mb-4 flex flex-wrap gap-2">
               {t.hero.title} <span className="text-slate-400">{t.hero.subtitle}</span>
             </h1>
             <p className="text-lg text-slate-500 leading-relaxed max-w-2xl">
@@ -113,10 +113,10 @@ export default function EarlyAccess() {
           </header>
 
           {/* 2. INVISIBLE FILTER ROW (Sleek Data-Table Style) */}
-          <div className="relative z-20 flex flex-col sm:flex-row items-center justify-between py-4 mb-4 border-b border-slate-200 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+          <div className="relative z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 mb-4 border-b border-slate-200 animate-fade-in-up gap-4 sm:gap-0" style={{ animationDelay: '100ms' }}>
             
             {/* Left Side: Inline Filters */}
-            <div className="flex flex-wrap items-center gap-6 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto">
               {/* Subject Area Dropdown */}
               <div className="relative group/dropdown">
                 <button className="flex items-center gap-2 text-[13px] font-semibold text-slate-600 hover:text-slate-900 transition-all cursor-pointer group">
@@ -153,7 +153,7 @@ export default function EarlyAccess() {
             </div>
 
             {/* Right Side: Sorting */}
-            <div className="w-full sm:w-auto flex items-center gap-3 mt-4 sm:mt-0">
+            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 mt-2 sm:mt-0 pt-4 sm:pt-0 border-t border-slate-100 sm:border-0">
               <span className="text-[12px] font-medium text-slate-400 uppercase tracking-widest">{t.filters.sort}</span>
               <div className="relative group/sort">
                 <button className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-800 hover:text-slate-900 transition-colors cursor-pointer group">
@@ -239,18 +239,18 @@ export default function EarlyAccess() {
           </div>
 
           {/* 4. CALL TO ACTION CONTAINER (Ultimate Minimalist Aesthetic) */}
-          <div className="mt-16 relative rounded-2xl p-8 md:p-12 border border-slate-200 bg-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+          <div className="mt-16 relative rounded-2xl p-6 md:p-12 border border-slate-200 bg-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-8 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
             <div className="absolute top-0 left-0 w-1 h-full bg-slate-900 rounded-l-2xl" />
             
-            <div className="max-w-xl">
+            <div className="max-w-xl text-left">
               <h3 className="text-2xl font-semibold text-slate-900 mb-2 tracking-tight">
                 {t.cta.title}
               </h3>
-              <p className="text-slate-500 text-[15px] leading-relaxed">
+              <p className="text-slate-500 text-[14px] md:text-[15px] leading-relaxed">
                 {t.cta.desc}
               </p>
             </div>
-            <button className="shrink-0 px-6 py-3 bg-slate-900 text-white text-[14px] font-semibold rounded-xl hover:bg-slate-800 transition-colors duration-200 flex items-center gap-2 cursor-pointer">
+            <button className="w-full md:w-auto shrink-0 px-6 py-3 bg-slate-900 text-white text-[14px] font-semibold rounded-xl hover:bg-slate-800 transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
               {t.cta.btn}
               <ArrowRight className="w-4 h-4" />
             </button>

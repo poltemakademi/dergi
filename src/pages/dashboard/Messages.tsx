@@ -72,7 +72,7 @@ export default function Messages() {
   return (
     <div className="h-[calc(100vh-10rem)] bg-white rounded-2xl border border-slate-200 shadow-sm flex overflow-hidden relative">
       {/* Sidebar */}
-      <div className="w-64 border-r border-slate-100 flex flex-col bg-slate-50/50 shrink-0">
+      <div className="hidden lg:flex w-64 border-r border-slate-100 flex-col bg-slate-50/50 shrink-0">
         <div className="p-4 border-b border-slate-100">
           <button 
             onClick={() => setIsComposeOpen(true)}
