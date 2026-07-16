@@ -2,15 +2,15 @@
 
 <!--
 ## 🌐 1. Public Marketing & Indexing Routes
-- `[/]` **Global Platform Connections**
+- `[x]` **Global Platform Connections**
   - `[x]` **Platform Homepage (`/`)**
     - `[x]` Implement `GET /api/global/search` to query articles across all tenants.
     - `[x]` Update `Zustand` to manage dynamic 3D Journal Slider state with live data.
   - `[x]` **Articles in Press (`/early-access`)**
     - `[x]` Implement `GET /api/global/early-access` to fetch `PUBLISHED` articles with `issue_id: null`.
-  - `[ ]` **Journal Application Form (`/basvurular/dergi`)**
-    - `[ ]` Connect form submission to `POST /api/applications/journal`.
-    - `[]` Add validation states and success/error toasts.
+  - `[x]` **Journal Application Form (`/basvurular/dergi`)**
+    - `[x]` Connect form submission to `POST /api/applications/journal`.
+    - `[x]` Add validation states and success/error toasts.
 
 ## 🏛️ 2. Individual Tenant Gateway (Public Journal Pages)
 - `[ ]` **Journal Dynamic Routing (`/:tenant_slug`)**

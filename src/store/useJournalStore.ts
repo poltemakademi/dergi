@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { apiClient } from '../services/api/client';
-import { MOCK_JOURNALS, MockJournal } from '../lib/mockData';
+import { MOCK_JOURNALS } from '../lib/mockData';
+import type { MockJournal } from '../lib/mockData';
+
 
 interface JournalState {
   journals: MockJournal[];
