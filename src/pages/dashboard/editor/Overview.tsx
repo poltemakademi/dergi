@@ -1,7 +1,31 @@
-import { TrendingUp, FileText, Download, CheckCircle, Clock, BarChart3 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, FileText, Download, CheckCircle, Clock, BarChart3, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiClient } from '../../../services/api/client';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 export default function Overview() {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useLocaleStore();
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await apiClient.get('/api/editor/analytics');
+        setAnalytics(response.data);
+        setError(null);
+      } catch (err: any) {
+        console.error('Failed to fetch analytics:', err);
+        setError(t('dashboard.error'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [t]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -15,6 +39,19 @@ export default function Overview() {
     show: { opacity: 1, y: 0 }
   };
 
+  if (isLoading) {
+    return <div className="p-12 text-center text-slate-500">{t('dashboard.loading')}</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center text-rose-500 gap-4">
+        <AlertTriangle className="w-8 h-8" />
+        <p className="font-medium">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -24,16 +61,16 @@ export default function Overview() {
     >
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className="w-5 h-5 text-slate-400" />
-        <h2 className="text-xl font-bold text-slate-900">Platform Analytics</h2>
+        <h2 className="text-xl font-bold text-slate-900">{t('overview.title')}</h2>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: 'Total Submissions', value: '1,248', icon: FileText, trend: '+12%' },
-          { title: 'Acceptance Rate', value: '24.5%', icon: CheckCircle, trend: '+2.1%' },
-          { title: 'Avg. Review Time', value: '42 Days', icon: Clock, trend: '-5 Days' },
-          { title: 'Total Downloads', value: '45.2k', icon: Download, trend: '+18%' }
+          { title: t('overview.totalSubmissions'), value: analytics?.totalSubmissions || '0', icon: FileText, trend: analytics?.trends?.submissions || '+0%' },
+          { title: t('overview.acceptanceRate'), value: analytics?.acceptanceRate || '0%', icon: CheckCircle, trend: analytics?.trends?.acceptance || '+0%' },
+          { title: t('overview.avgReviewTime'), value: analytics?.avgReviewTime || '0', icon: Clock, trend: analytics?.trends?.reviewTime || '-0' },
+          { title: t('overview.totalDownloads'), value: analytics?.totalDownloads || '0', icon: Download, trend: analytics?.trends?.downloads || '+0%' }
         ].map((kpi, i) => (
           <motion.div 
             key={i} 
@@ -44,7 +81,7 @@ export default function Overview() {
               <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100">
                 <kpi.icon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded border ${kpi.trend.startsWith('+') ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-rose-600 bg-rose-50 border-rose-100'}`}>
                 {kpi.trend}
               </span>
             </div>
@@ -58,14 +95,14 @@ export default function Overview() {
         {/* Trend Chart Mockup (Pure CSS) */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-base font-bold text-slate-900">Submission Velocity (2025)</h3>
+            <h3 className="text-base font-bold text-slate-900">{t('overview.velocityTitle')}</h3>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
-              <TrendingUp className="w-4 h-4 text-slate-400" /> YoY Comparison
+              <TrendingUp className="w-4 h-4 text-slate-400" /> {t('overview.yoy')}
             </div>
           </div>
           
           <div className="flex-1 min-h-[240px] flex items-end gap-2 px-2">
-            {[40, 55, 30, 70, 85, 60, 45, 90, 110, 80, 65, 95].map((val, i) => (
+            {(analytics?.velocity || [40, 55, 30, 70, 85, 60, 45, 90, 110, 80, 65, 95]).map((val: number, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2 group/bar h-full justify-end">
                 <div className="w-full bg-slate-50 rounded-t-md overflow-hidden h-[200px] border border-slate-100 relative group-hover/bar:bg-slate-100 transition-colors">
                   <motion.div 
@@ -76,7 +113,7 @@ export default function Overview() {
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 font-semibold">
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}
+                  {i + 1}
                 </span>
               </div>
             ))}
@@ -85,15 +122,15 @@ export default function Overview() {
 
         {/* Status Distribution */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm flex flex-col">
-          <h3 className="text-base font-bold text-slate-900 mb-6">Pipeline Distribution</h3>
+          <h3 className="text-base font-bold text-slate-900 mb-6">{t('overview.pipeline')}</h3>
           
           <div className="space-y-6 flex-1 flex flex-col justify-center">
-            {[
-              { label: 'In Review', count: 45, color: 'bg-indigo-500', pct: 45 },
+            {(analytics?.distribution || [
+              { label: t('stat.inReview'), count: 45, color: 'bg-indigo-500', pct: 45 },
               { label: 'Revision Required', count: 12, color: 'bg-rose-500', pct: 12 },
               { label: 'Accepted', count: 28, color: 'bg-emerald-500', pct: 28 },
-              { label: 'Pending Pre-check', count: 8, color: 'bg-slate-400', pct: 8 }
-            ].map((stat, i) => (
+              { label: t('stat.pending'), count: 8, color: 'bg-slate-400', pct: 8 }
+            ]).map((stat: any, i: number) => (
               <div key={i}>
                 <div className="flex justify-between items-end mb-2">
                   <span className="font-semibold text-slate-600 text-sm">{stat.label}</span>
@@ -104,7 +141,7 @@ export default function Overview() {
                     initial={{ width: 0 }}
                     animate={{ width: `${stat.pct}%` }}
                     transition={{ duration: 0.8, delay: i * 0.1 + 0.2 }}
-                    className={`${stat.color} h-full rounded-full`} 
+                    className={`${stat.color || 'bg-indigo-500'} h-full rounded-full`} 
                   />
                 </div>
               </div>

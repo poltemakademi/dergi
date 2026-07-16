@@ -1,15 +1,57 @@
+import { useState, useRef } from 'react';
 import { useSubmissionStore } from '../../../store/useSubmissionStore';
 import { Check, ChevronRight, Upload, Users, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiClient } from '../../../services/api/client';
+import { toast } from 'sonner';
 
 export default function SubmitWizard() {
   const { currentStep, nextStep, prevStep, metadata, updateMetadata, fileUploaded, setFileUploaded, reset } = useSubmissionStore();
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleComplete = () => {
-    reset();
-    navigate('/dashboard/yazar/submissions');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+      setFileUploaded(true);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!metadata.titleEn || !metadata.titleTr || !metadata.abstractEn || !metadata.abstractTr) {
+      toast.error('Please ensure all mandatory English and Turkish fields are filled.');
+      return;
+    }
+
+    if (!selectedFile) {
+      toast.error('Please upload a blinded PDF manuscript.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('metadata', JSON.stringify(metadata));
+      
+      await apiClient.post('/api/author/submit', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Manuscript submitted successfully');
+      reset();
+      navigate('/dashboard/yazar/submissions');
+    } catch (error: any) {
+      console.error('Failed to submit manuscript:', error);
+      toast.error(error?.response?.data?.message || 'Failed to submit manuscript');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const steps = [
@@ -85,7 +127,7 @@ export default function SubmitWizard() {
                 transition={{ duration: 0.3 }}
                 className="space-y-8"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="space-y-5">
                     <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">English Metadata</h3>
                     <div className="space-y-4">
@@ -149,8 +191,16 @@ export default function SubmitWizard() {
                   </div>
                 </div>
                 
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  className="hidden" 
+                  accept=".pdf" 
+                />
+
                 <button 
-                  onClick={() => setFileUploaded(true)} 
+                  onClick={() => fileInputRef.current?.click()} 
                   className={`w-full max-w-2xl mx-auto h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-200 ${fileUploaded ? 'border-slate-900 bg-slate-50 text-slate-900' : 'border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 text-slate-500 cursor-pointer'}`}
                 >
                   {fileUploaded ? (
@@ -158,7 +208,7 @@ export default function SubmitWizard() {
                       <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center mb-3 text-white shadow-sm">
                         <Check className="w-6 h-6" />
                       </div>
-                      <span className="font-bold text-base text-slate-900">Manuscript_Anonymous.pdf</span>
+                      <span className="font-bold text-base text-slate-900">{selectedFile?.name || 'Manuscript_Anonymous.pdf'}</span>
                       <span className="text-slate-500 text-xs mt-1 font-medium">Successfully Verified & Uploaded</span>
                     </div>
                   ) : (
@@ -180,7 +230,7 @@ export default function SubmitWizard() {
         <div className="px-8 py-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
           <button 
             onClick={prevStep} 
-            disabled={currentStep === 1}
+            disabled={currentStep === 1 || isSubmitting}
             className="px-6 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 disabled:opacity-30 transition-colors flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" /> Back
@@ -196,10 +246,10 @@ export default function SubmitWizard() {
           ) : (
             <button 
               onClick={handleComplete}
-              disabled={!fileUploaded}
+              disabled={!fileUploaded || isSubmitting}
               className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-sm font-semibold flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check className="w-4 h-4" /> Submit Manuscript
+              <Check className="w-4 h-4" /> {isSubmitting ? 'Submitting...' : 'Submit Manuscript'}
             </button>
           )}
         </div>

@@ -1,5 +1,8 @@
-import { useParams, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { apiClient } from '../../../services/api/client';
+import { toast } from 'sonner';
 
 const pipeline = [
   { id: 'PENDING_PRE_CHECK', label: 'Pre-Check', icon: <FileText className="w-5 h-5" /> },
@@ -10,10 +13,27 @@ const pipeline = [
 
 export default function Track() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   
   // Mock data based on ID
   const isRevision = id === 'JMS-2025-022';
   const currentStep = isRevision ? 2 : 1; // 0-indexed
+
+  const handleWithdraw = async () => {
+    if (!window.confirm('Are you absolutely sure you want to withdraw this manuscript? This action cannot be undone.')) return;
+    
+    setIsWithdrawing(true);
+    try {
+      await apiClient.post(`/api/author/withdraw/${id}`);
+      toast.success('Manuscript withdrawn successfully');
+      navigate('/dashboard/yazar/submissions');
+    } catch (error: any) {
+      console.error('Failed to withdraw manuscript:', error);
+      toast.error(error?.response?.data?.message || 'Failed to withdraw manuscript');
+      setIsWithdrawing(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -29,8 +49,12 @@ export default function Track() {
             <p className="text-slate-500 mt-2">Submitted on Oct 12, 2025</p>
           </div>
           
-          <button className="px-4 py-2 border-2 border-rose-100 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition-colors">
-            Withdraw Manuscript
+          <button 
+            onClick={handleWithdraw}
+            disabled={isWithdrawing}
+            className="px-4 py-2 border-2 border-rose-100 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition-colors disabled:opacity-50"
+          >
+            {isWithdrawing ? 'Withdrawing...' : 'Withdraw Manuscript'}
           </button>
         </div>
 

@@ -33,6 +33,7 @@ import SalesAgreement from './pages/public/SalesAgreement';
 import RoleSelector from './pages/dashboard/RoleSelector';
 import Profile from './pages/dashboard/Profile';
 import Messages from './pages/dashboard/Messages';
+import Activity from './pages/dashboard/Activity';
 
 // Editor Pages
 import EditorOverview from './pages/dashboard/editor/Overview';
@@ -97,6 +98,7 @@ export default function App() {
             <Route path="role-selector" element={<RoleSelector />} />
             <Route path="profile" element={<Profile />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="activity" element={<Activity />} />
 
             {/* Editor Routes */}
             <Route path="editor/overview" element={<EditorOverview />} />

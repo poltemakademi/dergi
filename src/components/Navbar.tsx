@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { t, lang, setLang } = useTranslation();
-  const { isAuthenticated, activeRole } = useAuthStore();
+  const { isAuthenticated, activeRole, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
@@ -100,13 +100,21 @@ export default function Navbar() {
           </div>
 
           {isAuthenticated ? (
-            <Link to="/dashboard" className="relative group overflow-hidden px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative z-10 flex items-center gap-2">
-                {t.nav.dashboard}
-                {activeRole && <span className="opacity-80">({t.roles?.[activeRole] || activeRole})</span>}
-              </span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/dashboard" className="relative group overflow-hidden px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_25px_-5px_rgba(79,70,229,0.4)] transition-all duration-300 cursor-pointer flex items-center gap-2">
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <span className="relative z-10 flex items-center gap-2">
+                  {t.nav.dashboard}
+                  {activeRole && <span className="opacity-80">({t.roles?.[activeRole] || activeRole})</span>}
+                </span>
+              </Link>
+              <button 
+                onClick={() => { logout(); navigate('/auth'); }}
+                className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 text-xs font-bold uppercase tracking-wider rounded-full hover:bg-rose-100 transition-colors border border-rose-200/50 cursor-pointer shadow-sm"
+              >
+                {lang === 'EN' ? 'Log Out' : 'Çıkış Yap'}
+              </button>
+            </div>
           ) : (
             <>
               <Link to="/auth" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-full hover:bg-slate-100 transition-colors border border-slate-200/50 cursor-pointer shadow-sm">
