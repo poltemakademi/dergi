@@ -313,7 +313,7 @@ export default function Home() {
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
                             <Fingerprint className="w-3.5 h-3.5 text-indigo-500" /> Matches by DOI ({searchResults.doiMatches.length})
                           </h4>
-                          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                          <div className="flex gap-4 overflow-x-auto -mx-6 md:-mx-8 px-6 md:px-8 pb-3 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                             {searchResults.doiMatches.slice(0, 5).map((article: any) => (
                               <Link
                                 key={article.id}
@@ -852,7 +852,7 @@ export default function Home() {
                     Search Results
                   </h3>
                   <p className="text-sm text-slate-500 font-medium mt-1">
-                    Showing all matches for "<span className="text-indigo-600 font-bold">{searchQuery}</span>" ({searchResults.journals.length} journals, {searchResults.articles.length} articles)
+                    Showing all matches for "<span className="text-indigo-600 font-bold">{searchQuery}</span>" ({searchResults.journals.length} journals, {searchResults.articles.length} articles, {searchResults.doiMatches?.length || 0} DOIs)
                   </p>
                 </div>
                 <button
@@ -866,14 +866,14 @@ export default function Home() {
 
               {/* Content Grid */}
               <div className="flex-1 overflow-y-auto p-8 md:p-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 divide-y md:divide-y-0 md:divide-x divide-slate-200/60">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 divide-y md:divide-y-0 md:divide-x divide-slate-200/60 items-stretch">
                   {/* Journals Column */}
-                  <div className="space-y-6 text-left">
+                  <div className="space-y-6 text-left flex flex-col h-full">
                     <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-indigo-500" /> All Matches in Journals ({searchResults.journals.length})
                     </h4>
                     {searchResults.journals.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="flex flex-col gap-3 flex-1">
                         {searchResults.journals.map((journal: any) => {
                           const storeMatch = journals.find(j => j.id.toLowerCase() === journal.id.toLowerCase());
                           return (
@@ -881,7 +881,7 @@ export default function Home() {
                               key={journal.id}
                               to={`/${journal.slug || journal.id.toLowerCase()}`}
                               onClick={() => setShowAllResultsModal(false)}
-                              className="flex items-center gap-4 p-4 rounded-2xl hover:bg-indigo-50/40 border border-transparent hover:border-indigo-100/50 transition-all duration-300 group"
+                              className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group min-h-[110px] flex-1"
                             >
                               <div className="w-14 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50 group-hover:scale-105 transition-transform duration-300">
                                 <img
@@ -915,18 +915,18 @@ export default function Home() {
                   </div>
 
                   {/* Articles Column */}
-                  <div className="space-y-6 md:pl-8 pt-6 md:pt-0 text-left">
+                  <div className="space-y-6 md:pl-8 pt-6 md:pt-0 text-left flex flex-col h-full">
                     <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-indigo-500" /> All Matches in Articles ({searchResults.articles.length})
                     </h4>
                     {searchResults.articles.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="flex flex-col gap-3 flex-1">
                         {searchResults.articles.map((article: any) => (
                           <Link
                             key={article.id}
                             to={`/${article.journalSlug || 'js'}/article/${article.id}`}
                             onClick={() => setShowAllResultsModal(false)}
-                            className="block p-5 rounded-2xl hover:bg-indigo-50/40 border border-transparent hover:border-indigo-100/50 transition-all duration-300 group text-left"
+                            className="flex flex-col justify-between p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group text-left min-h-[110px] flex-1"
                           >
                             <div className="font-extrabold text-slate-800 text-sm md:text-base leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
                               {article.title}
@@ -954,6 +954,37 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {/* DOI Matches Section */}
+                {searchResults.doiMatches && searchResults.doiMatches.length > 0 && (
+                  <div className="border-t border-slate-100/80 pt-8 mt-6">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                      <Fingerprint className="w-4 h-4 text-indigo-500" /> All Matches by DOI ({searchResults.doiMatches.length})
+                    </h4>
+                    <div className="flex gap-4 overflow-x-auto -mx-8 md:-mx-10 px-8 md:px-10 pb-3 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                      {searchResults.doiMatches.map((article: any) => (
+                        <Link
+                          key={article.id}
+                          to={`/${article.journalSlug || 'js'}/article/${article.id}`}
+                          onClick={() => setShowAllResultsModal(false)}
+                          className="flex-shrink-0 w-[290px] flex flex-col justify-between p-4 rounded-2xl bg-slate-50/30 hover:bg-indigo-50/40 border border-slate-100/50 hover:border-indigo-100/50 transition-all duration-300 group text-left min-h-[110px]"
+                        >
+                          <div className="font-extrabold text-slate-800 text-sm leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            {article.title}
+                          </div>
+                          <div className="mt-3 flex items-center justify-between">
+                            <span className="font-mono text-[9px] bg-slate-100 border border-slate-200/60 text-slate-500 px-1.5 py-0.5 rounded-md truncate max-w-[170px]">
+                              {article.doi}
+                            </span>
+                            <span className="text-[10px] text-indigo-500 font-bold opacity-0 group-hover:opacity-100 transition-all flex items-center gap-0.5 shrink-0">
+                              Read <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

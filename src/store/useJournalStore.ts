@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from '../services/api/client';
-import { MOCK_JOURNALS } from '../lib/mockData';
-import type { MockJournal } from '../lib/mockData';
+import { MOCK_JOURNALS, MockJournal } from '../lib/mockData';
 
 interface JournalState {
   journals: MockJournal[];
@@ -24,9 +23,9 @@ export const useJournalStore = create<JournalState>((set) => ({
       const response = await apiClient.get('/api/global/search', {
         params: { q: '', type: 'journals' }
       });
-      
+
       const fetchedData = response.data;
-      
+
       // If we receive valid journals from the server, we use them.
       // We will also merge them with mock data details (like covers, ISSN, tr names) 
       // if those aren't fully populated by the backend, ensuring a premium visual UI.
@@ -35,8 +34,8 @@ export const useJournalStore = create<JournalState>((set) => ({
           // Find matching mock journal by ID or name to merge rich static assets
           const mockMatch = MOCK_JOURNALS.find(
             (mj) => mj.id.toLowerCase() === (fetched.id || '').toString().toLowerCase() ||
-                    mj.slug.toLowerCase() === (fetched.slug || '').toString().toLowerCase() ||
-                    mj.name.toLowerCase() === (fetched.name || '').toString().toLowerCase()
+              mj.slug.toLowerCase() === (fetched.slug || '').toString().toLowerCase() ||
+              mj.name.toLowerCase() === (fetched.name || '').toString().toLowerCase()
           );
 
           return {
