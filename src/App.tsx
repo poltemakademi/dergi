@@ -12,6 +12,7 @@ import Integrations from './pages/public/Integrations';
 import Auth from './pages/public/Auth';
 import About from './pages/public/About';
 import Directory from './pages/public/Directory';
+import Search from './pages/public/Search';
 import Applications from './pages/public/Applications';
 import DoiApplication from './pages/public/DoiApplication';
 
@@ -74,6 +75,7 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/directory" element={<Directory />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/sistem-ozellikleri" element={<SystemFeatures />} />
             <Route path="/entegrasyonlar" element={<Integrations />} />
             <Route path="/early-access" element={<EarlyAccess />} />

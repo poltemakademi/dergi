@@ -13,18 +13,18 @@
     - `[x]` Add validation states and success/error toasts.
 
 ## 🏛️ 2. Individual Tenant Gateway (Public Journal Pages)
-- `[ ]` **Journal Dynamic Routing (`/:tenant_slug`)**
-  - `[ ]` **Journal Homepage (`/`)**
-    - `[ ]` Fetch `GET /api/tenant/:slug/metadata` on mount to load brand colors, logos, and featured articles.
-  - `[ ]` **Current Issue (`/current`)**
-    - `[ ]` Fetch `GET /api/tenant/:slug/issues/latest`.
-  - `[ ]` **Issue Archives (`/archives`)**
-    - `[ ]` Fetch `GET /api/tenant/:slug/issues/archive` and map to tree-view.
-  - `[ ]` **Article Detail Page (`/article/:id`)**
-    - `[ ]` Fetch `GET /api/tenant/:slug/articles/:id`.
-    - `[ ]` Implement `POST /api/metrics/download/:id` for PDF download analytics.
-  - `[ ]` **CMS Pages (`/policies` & `/board`)**
-    - `[ ]` Fetch `GET /api/tenant/:slug/pages/:page_alias`.
+- `[x]` **Journal Dynamic Routing (`/:tenant_slug`)**
+  - `[x]` **Journal Homepage (`/`)**
+    - `[x]` Fetch `GET /api/tenant/:slug/metadata` on mount to load brand colors, logos, and featured articles.
+  - `[x]` **Current Issue (`/current`)**
+    - `[x]` Fetch `GET /api/tenant/:slug/issues/latest`.
+  - `[x]` **Issue Archives (`/archives`)**
+    - `[x]` Fetch `GET /api/tenant/:slug/issues/archive` and map to tree-view.
+  - `[x]` **Article Detail Page (`/article/:id`)**
+    - `[x]` Fetch `GET /api/tenant/:slug/articles/:id`.
+    - `[x]` Implement `POST /api/metrics/download/:id` for PDF download analytics.
+  - `[x]` **CMS Pages (`/policies` & `/board`)**
+    - `[x]` Fetch `GET /api/tenant/:slug/pages/:page_alias`.
                  later-->
 ## 🛠️ 3. Secured Role-Based Dashboards
 - `[ ]` **Shared Spaces**

@@ -1,5 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, ShieldCheck, Users } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, BookOpen, ShieldCheck, Users, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useTenantStore } from '../../store/useTenantStore';
 
 interface CMSPageProps {
   type: 'policies' | 'board';
@@ -7,8 +9,17 @@ interface CMSPageProps {
 
 export default function CMSPage({ type }: CMSPageProps) {
   const navigate = useNavigate();
+  const { tenant_slug } = useParams<{ tenant_slug: string }>();
 
-  const content = {
+  const { pageContent, isLoading, fetchPageContent } = useTenantStore();
+
+  useEffect(() => {
+    if (tenant_slug) {
+      fetchPageContent(tenant_slug, type);
+    }
+  }, [tenant_slug, type, fetchPageContent]);
+
+  const defaultContent = {
     policies: {
       title: "Ethical Guidelines & Policies",
       icon: <ShieldCheck className="w-8 h-8 text-indigo-600" />,
@@ -53,7 +64,20 @@ export default function CMSPage({ type }: CMSPageProps) {
     }
   };
 
-  const pageData = content[type];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center pt-32">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <span className="text-slate-500 font-bold text-sm">Loading page content...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const pageTitle = pageContent?.page_title || defaultContent[type].title;
+  const pageBody = pageContent?.page_content || defaultContent[type].body;
+  const icon = defaultContent[type].icon;
 
   return (
     <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-12 px-6 lg:px-8">
@@ -71,23 +95,22 @@ export default function CMSPage({ type }: CMSPageProps) {
         <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm space-y-8">
           <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
             <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center shrink-0">
-              {pageData.icon || <BookOpen className="w-8 h-8 text-indigo-600" />}
+              {icon || <BookOpen className="w-8 h-8 text-indigo-600" />}
             </div>
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                {pageData.title}
+                {pageTitle}
               </h1>
             </div>
           </div>
 
-          {/* CMS Content rendered via dangerouslySetInnerHTML for rich text simulation */}
           <div 
             className="prose prose-slate prose-indigo max-w-none 
               prose-headings:font-bold prose-headings:tracking-tight 
               prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
               prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-4
               prose-li:text-slate-600"
-            dangerouslySetInnerHTML={{ __html: pageData.body }} 
+            dangerouslySetInnerHTML={{ __html: pageBody }} 
           />
           
         </div>
