@@ -4,11 +4,18 @@ import { useEffect } from 'react';
 import { useTenantStore } from '../../store/useTenantStore';
 import { toast } from 'sonner';
 
+import { useTranslation } from '../../hooks/useTranslation';
+
 export default function ArticleDetail() {
   const navigate = useNavigate();
   const { tenant_slug, id } = useParams<{ tenant_slug: string; id: string }>();
+  const { t } = useTranslation();
 
   const { activeArticle, isLoading, fetchArticleDetail, trackDownload } = useTenantStore();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (tenant_slug && id) {
@@ -27,7 +34,7 @@ export default function ArticleDetail() {
     );
   }
 
-  const publishedDate = activeArticle.published || (activeArticle.published_at 
+  const publishedDate = activeArticle.published || (activeArticle.published_at
     ? new Date(activeArticle.published_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'July 15, 2026');
 
@@ -38,7 +45,36 @@ export default function ArticleDetail() {
   const handleDownload = async () => {
     if (id) {
       await trackDownload(id);
-      toast.success("PDF download metric recorded!");
+      
+      const pdfUrl = activeArticle?.pdf_url && activeArticle.pdf_url !== '#'
+        ? activeArticle.pdf_url
+        : '/sample.pdf';
+        
+      try {
+        // Fetch as blob to force a direct browser download on the device
+        const response = await fetch(pdfUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.setAttribute('download', `${(activeArticle?.title || 'article').replace(/\s+/g, '_')}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.warn('Direct Blob download failed, falling back to link click:', err);
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.target = '_blank';
+        link.setAttribute('download', `${(activeArticle?.title || 'article').replace(/\s+/g, '_')}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      toast.success("PDF download metric recorded & download started!");
     }
   };
 
@@ -54,9 +90,9 @@ export default function ArticleDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-12 px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-32 md:pt-36 px-6 lg:px-8">
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Main Content Area */}
         <div className="lg:col-span-8 space-y-8">
           <div className="mb-2">
@@ -65,7 +101,7 @@ export default function ArticleDetail() {
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-              Back
+              {t.journal.back}
             </button>
           </div>
 
@@ -80,7 +116,7 @@ export default function ArticleDetail() {
                   Published: {publishedDate}
                 </span>
               </div>
-              
+
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
                 {activeArticle.titleEn || activeArticle.title}
               </h1>
@@ -157,11 +193,11 @@ export default function ArticleDetail() {
 
         {/* Sidebar Info & Actions */}
         <div className="lg:col-span-4 space-y-6">
-          
+
           {/* Download Action */}
           <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-3xl p-6 text-white shadow-lg space-y-6">
             <h3 className="font-bold text-lg">Access Article</h3>
-            <button 
+            <button
               onClick={handleDownload}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white text-indigo-700 font-extrabold text-sm rounded-xl shadow-sm hover:shadow-md hover:bg-slate-50 transition-all cursor-pointer"
             >
@@ -176,7 +212,7 @@ export default function ArticleDetail() {
           {/* Metrics & Meta */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2">Article Metrics</h3>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between border-b border-slate-50 pb-2">
                 <span className="text-slate-500 font-medium">DOI</span>
@@ -199,7 +235,7 @@ export default function ArticleDetail() {
               <div className="flex justify-between border-b border-slate-50 pb-2">
                 <span className="text-slate-500 font-medium">Downloads</span>
                 <span className="text-slate-800 font-bold flex items-center gap-1">
-                  <Download className="w-3 h-3 text-slate-400"/> {activeArticle.downloads_count || 0}
+                  <Download className="w-3 h-3 text-slate-400" /> {activeArticle.downloads_count || 0}
                 </span>
               </div>
             </div>
@@ -209,13 +245,13 @@ export default function ArticleDetail() {
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-3">
             <h3 className="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2">Tools</h3>
             <div className="flex flex-col gap-2">
-              <button 
+              <button
                 onClick={handleCite}
                 className="w-full flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors p-2 hover:bg-slate-50 rounded-lg text-left"
               >
                 <Quote className="w-4 h-4" /> Cite This Article
               </button>
-              <button 
+              <button
                 onClick={handleShare}
                 className="w-full flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors p-2 hover:bg-slate-50 rounded-lg text-left"
               >

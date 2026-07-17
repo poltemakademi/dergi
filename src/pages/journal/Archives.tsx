@@ -4,12 +4,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronUp, ArrowLeft, Archive, Book, Loader2 } from 'lucide-react';
 import { useTenantStore } from '../../store/useTenantStore';
 
+import { useTranslation } from '../../hooks/useTranslation';
+
 export default function Archives() {
   const navigate = useNavigate();
   const { tenant_slug } = useParams<{ tenant_slug: string }>();
   const [expandedYear, setExpandedYear] = useState<number | null>(null);
+  const { t } = useTranslation();
 
   const { archives, isLoading, fetchArchives } = useTenantStore();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (tenant_slug) {
@@ -56,7 +63,7 @@ export default function Archives() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-12 px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-32 md:pt-36 px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <button
@@ -64,7 +71,7 @@ export default function Archives() {
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            Back
+            {t.journal.back}
           </button>
         </div>
 
@@ -107,7 +114,7 @@ export default function Archives() {
                       >
                         <div className="p-5 space-y-3">
                           {archive.volumes.map((vol, idx) => (
-                            <div 
+                            <div
                               key={idx}
                               className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors cursor-pointer group"
                               onClick={() => navigate(`../current`)}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../lib/supabaseClient';
 
 export type Role = 'super_admin' | 'editor' | 'layout_editor' | 'reviewer' | 'author';
 
@@ -53,14 +54,47 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true, // Start loading
 
       initAuth: () => {
-        // With pure Zustand persist, the state is loaded synchronously from localStorage
-        // Just set loading to false. We could add token expiration validation here later.
-        const state = get();
-        if (state.token && state.user) {
-          set({ isAuthenticated: true, isLoading: false });
-        } else {
-          set({ isAuthenticated: false, isLoading: false });
-        }
+        // Recover state asynchronously from Supabase session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            const user = session.user;
+            // Retrieve profile and roles to populate state
+            Promise.all([
+              supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
+              supabase.from('journal_members').select('journal_role').eq('user_id', user.id)
+            ]).then(([profRes, memRes]) => {
+              const profile = profRes.data;
+              const members = memRes.data;
+              const roles = (members && members.length > 0)
+                ? members.map((m: any) => m.journal_role)
+                : ['author'];
+
+              set({
+                token: session.access_token,
+                user: {
+                  id: user.id,
+                  name: profile?.name_surname || user.user_metadata?.full_name || 'Academic User',
+                  email: user.email || '',
+                  phone: profile?.phone,
+                  institution: profile?.institution,
+                  orcid: profile?.orcid_id,
+                },
+                roles,
+                activeRole: get().activeRole || roles[0] || 'author',
+                isAuthenticated: true,
+                isLoading: false
+              });
+            }).catch(() => {
+              set({ isLoading: false });
+            });
+          } else {
+            const state = get();
+            set({ isAuthenticated: !!(state.token && state.user), isLoading: false });
+          }
+        }).catch(() => {
+          const state = get();
+          set({ isAuthenticated: !!(state.token && state.user), isLoading: false });
+        });
       },
 
       setAuth: (token: string, user: User, roles: Role[]) => {
@@ -82,6 +116,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        supabase.auth.signOut().catch(() => {});
         set({
           token: null,
           user: null,

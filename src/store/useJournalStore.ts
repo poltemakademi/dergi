@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../services/api/client';
+import { supabase } from '../lib/supabaseClient';
 import { MOCK_JOURNALS } from '../lib/mockData';
 import type { MockJournal } from '../lib/mockData';
 
@@ -19,14 +19,12 @@ export const useJournalStore = create<JournalState>((set) => ({
   fetchJournals: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Fetch journals across all tenants/globally.
-      // We will try fetching from /api/global/search with a blank query or search for journals,
-      // or try a direct /api/journals endpoint if available.
-      const response = await apiClient.get('/api/global/search', {
-        params: { q: '', type: 'journals' }
-      });
+      const { data: fetchedData, error } = await supabase
+        .from('journals')
+        .select('*');
 
-      const fetchedData = response.data;
+      if (error) throw error;
+
 
       // If we receive valid journals from the server, we use them.
       // We will also merge them with mock data details (like covers, ISSN, tr names) 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/api/client';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 
@@ -9,6 +9,11 @@ export default function Submissions() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useLocaleStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -32,22 +37,32 @@ export default function Submissions() {
   }, [t]);
 
   const getStatusInfo = (status: string) => {
-    switch(status) {
-      case 'IN_REVIEW': 
+    switch (status) {
+      case 'IN_REVIEW':
         return { color: 'text-amber-600 bg-amber-50 border-amber-200', icon: <Clock className="w-4 h-4" />, text: t('stat.inReview') };
-      case 'REVISION_REQUIRED': 
+      case 'REVISION_REQUIRED':
         return { color: 'text-rose-600 bg-rose-50 border-rose-200', icon: <AlertCircle className="w-4 h-4" />, text: locale === 'tr' ? 'Revizyon' : 'Revision' };
       case 'PENDING_PRE_CHECK':
         return { color: 'text-sky-600 bg-sky-50 border-sky-200', icon: <FileText className="w-4 h-4" />, text: locale === 'tr' ? 'Ön Kontrol' : 'Pre-Check' };
       case 'ACCEPTED':
         return { color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: <FileText className="w-4 h-4" />, text: locale === 'tr' ? 'Kabul Edildi' : 'Accepted' };
-      default: 
+      default:
         return { color: 'text-slate-600 bg-slate-50 border-slate-200', icon: <FileText className="w-4 h-4" />, text: status || 'Unknown' };
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      <div className="mb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+          {t('dashboard.back')}
+        </button>
+      </div>
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-black text-slate-800">{t('sub.mySubmissions')}</h2>
@@ -61,7 +76,7 @@ export default function Submissions() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
         {/* Right-aligned fade gradient for mobile horizontal scrolling indication */}
         <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden z-10" />
-        
+
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
