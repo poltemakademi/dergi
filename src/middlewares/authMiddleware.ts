@@ -21,6 +21,19 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
     }
 
     const token = authHeader.split(' ')[1];
+    
+    console.log('[AuthMiddleware] Received Token:', token);
+    console.log('[AuthMiddleware] NODE_ENV:', process.env.NODE_ENV);
+
+    // FOR DEVELOPMENT ONLY: Allow RoleSimulator mock token
+    if (token.startsWith('demo-') && process.env.NODE_ENV !== 'production') {
+      req.user = {
+        id: '9077a2da-0d48-4505-9989-b68ec3a5dba7',
+        email: 'demo@example.com',
+        roles: [{ journal_id: 'mock-journal', role: 'author' }]
+      };
+      return next();
+    }
 
     // Verify token with Supabase Auth
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);

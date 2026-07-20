@@ -26,7 +26,7 @@ export default function SubmitWizard() {
     window.scrollTo(0, 0);
   }, []);
 
-  const { mutate: submitManuscript, isLoading: isSubmitting } = useApiMutation<FormData, SubmitResponse>(
+  const { mutate: submitManuscript, isLoading: isSubmitting } = useApiMutation<any, SubmitResponse>(
     '/api/author/submit',
     {
       method: 'POST',
@@ -50,12 +50,18 @@ export default function SubmitWizard() {
     }
   };
 
-  const handleComplete = async () => {
-    if (!metadata.titleEn?.trim() || !metadata.titleTr?.trim() || !metadata.abstractEn?.trim() || !metadata.abstractTr?.trim()) {
-      toast.error('Please ensure all mandatory English and Turkish fields are filled.');
-      return;
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (!metadata.titleEn?.trim() || !metadata.titleTr?.trim() || !metadata.abstractEn?.trim() || !metadata.abstractTr?.trim()) {
+        toast.error('Please ensure all mandatory English and Turkish fields are filled.');
+        return;
+      }
     }
 
+    nextStep();
+  };
+
+  const handleComplete = async () => {
     if (!selectedFile) {
       toast.error('Please upload a blinded PDF manuscript.');
       return;
@@ -66,11 +72,13 @@ export default function SubmitWizard() {
       authors
     };
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('metadata', JSON.stringify(metadataPayload));
+    const payload = {
+      title: metadata.titleEn || metadata.titleTr,
+      journal_id: '48d85d88-cf07-4745-893c-60037d52fa0e', // Real journal ID
+      coAuthors: authors
+    };
 
-    submitManuscript(formData);
+    submitManuscript(payload);
   };
 
   const steps = [
@@ -334,7 +342,7 @@ export default function SubmitWizard() {
 
           {currentStep < 3 ? (
             <button
-              onClick={nextStep}
+              onClick={handleNextStep}
               className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-sm font-semibold flex items-center gap-2 transition-all shadow-sm"
             >
               Next Step <ChevronRight className="w-4 h-4" />

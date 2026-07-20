@@ -46,10 +46,12 @@ export default function Track() {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
 
   // Dynamic status querying
-  const { data: submission, isLoading, error, refetch } = useApiQuery<SubmissionResponse>({
+  const { data: apiResponse, isLoading, error, refetch } = useApiQuery<any>({
     url: `/api/author/submissions/${id}`,
     enabled: !!id,
   });
+  
+  const submission: SubmissionResponse | undefined = apiResponse?.data;
 
   // Secure withdrawal mutation setup
   const { mutate: withdrawMutation, isLoading: isWithdrawMutating } = useApiMutation<undefined, void>(

@@ -20,11 +20,11 @@ export default function Submissions() {
     window.scrollTo(0, 0);
   }, []);
 
-  const { data: submissionsData, isLoading, error, refetch } = useApiQuery<Submission[]>({
+  const { data: submissionsData, isLoading, error, refetch } = useApiQuery<any>({
     url: '/api/author/submissions'
   });
 
-  const submissions = submissionsData || [];
+  const submissions = submissionsData?.data || [];
 
   const getStatusInfo = (status: string) => {
     switch (status) {

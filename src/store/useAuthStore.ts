@@ -134,7 +134,7 @@ export const useAuthStore = create<AuthState>()(
         activeRole: roles[0] || 'author',
         isAuthenticated: true,
         token: 'demo-token',
-        user: { id: 'demo-user-id', name: 'Demo User', email: 'demo@example.com', institution: '', orcid: '' } // Provide some defaults for mock demo
+        user: { id: '9077a2da-0d48-4505-9989-b68ec3a5dba7', name: 'Demo User', email: 'demo@example.com', institution: '', orcid: '' } // Provide some defaults for mock demo
       }),
     }),
     {
