@@ -15,9 +15,6 @@ import {
   Clock,
   BookMarked,
   Bell,
-  Mail,
-  MapPin,
-  Building,
   Loader2
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';

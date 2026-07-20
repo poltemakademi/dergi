@@ -60,7 +60,6 @@ export default function Profile() {
   };
 
   const isMissing = (field: string) => !isValid && missingFields.includes(field);
-  const isRequired = (field: string) => missingFields.includes(field) || formData[field as keyof typeof formData]; // simplified check: if it's missing it's required. Alternatively, we can check `isProfileComplete` empty profile to get all required fields.
 
   const emptyProfile = useMemo(() => isProfileComplete(activeRole, {}), [activeRole]);
   const isFieldRequired = (field: string) => emptyProfile.missingFields.includes(field);
