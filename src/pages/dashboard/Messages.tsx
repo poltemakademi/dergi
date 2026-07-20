@@ -145,7 +145,7 @@ export default function Messages() {
             <div className="p-8 flex justify-center items-center text-red-500 gap-2">
               <AlertCircle className="w-5 h-5" /> {error.message || 'Failed to load messages'}
             </div>
-          ) : messages.length === 0 ? (
+          ) : (!messages || messages.length === 0) ? (
             <div className="p-8 flex justify-center items-center text-slate-400">{t('msg.noMessages')}</div>
           ) : (
             messages.map((msg: any) => (
@@ -247,11 +247,11 @@ export default function Messages() {
                     className={`flex-1 bg-transparent border-none focus:ring-0 ${composeTo ? 'text-slate-800' : 'text-slate-400'}`}
                   >
                     <option value="" disabled>{locale === 'tr' ? 'Alıcı seçin...' : 'Select recipient...'}</option>
-                    {recipients.map(r => (
+                    {recipients && recipients.map((r: any) => (
                       <option key={r.email || r.id} value={r.email || r.id}>{r.name} ({r.role})</option>
                     ))}
                     {/* Add dynamic option if replying to someone not in list */}
-                    {composeTo && !recipients.find(r => r.email === composeTo || r.id === composeTo) && (
+                    {composeTo && (!recipients || !recipients.find((r: any) => r.email === composeTo || r.id === composeTo)) && (
                        <option value={composeTo}>{composeTo}</option>
                     )}
                   </select>

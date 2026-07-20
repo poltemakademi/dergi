@@ -6,6 +6,21 @@ import { useApiMutation } from '../../../hooks/useApiMutation';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
 import { toast } from 'sonner';
 
+interface Article {
+  id: string;
+  title: string;
+  category?: string;
+  author: string;
+  status: string;
+  date?: string;
+  pdfUrl?: string;
+}
+
+interface Reviewer {
+  id: string;
+  name: string;
+}
+
 export default function Articles() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -22,15 +37,15 @@ export default function Articles() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: articlesData, isLoading, error, refetch } = useApiQuery<any>({
+  const { data: articlesData, isLoading, error, refetch } = useApiQuery<{ data: Article[], totalPages: number }>({
     url: '/api/editor/articles',
     params: { search: debouncedSearch, status: statusFilter, page, limit: 10 }
   });
 
-  const articles = articlesData?.data || articlesData || [];
+  const articles: Article[] = articlesData?.data || ([] as Article[]);
   const totalPages = articlesData?.totalPages || 1;
 
-  const { data: reviewers = [] } = useApiQuery<any[]>({ url: '/api/editor/reviewers' });
+  const { data: reviewers = [] } = useApiQuery<Reviewer[]>({ url: '/api/editor/reviewers' });
 
   const { mutate: updateStatus } = useApiMutation<{ id: string, status: string }, any>(
     (payload: { id: string, status: string }) => `/api/editor/articles/${payload.id}/status`,
@@ -136,7 +151,7 @@ export default function Articles() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {articles.map((article: any) => (
+              {articles.map((article: Article) => (
                 <tr key={article.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="p-4">
                     <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{article.id}</span>
@@ -171,7 +186,7 @@ export default function Articles() {
                               defaultValue=""
                             >
                               <option value="" disabled>Select reviewer...</option>
-                              {reviewers.map((r: any) => (
+                              {reviewers && reviewers.map((r: Reviewer) => (
                                 <option key={r.id} value={r.id}>{r.name}</option>
                               ))}
                             </select>

@@ -56,6 +56,11 @@ import ReviewerEvaluate from './pages/dashboard/reviewer/Evaluate';
 import LayoutQueue from './pages/dashboard/layout/Queue';
 import LayoutProofs from './pages/dashboard/layout/Proofs';
 
+// Super Admin Pages
+import SystemOverview from './pages/dashboard/admin/SystemOverview';
+import UserManagement from './pages/dashboard/admin/UserManagement';
+import JournalManagement from './pages/dashboard/admin/JournalManagement';
+
 import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore } from './store/useAuthStore';
@@ -121,6 +126,11 @@ export default function App() {
             {/* Layout Editor Routes */}
             <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutQueue /></RoleGuard>} />
             <Route path="layout/proofs" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
+
+            {/* Super Admin Routes */}
+            <Route path="admin/system" element={<RoleGuard allowedRoles={['super_admin']}><SystemOverview /></RoleGuard>} />
+            <Route path="admin/users" element={<RoleGuard allowedRoles={['super_admin']}><UserManagement /></RoleGuard>} />
+            <Route path="admin/journals" element={<RoleGuard allowedRoles={['super_admin']}><JournalManagement /></RoleGuard>} />
           </Route>
 
           {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}

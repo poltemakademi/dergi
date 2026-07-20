@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Bell, Check, Info, AlertTriangle, CheckCircle, Clock, Filter, Trash2 } from 'lucide-react';
 import { useSSE, type Notification } from '../../hooks/useSSE';
 import { motion } from 'framer-motion';
-import { apiClient } from '../../services/api/client';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { useApiMutation } from '../../hooks/useApiMutation';
 
