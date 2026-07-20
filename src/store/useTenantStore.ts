@@ -26,6 +26,7 @@ export interface TenantMetadata {
   primaryColor?: string;
   secondaryColor?: string;
   featuredArticles?: Array<any>;
+  announcements?: Array<{ type?: string; date?: string; title: string; content: string }>;
 }
 
 export interface TenantArticle {
@@ -350,30 +351,8 @@ export const useTenantStore = create<TenantState>((set) => ({
 
       set({ archives: mappedIssues, isLoading: false });
     } catch (err: any) {
-      console.warn('Failed to fetch archives, using mock fallback:', err.message || err);
-      const fallbackArchives: TenantIssue[] = [
-        {
-          id: 'mock-vol-5',
-          journal_id: 'mock',
-          issue_title_native: 'Cilt 5, Sayı 2',
-          issue_title_english: 'Volume 5, Issue 2',
-          issue_volume: '5',
-          issue_number: '2',
-          published_at: '2025-12-01',
-          articles: []
-        },
-        {
-          id: 'mock-vol-5-1',
-          journal_id: 'mock',
-          issue_title_native: 'Cilt 5, Sayı 1',
-          issue_title_english: 'Volume 5, Issue 1',
-          issue_volume: '5',
-          issue_number: '1',
-          published_at: '2025-06-01',
-          articles: []
-        }
-      ];
-      set({ archives: fallbackArchives, isLoading: false });
+      console.warn('Failed to fetch archives:', err.message || err);
+      set({ archives: [], error: err.message || 'Failed to fetch archives', isLoading: false });
     }
   },
 
@@ -487,31 +466,8 @@ export const useTenantStore = create<TenantState>((set) => ({
       if (pageErr) throw pageErr;
       set({ pageContent: page || null, isLoading: false });
     } catch (err: any) {
-      console.warn('Failed to fetch CMS page content, using mock fallback:', err.message || err);
-      
-      const fallbackPage: TenantPage = {
-        id: 'mock-page',
-        journal_id: 'mock',
-        page_title: alias === 'policies' ? 'Ethical Guidelines & Policies' : 'Editorial Board',
-        page_alias: alias,
-        page_content: alias === 'policies' 
-          ? `
-            <h3>1. Double-Blind Peer Review Policy</h3>
-            <p>This journal employs a strict double-blind peer review process...</p>
-            <h3>2. Open Access Policy</h3>
-            <p>This journal provides immediate open access to its content...</p>
-          `
-          : `
-            <div class="space-y-6">
-              <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <h4 class="text-xs font-black text-indigo-600 uppercase tracking-widest mb-1">Editor-in-Chief</h4>
-                <h3 class="text-lg font-bold text-slate-900">Doç. Dr. Hüsamettin KARATAŞ</h3>
-              </div>
-            </div>
-          `
-      };
-      
-      set({ pageContent: fallbackPage, isLoading: false });
+      console.warn('Failed to fetch CMS page content:', err.message || err);
+      set({ pageContent: null, error: err.message || 'Failed to fetch page content', isLoading: false });
     }
   },
 

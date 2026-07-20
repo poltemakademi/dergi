@@ -6,8 +6,6 @@ import {
   ArrowRight,
   Filter,
   Check,
-  ArrowUpRight,
-  Loader2,
   AlertCircle,
   Download
 } from 'lucide-react';
@@ -83,7 +81,6 @@ export default function EarlyAccess() {
 
   const [articles, setArticles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
   const [sortOption, setSortOption] = useState<string>('Latest Minted');
@@ -110,7 +107,6 @@ export default function EarlyAccess() {
 
     const fetchEarlyAccess = async () => {
       setIsLoading(true);
-      setError(null);
       try {
         const response = await apiClient.get('/api/global/early-access');
         const data = response.data;
@@ -137,7 +133,6 @@ export default function EarlyAccess() {
       } catch (err: any) {
         console.warn('Failed to fetch early access articles, using fallback static data:', err.message || err);
         setArticles(ARTICLES);
-        setError(err.message || 'Failed to fetch');
       } finally {
         setIsLoading(false);
       }

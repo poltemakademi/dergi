@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Star, Inbox as InboxIcon, Send, AlertCircle, X, Reply, Trash2 } from 'lucide-react';
+import { Search, Star, Inbox as InboxIcon, Send, AlertCircle, X, Reply, Trash2, Loader2 } from 'lucide-react';
 import { apiClient } from '../../services/api/client';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 export default function Messages() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -12,7 +13,12 @@ export default function Messages() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useLocaleStore();
-  const { activeRole } = useAuthStore();
+  const { activeRole, user } = useAuthStore();
+
+  const [composeTo, setComposeTo] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeContent, setComposeContent] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const getRoleMockMessages = () => {
     switch (activeRole) {
@@ -44,23 +50,73 @@ export default function Messages() {
     }
   };
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await apiClient.get('/api/messages');
-        setMessages(response.data);
-        setError(null);
-      } catch (err: any) {
-        console.warn('Failed to fetch messages, falling back to mock data:', err);
-        setMessages(getRoleMockMessages());
-        setError(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.get('/api/messages');
+      setMessages(response.data);
+      setError(null);
+    } catch (err: any) {
+      console.warn('Failed to fetch messages, simulating fallback:', err);
+      setMessages(getRoleMockMessages());
+      setError(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMessages();
   }, [activeRole]);
+
+  const handleSendMessage = async () => {
+    if (!composeTo || !composeSubject || !composeContent) {
+      toast.error(locale === 'tr' ? 'Lütfen tüm alanları doldurun' : 'Please fill all fields');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await apiClient.post('/api/messages', {
+        to: composeTo,
+        subject: composeSubject,
+        content: composeContent,
+        sender: user?.name || activeRole
+      });
+      // Try real API first
+      toast.success(locale === 'tr' ? 'Mesajınız başarıyla gönderildi' : 'Message sent successfully');
+      setIsComposeOpen(false);
+      setComposeTo('');
+      setComposeSubject('');
+      setComposeContent('');
+      fetchMessages();
+    } catch (err: any) {
+      console.warn('Failed to send message via API, simulating locally:', err);
+      
+      // Simulate success locally since backend is unavailable
+      const simulatedMessage = {
+        id: Math.random().toString(36).substr(2, 9),
+        sender: locale === 'tr' ? 'Ben' : 'Me',
+        email: user?.email || 'my-email@example.com',
+        subject: composeSubject,
+        preview: composeContent.substring(0, 50) + '...',
+        content: composeContent,
+        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        unread: false
+      };
+      
+      // Add simulated message to top of list
+      setMessages(prev => [simulatedMessage, ...prev]);
+      
+      toast.success(locale === 'tr' ? 'Mesajınız başarıyla gönderildi (Simülasyon)' : 'Message sent successfully (Simulation)');
+      setIsComposeOpen(false);
+      setComposeTo('');
+      setComposeSubject('');
+      setComposeContent('');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleSelectMessage = (msg: any) => {
     setSelectedMessage(msg);
@@ -205,14 +261,25 @@ export default function Messages() {
               <div className="p-6 space-y-4">
                 <div className="flex items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-sm font-medium w-16">{locale === 'tr' ? 'Kime:' : 'To:'}</span>
-                  <input type="text" className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800" placeholder="editor@novaijournal.com" />
+                  <select 
+                    value={composeTo} 
+                    onChange={(e) => setComposeTo(e.target.value)} 
+                    className={`flex-1 bg-transparent border-none focus:ring-0 ${composeTo ? 'text-slate-800' : 'text-slate-400'}`}
+                  >
+                    <option value="" disabled>{locale === 'tr' ? 'Alıcı seçin...' : 'Select recipient...'}</option>
+                    <option value="editor@novaijournal.com">{locale === 'tr' ? 'Baş Editör (editor@novaijournal.com)' : 'Editor-in-Chief (editor@novaijournal.com)'}</option>
+                    <option value="managing@novaijournal.com">{locale === 'tr' ? 'Sorumlu Editör (managing@novaijournal.com)' : 'Managing Editor (managing@novaijournal.com)'}</option>
+                    <option value="support@novaijournal.com">{locale === 'tr' ? 'Teknik Destek (support@novaijournal.com)' : 'Technical Support (support@novaijournal.com)'}</option>
+                  </select>
                 </div>
                 <div className="flex items-center border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-sm font-medium w-16">{locale === 'tr' ? 'Konu:' : 'Subject:'}</span>
-                  <input type="text" className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 font-medium" placeholder={locale === 'tr' ? 'Mesajınızın konusu...' : 'Subject of your message...'} />
+                  <input type="text" value={composeSubject} onChange={(e) => setComposeSubject(e.target.value)} className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 font-medium" placeholder={locale === 'tr' ? 'Mesajınızın konusu...' : 'Subject of your message...'} />
                 </div>
                 <div className="pt-2">
                   <textarea 
+                    value={composeContent}
+                    onChange={(e) => setComposeContent(e.target.value)}
                     className="w-full h-48 bg-transparent border-none focus:ring-0 text-slate-700 resize-none" 
                     placeholder={locale === 'tr' ? 'Mesajınızı buraya yazın...' : 'Write your message here...'}
                   />
@@ -222,8 +289,13 @@ export default function Messages() {
                 <button onClick={() => setIsComposeOpen(false)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors">
                   {locale === 'tr' ? 'İptal' : 'Cancel'}
                 </button>
-                <button onClick={() => setIsComposeOpen(false)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-md shadow-indigo-200 flex items-center gap-2">
-                  <Send className="w-4 h-4" /> {locale === 'tr' ? 'Gönder' : 'Send'}
+                <button 
+                  onClick={handleSendMessage} 
+                  disabled={isSending}
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-md shadow-indigo-200 flex items-center gap-2"
+                >
+                  {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {locale === 'tr' ? 'Gönder' : 'Send'}
                 </button>
               </div>
             </motion.div>

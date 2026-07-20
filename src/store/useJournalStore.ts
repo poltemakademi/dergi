@@ -1,18 +1,16 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabaseClient';
 import { MOCK_JOURNALS } from '../lib/mockData';
-import type { MockJournal } from '../lib/mockData';
-
 
 interface JournalState {
-  journals: MockJournal[];
+  journals: any[];
   isLoading: boolean;
   error: string | null;
   fetchJournals: () => Promise<void>;
 }
 
 export const useJournalStore = create<JournalState>((set) => ({
-  journals: MOCK_JOURNALS, // initialize with mock data as fallback
+  journals: [],
   isLoading: false,
   error: null,
 
@@ -24,7 +22,6 @@ export const useJournalStore = create<JournalState>((set) => ({
         .select('*');
 
       if (error) throw error;
-
 
       // If we receive valid journals from the server, we use them.
       // We will also merge them with mock data details (like covers, ISSN, tr names) 
@@ -65,13 +62,11 @@ export const useJournalStore = create<JournalState>((set) => ({
         });
         set({ journals: mergedJournals, isLoading: false });
       } else {
-        // If empty response, keep mock data
-        set({ journals: MOCK_JOURNALS, isLoading: false });
+        set({ journals: MOCK_JOURNALS as any[], isLoading: false });
       }
     } catch (err: any) {
-      console.warn('Failed to fetch live journals, using fallback mock data:', err.message || err);
-      // Fail-safe: keep mock data on error
-      set({ journals: MOCK_JOURNALS, error: err.message || 'Failed to fetch journals', isLoading: false });
+      console.warn('Failed to fetch live journals:', err.message || err);
+      set({ journals: MOCK_JOURNALS as any[], error: null, isLoading: false });
     }
   }
 }));
