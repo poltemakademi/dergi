@@ -43,6 +43,7 @@ export const translations = {
     'dashboard.noData': 'No data found.',
     'dashboard.save': 'Save Changes',
     'dashboard.cancel': 'Cancel',
+    'dashboard.back': 'Go Back',
 
     // Overview
     'overview.title': 'Platform Analytics',
@@ -140,6 +141,7 @@ export const translations = {
     'dashboard.noData': 'Veri bulunamadı.',
     'dashboard.save': 'Değişiklikleri Kaydet',
     'dashboard.cancel': 'İptal',
+    'dashboard.back': 'Geri Dön',
 
     // Overview
     'overview.title': 'Platform Analitiği',

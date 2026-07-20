@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiClient } from '../../services/api/client';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -105,6 +105,8 @@ export default function Auth() {
   const [successMsg, setSuccessMsg] = useState('');
   
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,26 +132,91 @@ export default function Auth() {
         );
         
         toast.success(lang === 'TR' ? 'Demo girişi başarılı!' : 'Demo login successful!');
-        navigate('/dashboard');
+        navigate(from, { replace: true });
         return;
       }
 
       if (isLogin) {
-        const response = await apiClient.post('/api/auth/login', { email, password });
-        // Expected response format: { token: string, user: User, roles: Role[] }
-        const { token, user, roles } = response.data;
-        
-        useAuthStore.getState().setAuth(token, user, roles);
-        toast.success(lang === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
-        navigate('/dashboard');
-      } else {
-        await apiClient.post('/api/auth/register', { 
-          email, 
-          password, 
-          full_name: name, 
-          role: role 
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
-        
+
+        if (authError) throw authError;
+
+        const session = authData.session;
+        const user = authData.user;
+
+        if (session && user) {
+          // Fetch profiles & roles
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          const { data: members } = await supabase
+            .from('journal_members')
+            .select('journal_role')
+            .eq('user_id', user.id);
+
+          const roles = (members && members.length > 0)
+            ? members.map((m: any) => m.journal_role)
+            : ['author'];
+
+          useAuthStore.getState().setAuth(
+            session.access_token,
+            {
+              id: user.id,
+              name: profile?.name_surname || user.user_metadata?.full_name || 'Academic User',
+              email: user.email || email,
+              phone: profile?.phone,
+              institution: profile?.institution,
+              orcid: profile?.orcid_id,
+            },
+            roles
+          );
+
+          toast.success(lang === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
+          navigate(from, { replace: true });
+        }
+      } else {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+            }
+          }
+        });
+
+        if (authError) throw authError;
+
+        const user = authData.user;
+        if (user) {
+          // Insert user profile row
+          const { error: profileErr } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: user.id,
+              name_surname: name,
+              academic_email: email,
+            });
+            
+          if (profileErr) console.warn('Failed to insert user profile: ', profileErr);
+
+          // Assign default author role
+          const { error: roleErr } = await supabase
+            .from('journal_members')
+            .insert({
+              user_id: user.id,
+              journal_role: 'author'
+            });
+            
+          if (roleErr) console.warn('Failed to assign default author role: ', roleErr);
+        }
+
         setSuccessMsg(lang === 'TR' ? 'Kayıt başarılı! Giriş yapabilirsiniz.' : 'Registration successful! You can now log in.');
         toast.success(lang === 'TR' ? 'Kayıt başarılı!' : 'Registration successful!');
         setIsLogin(true);

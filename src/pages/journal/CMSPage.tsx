@@ -80,7 +80,7 @@ export default function CMSPage({ type }: CMSPageProps) {
   const icon = defaultContent[type].icon;
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-12 px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-32 md:pt-36 px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <button
@@ -104,15 +104,15 @@ export default function CMSPage({ type }: CMSPageProps) {
             </div>
           </div>
 
-          <div 
+          <div
             className="prose prose-slate prose-indigo max-w-none 
               prose-headings:font-bold prose-headings:tracking-tight 
               prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
               prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-4
               prose-li:text-slate-600"
-            dangerouslySetInnerHTML={{ __html: pageBody }} 
+            dangerouslySetInnerHTML={{ __html: pageBody }}
           />
-          
+
         </div>
       </div>
     </div>

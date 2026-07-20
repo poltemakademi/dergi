@@ -5,12 +5,19 @@ import { Download, User, ChevronDown, ChevronUp, ArrowLeft, Loader2 } from 'luci
 import { useTenantStore } from '../../store/useTenantStore';
 import { toast } from 'sonner';
 
+import { useTranslation } from '../../hooks/useTranslation';
+
 export default function CurrentIssue() {
   const navigate = useNavigate();
   const { tenant_slug } = useParams<{ tenant_slug: string }>();
   const [expandedAbstract, setExpandedAbstract] = useState<number | string | null>(null);
+  const { t } = useTranslation();
 
   const { currentIssue, isLoading, fetchCurrentIssue, trackDownload } = useTenantStore();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (tenant_slug) {
@@ -29,7 +36,7 @@ export default function CurrentIssue() {
     );
   }
 
-  const issueDate = currentIssue.published_at 
+  const issueDate = currentIssue.published_at
     ? new Date(currentIssue.published_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })
     : 'June/July 2026';
 
@@ -37,11 +44,41 @@ export default function CurrentIssue() {
 
   const handleDownload = async (artId: string | number) => {
     await trackDownload(artId);
+    
+    const article = articles.find(a => a.id === artId);
+    const pdfUrl = article?.pdf_url && article.pdf_url !== '#'
+      ? article.pdf_url
+      : '/sample.pdf';
+      
+    try {
+      // Fetch as blob to force a direct browser download on the device
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `${(article?.title || 'article').replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.warn('Direct Blob download failed, falling back to link click:', err);
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.target = '_blank';
+      link.setAttribute('download', `${(article?.title || 'article').replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
     toast.success("PDF download started & analytic logged!");
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-12 px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 font-sans text-slate-800 pb-20 pt-32 md:pt-36 px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <button
@@ -49,7 +86,7 @@ export default function CurrentIssue() {
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            Back
+            {t.journal.back}
           </button>
         </div>
 
@@ -81,7 +118,7 @@ export default function CurrentIssue() {
                   </div>
 
                   <div className="space-y-2">
-                    <h3 
+                    <h3
                       onClick={() => navigate(`../article/${article.id}`)}
                       className="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-700 transition-colors cursor-pointer"
                     >
@@ -124,7 +161,7 @@ export default function CurrentIssue() {
                   )}
 
                   <div className="flex items-center gap-3 pt-2">
-                    <button 
+                    <button
                       onClick={() => handleDownload(article.id)}
                       className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer"
                     >

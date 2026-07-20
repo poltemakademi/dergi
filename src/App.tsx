@@ -95,7 +95,7 @@ export default function App() {
           {/* --- 2. Secured Role-Based Dashboards --- */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardGuard />} />
-            
+
             {/* Shared Routes */}
             <Route path="role-selector" element={<RoleSelector />} />
             <Route path="profile" element={<Profile />} />

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useJournalStore } from '../../store/useJournalStore';
+import { seedSupabaseDatabase } from '../../utils/supabaseSeeder';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -25,7 +26,11 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetchJournals();
+    const initDbAndFetch = async () => {
+      await seedSupabaseDatabase();
+      await fetchJournals();
+    };
+    initDbAndFetch();
   }, [fetchJournals]);
 
   const handleSearch = (queryText: string) => {

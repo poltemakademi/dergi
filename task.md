@@ -24,8 +24,7 @@
     - `[x]` Fetch `GET /api/tenant/:slug/articles/:id`.
     - `[x]` Implement `POST /api/metrics/download/:id` for PDF download analytics.
   - `[x]` **CMS Pages (`/policies` & `/board`)**
-    - `[x]` Fetch `GET /api/tenant/:slug/pages/:page_alias`.
-                 later-->
+    - `[x]` Fetch `GET /api/tenant/:slug/pages/:page_alias` (Connected to Supabase Database)
 ## 🛠️ 3. Secured Role-Based Dashboards
 - `[ ]` **Shared Spaces**
   - `[x]` **Profile (`/profile`)**: Connect `PUT /api/user/profile` for IBAN and contact updates. (Implemented Role-Based Gate and mock fallback)

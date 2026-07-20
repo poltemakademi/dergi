@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useLocaleStore } from '../store/useLocaleStore';
 import { isProfileComplete } from '../utils/profileValidation';
@@ -12,11 +12,15 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import Profile from '../pages/dashboard/Profile'; // Intercept component
 
 export default function DashboardLayout() {
-  const { activeRole, user, activeTenant, roles, logout } = useAuthStore();
+  const { isAuthenticated, activeRole, user, activeTenant, roles, logout } = useAuthStore();
   const { locale, setLocale, t } = useLocaleStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
 
   const { isValid: isProfileValid } = useMemo(() => isProfileComplete(activeRole, user), [activeRole, user]);
 

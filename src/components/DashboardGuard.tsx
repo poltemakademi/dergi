@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import type { Role } from '../store/useAuthStore';
 
@@ -16,9 +16,10 @@ const getDefaultPathForRole = (role: Role) => {
 
 export default function DashboardGuard() {
   const { roles, isAuthenticated } = useAuthStore();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Smart Routing Logic

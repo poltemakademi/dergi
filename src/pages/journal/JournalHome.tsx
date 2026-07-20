@@ -27,7 +27,7 @@ export default function JournalHome() {
   const { activeTab } = useJournalTabStore();
   const [expandedAbstract, setExpandedAbstract] = useState<number | null>(null);
   const { t, lang } = useTranslation();
-  
+
   const { metadata, isLoading, fetchMetadata } = useTenantStore();
 
   // Scroll to top on page load
@@ -66,12 +66,12 @@ export default function JournalHome() {
   }
 
   // Editorial team mapping
-  const editorialBoard = metadata.editorialBoard && metadata.editorialBoard.length > 0 
-    ? metadata.editorialBoard 
+  const editorialBoard = metadata.editorialBoard && metadata.editorialBoard.length > 0
+    ? metadata.editorialBoard
     : [
-        { role: t.journal.editorRole, name: 'Doç. Dr. Hüsamettin KARATAŞ', title: t.journal.editorialSub },
-        { role: t.journal.assistantEditorRole, name: 'Dr. Zaidan Arif AL-ZEBARI', title: t.journal.assistantSub }
-      ];
+      { role: t.journal.editorRole, name: 'Doç. Dr. Hüsamettin KARATAŞ', title: t.journal.editorialSub },
+      { role: t.journal.assistantEditorRole, name: 'Dr. Zaidan Arif AL-ZEBARI', title: t.journal.assistantSub }
+    ];
 
   // Quick links definitions
   const quickLinks = [
@@ -94,8 +94,8 @@ export default function JournalHome() {
   }));
 
   const displayTitle = lang === 'TR' ? (metadata.tr || metadata.name) : metadata.name;
-  const displayDesc = typeof metadata.description === 'string' 
-    ? metadata.description 
+  const displayDesc = typeof metadata.description === 'string'
+    ? metadata.description
     : (metadata.description?.[lang] || metadata.description?.['EN'] || '');
 
   const getTabContent = (field: any) => {
@@ -202,6 +202,7 @@ export default function JournalHome() {
                       <button
                         key={i}
                         onClick={() => {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                           if (link.action === 'latest') navigate('./current');
                           else if (link.action === 'archive') navigate('./archives');
                           else if (link.action === 'submit') navigate('/dashboard/yazar/submit-wizard');
@@ -249,7 +250,7 @@ export default function JournalHome() {
 
                         {/* Title & Author */}
                         <div className="space-y-2">
-                          <h3 
+                          <h3
                             onClick={() => navigate(`./article/${article.id}`)}
                             className="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-700 transition-colors cursor-pointer"
                           >
@@ -292,7 +293,7 @@ export default function JournalHome() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-3 pt-2">
-                          <button 
+                          <button
                             onClick={() => navigate(`./article/${article.id}`)}
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer"
                           >
