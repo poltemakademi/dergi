@@ -121,6 +121,7 @@ export default function App() {
             {/* Layout Editor Routes */}
             <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutQueue /></RoleGuard>} />
             <Route path="layout/proofs" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
+            <Route path="layout/proofs/:id" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
           </Route>
 
           {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}

@@ -3,16 +3,21 @@ import { useSubmissionStore } from '../../../store/useSubmissionStore';
 import { Check, ChevronRight, Upload, Users, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiClient } from '../../../services/api/client';
 import { toast } from 'sonner';
 import { useLocaleStore } from '../../../store/useLocaleStore';
+import { useApiMutation } from '../../../hooks/useApiMutation';
+
+interface SubmitResponse {
+  success: boolean;
+  submissionId?: string;
+  message?: string;
+}
 
 export default function SubmitWizard() {
   const { currentStep, nextStep, prevStep, metadata, updateMetadata, fileUploaded, setFileUploaded, reset, authors, addAuthor, removeAuthor } = useSubmissionStore();
   const navigate = useNavigate();
   const { t } = useLocaleStore();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddingAuthor, setIsAddingAuthor] = useState(false);
   const [newAuthor, setNewAuthor] = useState({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -20,6 +25,23 @@ export default function SubmitWizard() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const { mutate: submitManuscript, isLoading: isSubmitting } = useApiMutation<FormData, SubmitResponse>(
+    '/api/author/submit',
+    {
+      method: 'POST',
+      onSuccess: () => {
+        reset();
+        navigate('/dashboard/yazar/submissions');
+      },
+      showSuccessToast: 'Manuscript submitted successfully',
+      showErrorToast: false,
+      onError: (err: { response?: { data?: { message?: string } }; message: string }) => {
+        const message = err.response?.data?.message || err.message || 'An error occurred';
+        toast.error(`Submission failed: ${message}`);
+      }
+    }
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -29,7 +51,7 @@ export default function SubmitWizard() {
   };
 
   const handleComplete = async () => {
-    if (!metadata.titleEn || !metadata.titleTr || !metadata.abstractEn || !metadata.abstractTr) {
+    if (!metadata.titleEn?.trim() || !metadata.titleTr?.trim() || !metadata.abstractEn?.trim() || !metadata.abstractTr?.trim()) {
       toast.error('Please ensure all mandatory English and Turkish fields are filled.');
       return;
     }
@@ -39,30 +61,16 @@ export default function SubmitWizard() {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('metadata', JSON.stringify(metadata));
+    const metadataPayload = {
+      ...metadata,
+      authors
+    };
 
-      await apiClient.post('/api/author/submit', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('metadata', JSON.stringify(metadataPayload));
 
-      toast.success('Manuscript submitted successfully');
-      reset();
-      navigate('/dashboard/yazar/submissions');
-    } catch (error: any) {
-      console.warn('Backend unavailable, simulating local submission:', error);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Manuscript submitted successfully (Local Mock)');
-      reset();
-      navigate('/dashboard/yazar/submissions');
-    } finally {
-      setIsSubmitting(false);
-    }
+    submitManuscript(formData);
   };
 
   const steps = [
@@ -116,8 +124,8 @@ export default function SubmitWizard() {
                 <div key={step.num} className="flex-1 flex flex-col items-center gap-2 relative z-10">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all duration-300 border-2 ${isPast ? 'bg-slate-900 border-slate-900 text-white' :
-                        isActive ? 'bg-white border-slate-900 text-slate-900' :
-                          'bg-white border-slate-200 text-slate-400'
+                      isActive ? 'bg-white border-slate-900 text-slate-900' :
+                        'bg-white border-slate-200 text-slate-400'
                       }`}
                   >
                     {isPast ? <Check className="w-4 h-4" /> : step.icon}
@@ -194,26 +202,26 @@ export default function SubmitWizard() {
                   <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
                     <h4 className="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wide">Add New Author</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                      <input type="text" placeholder="Full Name" value={newAuthor.name} onChange={(e) => setNewAuthor({...newAuthor, name: e.target.value})} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
-                      <input type="email" placeholder="Email Address" value={newAuthor.email} onChange={(e) => setNewAuthor({...newAuthor, email: e.target.value})} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
-                      <input type="text" placeholder="Institution" value={newAuthor.institution} onChange={(e) => setNewAuthor({...newAuthor, institution: e.target.value})} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
-                      <input type="text" placeholder="ORCID (Optional)" value={newAuthor.orcid} onChange={(e) => setNewAuthor({...newAuthor, orcid: e.target.value})} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
+                      <input type="text" placeholder="Full Name" value={newAuthor.name} onChange={(e) => setNewAuthor({ ...newAuthor, name: e.target.value })} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
+                      <input type="email" placeholder="Email Address" value={newAuthor.email} onChange={(e) => setNewAuthor({ ...newAuthor, email: e.target.value })} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
+                      <input type="text" placeholder="Institution" value={newAuthor.institution} onChange={(e) => setNewAuthor({ ...newAuthor, institution: e.target.value })} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
+                      <input type="text" placeholder="ORCID (Optional)" value={newAuthor.orcid} onChange={(e) => setNewAuthor({ ...newAuthor, orcid: e.target.value })} className="px-4 py-2 border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm" />
                     </div>
                     <label className="flex items-center gap-2 mb-6 cursor-pointer">
-                      <input type="checkbox" checked={newAuthor.isCorresponding} onChange={(e) => setNewAuthor({...newAuthor, isCorresponding: e.target.checked})} className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
+                      <input type="checkbox" checked={newAuthor.isCorresponding} onChange={(e) => setNewAuthor({ ...newAuthor, isCorresponding: e.target.checked })} className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4" />
                       <span className="text-sm font-medium text-slate-700">Is Corresponding Author</span>
                     </label>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => {
-                          if (!newAuthor.name || !newAuthor.email) {
+                          if (!newAuthor.name?.trim() || !newAuthor.email?.trim()) {
                             toast.error('Name and Email are required');
                             return;
                           }
                           addAuthor({ id: Math.random().toString(36).substr(2, 9), ...newAuthor });
                           setNewAuthor({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
                           setIsAddingAuthor(false);
-                        }} 
+                        }}
                         className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-bold hover:bg-slate-800"
                       >
                         Save Author
@@ -249,7 +257,7 @@ export default function SubmitWizard() {
                           </div>
                         </div>
                         <button onClick={() => removeAuthor(author.id)} className="p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
                         </button>
                       </div>
                     ))}

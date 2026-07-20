@@ -18,7 +18,7 @@
 > - `src/components/skeletons/*` — Loading skeleton components
 >
 > **While waiting**, you can work on:
-> - [ ] **0.1** Create `src/utils/blindingFilter.ts` — Reusable double-blind PII sanitization utility
+> - [x] **0.1** Create `src/utils/blindingFilter.ts` — Reusable double-blind PII sanitization utility
 >   - Define `BLINDED_FIELDS` constant array:
 >     ```
 >     authors, authorNames, author, author_id, author_name,
@@ -28,8 +28,8 @@
 >     ```
 >   - Export `applyBlindingFilter<T>(data: T)` function that strips all listed fields
 >   - Fully typed with generics — return type excludes blinded fields
-> - [ ] **0.2** Review all Reviewer page source code — identify every location where author metadata could leak
-> - [ ] **0.3** Review Author page source code — map all mock fallback patterns to be replaced
+> - [x] **0.2** Review all Reviewer page source code — identify every location where author metadata could leak
+> - [x] **0.3** Review Author page source code — map all mock fallback patterns to be replaced
 
 ---
 
@@ -39,7 +39,7 @@
 
 ### Author Submissions Page
 
-- [ ] **1.1** Integrate `src/pages/dashboard/author/Submissions.tsx`
+- [x] **1.1** Integrate `src/pages/dashboard/author/Submissions.tsx`
   - Replace mock fallback array with `useApiQuery({ url: '/api/author/submissions' })`
   - Submissions scoped to `user.id` (backend responsibility)
   - Loading state: `<TableSkeleton rows={5} cols={4} />`
@@ -49,17 +49,17 @@
 
 ### Author Submit Wizard (3-Step Form)
 
-- [ ] **1.2** Integrate `src/pages/dashboard/author/SubmitWizard.tsx`
+- [x] **1.2** Integrate `src/pages/dashboard/author/SubmitWizard.tsx`
   - **Step 1 — Metadata**: Already two-way bound via `useSubmissionStore.updateMetadata()`. No API call needed — cached in Zustand until final submit. ✅ No changes required
   - **Step 2 — Authors**: Add Author, Save Author, Delete Author, Cancel — all already functional via Zustand. ✅ No changes required
   - **Step 3 — File Upload**: File dropzone already working (`<input type="file" accept=".pdf">`). ✅ No changes required
-  - [ ] **1.2a** Wire `handleComplete()` — Replace mock fallback submission:
+  - [x] **1.2a** Wire `handleComplete()` — Replace mock fallback submission:
     - Use `useApiMutation` with `POST /api/author/submit`
     - Send `multipart/form-data`: `{ file: PDF Blob, metadata: JSON string }`
     - Backend creates: `submissions` row + `submission_authors` rows + stores PDF in Supabase Storage
     - **Remove** the mock success fallback entirely
     - On failure: `toast.error('Submission failed: {message}')` — do NOT simulate success
-  - [ ] **1.2b** Enforce dual-language validation gate (already implemented — verify it blocks):
+  - [x] **1.2b** Enforce dual-language validation gate (already implemented — verify it blocks):
     ```
     Required: titleEn, titleTr, abstractEn, abstractTr
     Missing any → toast.error('Please ensure all mandatory English and Turkish fields are filled.')
@@ -67,22 +67,22 @@
 
 ### Author Track Page (Manuscript Tracker)
 
-- [ ] **1.3** Integrate `src/pages/dashboard/author/Track.tsx`
-  - [ ] **1.3a** Fetch real submission status:
+- [x] **1.3** Integrate `src/pages/dashboard/author/Track.tsx`
+  - [x] **1.3a** Fetch real submission status:
     - `useApiQuery({ url: '/api/author/submissions/:id' })` (read `:id` from URL params)
     - Response: `{ id, title, status, created_at, statusHistory[] }`
     - Derive `currentStep` from `status` field (replace hardcoded mock step)
     - Loading state: `<CardSkeleton count={1} />` or custom stepper skeleton
-  - [ ] **1.3b** Wire "Withdraw Manuscript" button:
+  - [x] **1.3b** Wire "Withdraw Manuscript" button:
     - Use `useApiMutation` → `POST /api/author/withdraw/:id`
     - Remove mock fallback
     - On success: navigate to `/dashboard/yazar/submissions` + `toast.success('Manuscript withdrawn')`
     - On error: `toast.error('Withdrawal failed')`
-  - [ ] **1.3c** Upgrade withdrawal confirmation dialog:
+  - [x] **1.3c** Upgrade withdrawal confirmation dialog:
     - Replace `window.confirm()` with a styled custom `<dialog>` or modal
     - Modal content: explain consequences (reviewer tokens revoked, draft files archived)
     - Show `toast.loading('Processing withdrawal…')` after confirmation
-  - [ ] **1.3d** Add "Upload Revised PDF" button (revision state):
+  - [x] **1.3d** Add "Upload Revised PDF" button (revision state):
     - Only visible when submission status is `REVISION_REQUIRED`
     - Add hidden `<input type="file" accept=".pdf">`
     - On file select: `POST /api/author/revisions/:id` with `multipart/form-data`
@@ -111,45 +111,45 @@
 
 ### Reviewer Assigned Page
 
-- [ ] **2.1** Integrate `src/pages/dashboard/reviewer/Assigned.tsx`
+- [x] **2.1** Integrate `src/pages/dashboard/reviewer/Assigned.tsx`
   - Replace mock fallback with `useApiQuery({ url: '/api/reviewer/assigned' })`
   - Response: `[{ id, title, deadline, status }]` — **NO author metadata**
-  - [ ] **2.1a** Verify API response contains ZERO author-identifying fields:
+  - [x] **2.1a** Verify API response contains ZERO author-identifying fields:
     - ❌ `author_id` — must NOT be present
     - ❌ `author_name` — must NOT be present
     - ❌ `email` — must NOT be present
     - ❌ `institution` — must NOT be present
     - ❌ `orcid` — must NOT be present
     - ❌ `submission_authors` — must NOT be joined
-  - [ ] **2.1b** Apply `applyBlindingFilter()` as defense-in-depth on the response data
-  - [ ] **2.1c** Wire deadline badge → render real `deadline` from `review_assignments` table
+  - [x] **2.1b** Apply `applyBlindingFilter()` as defense-in-depth on the response data
+  - [x] **2.1c** Wire deadline badge → render real `deadline` from `review_assignments` table
   - "Start Evaluation" button → already functional (`<Link to="/dashboard/reviewer/evaluate/${item.id}">`)
   - Loading state: `<CardSkeleton count={3} />`
 
 ### Reviewer Evaluate Page (PDF + Scoring)
 
-- [ ] **2.2** Integrate `src/pages/dashboard/reviewer/Evaluate.tsx`
-  - [ ] **2.2a** Wire PDF Viewer (left panel):
+- [x] **2.2** Integrate `src/pages/dashboard/reviewer/Evaluate.tsx`
+  - [x] **2.2a** Wire PDF Viewer (left panel):
     - Fetch blinded PDF: `GET /api/reviewer/article/:id/pdf`
     - Render in `<iframe>` or `<embed>` or PDF.js viewer
     - File MUST be the **blinded version** from Supabase Storage
     - Replace fake skeleton placeholder with real PDF
-  - [ ] **2.2b** Fetch article metadata (blinded):
+  - [x] **2.2b** Fetch article metadata (blinded):
     - `useApiQuery({ url: '/api/reviewer/article/:id', transform: applyBlindingFilter })`
     - Use `transform` option to apply `applyBlindingFilter` before state is set
     - Only allowed fields: `id`, `title`, `abstract`, `keywords`, `status`, `pdf_url`
-  - [ ] **2.2c** Harden existing client-side sanitization:
+  - [x] **2.2c** Harden existing client-side sanitization:
     - Replace inline `delete sanitizedData.xxx` block (lines ~27-35) with `applyBlindingFilter()` call
     - This is SECONDARY defense — backend is primary enforcer
-  - [ ] **2.2d** Score buttons (1-5 for Originality, Rigor) — already functional ✅
-  - [ ] **2.2e** Textareas (Notes for Author, Confidential Comments for Editor) — already functional ✅
-  - [ ] **2.2f** Final Recommendation dropdown (Accept/Revision/Reject) — already functional ✅
-  - [ ] **2.2g** Wire "Save Draft" button:
+  - [x] **2.2d** Score buttons (1-5 for Originality, Rigor) — already functional ✅
+  - [x] **2.2e** Textareas (Notes for Author, Confidential Comments for Editor) — already functional ✅
+  - [x] **2.2f** Final Recommendation dropdown (Accept/Revision/Reject) — already functional ✅
+  - [x] **2.2g** Wire "Save Draft" button:
     - Currently just navigates back (no draft persistence)
     - Use `useApiMutation` → `PUT /api/reviewer/evaluate/:id/draft`
     - Payload: `{ scores, notesForAuthor, confidentialNotes, recommendation }` (partial OK)
     - `toast.success('Draft saved')` — stay on page, do NOT navigate
-  - [ ] **2.2h** Wire "Submit Review" button:
+  - [x] **2.2h** Wire "Submit Review" button:
     - Remove mock fallback
     - Use `useApiMutation` → `POST /api/reviewer/evaluate/:id`
     - Payload: `{ scores: { originality, rigor }, notesForAuthor, confidentialNotes, recommendation }`
@@ -159,13 +159,13 @@
 
 ### Double-Blind End-to-End Verification
 
-- [ ] **2.3** End-to-end double-blind audit:
-  - [ ] **2.3a** Submit a test article as Author (with name, email, institution, ORCID filled)
-  - [ ] **2.3b** Assign a reviewer to that article (Editor action — coordinate with Dev 1)
-  - [ ] **2.3c** Log in as Reviewer → navigate to Assigned → verify ZERO author info visible
-  - [ ] **2.3d** Open Evaluate page → inspect network response → confirm no PII in JSON
-  - [ ] **2.3e** View PDF → confirm it's the blinded version (no author names in header/footer)
-  - [ ] **2.3f** Check browser DevTools console → no author data logged
+- [x] **2.3** End-to-end double-blind audit:
+  - [x] **2.3a** Submit a test article as Author (with name, email, institution, ORCID filled)
+  - [x] **2.3b** Assign a reviewer to that article (Editor action — coordinate with Dev 1)
+  - [x] **2.3c** Log in as Reviewer → navigate to Assigned → verify ZERO author info visible
+  - [x] **2.3d** Open Evaluate page → inspect network response → confirm no PII in JSON
+  - [x] **2.3e** View PDF → confirm it's the blinded version (no author names in header/footer)
+  - [x] **2.3f** Check browser DevTools console → no author data logged
 
 ### ✅ Phase 2 Testing Checkpoint
 
@@ -187,33 +187,33 @@
 
 ### Layout Queue Page
 
-- [ ] **3.1** Integrate `src/pages/dashboard/layout/Queue.tsx`
+- [x] **3.1** Integrate `src/pages/dashboard/layout/Queue.tsx`
   - Replace mock fallback with `useApiQuery({ url: '/api/layout/queue' })`
   - Response: `[{ id, title, priority, date }]` — submissions with `status = 'IN_COPYEDITING'`
   - Scoped to active tenant (`journal_id`)
   - Loading state: `<TableSkeleton rows={5} cols={4} />`
-  - [ ] **3.1a** Fix "Process →" button routing:
+  - [x] **3.1a** Fix "Process →" button routing:
     - Current: all rows link to same `/dashboard/layout/proofs` (no article ID)
     - Fix: `<Link to="/dashboard/layout/proofs/${item.id}">` or `?articleId=${item.id}`
     - Choose URL param pattern consistent with Track page (`/proofs/:id`)
 
 ### Layout Proofs Page
 
-- [ ] **3.2** Integrate `src/pages/dashboard/layout/Proofs.tsx`
-  - [ ] **3.2a** Dynamic article loading:
+- [x] **3.2** Integrate `src/pages/dashboard/layout/Proofs.tsx`
+  - [x] **3.2a** Dynamic article loading:
     - Read `articleId` from URL params (`useParams()` or `useSearchParams()`)
     - Fetch metadata: `useApiQuery({ url: '/api/layout/article/:id' })`
     - Replace hardcoded `JMS-2025-015` with real article title, author, ID
-  - [ ] **3.2b** Wire "Download Raw Source" button:
+  - [x] **3.2b** Wire "Download Raw Source" button:
     - `GET /api/layout/article/:id/source` → download original PDF
     - Use `window.open(url)` or create a temporary `<a download>` link
     - `toast.success('Download started')` on click
-  - [ ] **3.2c** File upload dropzone — already working ✅ (hidden `<input type="file" accept=".pdf">`)
-  - [ ] **3.2d** Wire "Preview Upload" button:
+  - [x] **3.2c** File upload dropzone — already working ✅ (hidden `<input type="file" accept=".pdf">`)
+  - [x] **3.2d** Wire "Preview Upload" button:
     - Currently non-functional
     - On click: `URL.createObjectURL(selectedFile)` → `window.open()` in new tab
     - Only enabled when `selectedFile` is set
-  - [ ] **3.2e** Wire "Mark as READY_FOR_PRODUCTION" button:
+  - [x] **3.2e** Wire "Mark as READY_FOR_PRODUCTION" button:
     - Remove mock fallback
     - Use `useApiMutation` → `POST /api/layout/upload-proof`
     - Send `multipart/form-data: { file: PDF, articleId: uuid }`
@@ -238,16 +238,16 @@
 
 ## Phase 4: Cleanup & Hardening (Shared with Dev 1)
 
-- [ ] **4.1** Remove ALL mock fallback arrays from pages you own (Author, Reviewer, Layout)
-- [ ] **4.2** Remove any `(Local Mock)` or `(Local MOCK)` toast suffixes in your pages
-- [ ] **4.3** Remove `console.warn('Backend unavailable...')` fallback patterns in your pages
-- [ ] **4.4** Run full TypeScript build: `npm run build` — zero errors in your files
-- [ ] **4.5** Audit `any` types in files you own — replace with proper interfaces
-- [ ] **4.6** Double-blind final audit:
+- [x] **4.1** Remove ALL mock fallback arrays from pages you own (Author, Reviewer, Layout)
+- [x] **4.2** Remove any `(Local Mock)` or `(Local MOCK)` toast suffixes in your pages
+- [x] **4.3** Remove `console.warn('Backend unavailable...')` fallback patterns in your pages
+- [x] **4.4** Run full TypeScript build: `npm run build` — zero errors in your files
+- [x] **4.5** Audit `any` types in files you own — replace with proper interfaces
+- [x] **4.6** Double-blind final audit:
   - Search entire frontend codebase for any renderer that could expose author identity to reviewers
   - Grep for: `author_name`, `authorName`, `institution`, `email` in reviewer components
   - Verify `blindingFilter.ts` covers all PII fields
-- [ ] **4.7** Cross-role test: log in as Author → attempt Reviewer routes → verify redirect by `RoleGuard`
+- [x] **4.7** Cross-role test: log in as Author → attempt Reviewer routes → verify redirect by `RoleGuard`
 
 ---
 
