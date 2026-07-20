@@ -5,6 +5,8 @@ export interface MockArticle {
   doi: string;
   abstract: string;
   pages: string;
+  keywords?: string[];
+  pdf_url?: string;
 }
 
 export interface MockAnnouncement {
