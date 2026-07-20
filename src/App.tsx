@@ -3,6 +3,7 @@ import PublicLayout from './layouts/PublicLayout';
 import JournalLayout from './layouts/JournalLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardGuard from './components/DashboardGuard';
+import RoleGuard from './components/RoleGuard';
 
 // Public Pages
 import Home from './pages/public/Home';
@@ -103,23 +104,23 @@ export default function App() {
             <Route path="activity" element={<Activity />} />
 
             {/* Editor Routes */}
-            <Route path="editor/overview" element={<EditorOverview />} />
-            <Route path="editor/articles" element={<EditorArticles />} />
-            <Route path="editor/issues" element={<EditorIssues />} />
-            <Route path="editor/settings" element={<EditorSettings />} />
+            <Route path="editor/overview" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorOverview /></RoleGuard>} />
+            <Route path="editor/articles" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorArticles /></RoleGuard>} />
+            <Route path="editor/issues" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorIssues /></RoleGuard>} />
+            <Route path="editor/settings" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorSettings /></RoleGuard>} />
 
             {/* Author Routes */}
-            <Route path="yazar/submissions" element={<AuthorSubmissions />} />
-            <Route path="yazar/submit-wizard" element={<AuthorSubmitWizard />} />
-            <Route path="yazar/track/:id" element={<AuthorTrack />} />
+            <Route path="yazar/submissions" element={<RoleGuard allowedRoles={['author']}><AuthorSubmissions /></RoleGuard>} />
+            <Route path="yazar/submit-wizard" element={<RoleGuard allowedRoles={['author']}><AuthorSubmitWizard /></RoleGuard>} />
+            <Route path="yazar/track/:id" element={<RoleGuard allowedRoles={['author']}><AuthorTrack /></RoleGuard>} />
 
             {/* Reviewer Routes */}
-            <Route path="reviewer/assigned" element={<ReviewerAssigned />} />
-            <Route path="reviewer/evaluate/:id" element={<ReviewerEvaluate />} />
+            <Route path="reviewer/assigned" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerAssigned /></RoleGuard>} />
+            <Route path="reviewer/evaluate/:id" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerEvaluate /></RoleGuard>} />
 
             {/* Layout Editor Routes */}
-            <Route path="layout/queue" element={<LayoutQueue />} />
-            <Route path="layout/proofs" element={<LayoutProofs />} />
+            <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutQueue /></RoleGuard>} />
+            <Route path="layout/proofs" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
           </Route>
 
           {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}

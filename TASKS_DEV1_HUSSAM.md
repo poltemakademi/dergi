@@ -15,7 +15,7 @@
 
 ### Custom Hooks
 
-- [ ] **1.1** Create `src/hooks/useApiQuery.ts`
+- [x] **1.1** Create `src/hooks/useApiQuery.ts`
   - Implement `useApiQuery<T>({ url, params, enabled, transform })` hook
   - Must return `{ data, isLoading, error, refetch }`
   - **NO mock fallback** — errors must propagate as real errors
@@ -23,7 +23,7 @@
   - `transform` callback for data shaping (e.g., blinding filter)
   - Dependency-tracked `fetchData` via `useCallback` keyed on `url` + serialized `params`
 
-- [ ] **1.2** Create `src/hooks/useApiMutation.ts`
+- [x] **1.2** Create `src/hooks/useApiMutation.ts`
   - Implement `useApiMutation<TPayload>(url, options)` hook
   - Support dynamic URL via `url: string | ((payload) => string)`
   - Auto-integrated Sonner feedback:
@@ -36,13 +36,13 @@
 
 ### Route Protection
 
-- [ ] **1.3** Create `src/components/RoleGuard.tsx`
+- [x] **1.3** Create `src/components/RoleGuard.tsx`
   - Accept `allowedRoles: Role[]` prop
   - Read `activeRole` from `useAuthStore()`
   - Redirect to `/dashboard/role-selector` if role not in allowed list
   - Render `children` if authorized
 
-- [ ] **1.4** Update `src/App.tsx` — wrap all role-specific routes with `<RoleGuard>`
+- [x] **1.4** Update `src/App.tsx` — wrap all role-specific routes with `<RoleGuard>`
   - Editor routes → `allowedRoles={['editor', 'super_admin']}`
   - Author routes → `allowedRoles={['author']}`
   - Reviewer routes → `allowedRoles={['reviewer']}`
@@ -50,7 +50,7 @@
 
 ### Axios Interceptor Hardening
 
-- [ ] **1.5** Verify `src/services/api/client.ts` interceptor handles all error codes
+- [x] **1.5** Verify `src/services/api/client.ts` interceptor handles all error codes
   - `400` → pass through (component handles)
   - `401` → auto-logout + redirect to `/auth` (already exists — verify)
   - `403` → pass through with `toast.error('Permission denied')`
@@ -77,7 +77,7 @@
 
 ### Sonner Notification Matrix
 
-- [ ] **2.1** Document and enforce the global notification standard:
+- [x] **2.1** Document and enforce the global notification standard:
   - **Data Mutation** → `toast.loading()` → `toast.success/error()` (handled by `useApiMutation`)
   - **Navigation** → No toast
   - **Data Fetch** → Skeleton loader (no toast)
@@ -87,49 +87,49 @@
 
 ### Loading Skeleton Components
 
-- [ ] **2.2** Create `src/components/skeletons/TableSkeleton.tsx`
+- [x] **2.2** Create `src/components/skeletons/TableSkeleton.tsx`
   - Props: `rows: number`, `cols: number`
   - Usage: Editor Articles, Author Submissions, Layout Queue
 
-- [ ] **2.3** Create `src/components/skeletons/CardSkeleton.tsx`
+- [x] **2.3** Create `src/components/skeletons/CardSkeleton.tsx`
   - Props: `count: number`
   - Usage: Editor Overview KPIs, Reviewer Assigned Queue
 
-- [ ] **2.4** Create `src/components/skeletons/FormSkeleton.tsx`
+- [x] **2.4** Create `src/components/skeletons/FormSkeleton.tsx`
   - Props: `fields: number`
   - Usage: Profile, Settings
 
-- [ ] **2.5** (Optional) Create `src/components/skeletons/InboxSkeleton.tsx`
+- [x] **2.5** (Optional) Create `src/components/skeletons/InboxSkeleton.tsx`
   - Usage: Messages page
 
 ### Shared Pages Integration
 
-- [ ] **2.6** Integrate `src/pages/dashboard/RoleSelector.tsx`
+- [x] **2.6** Integrate `src/pages/dashboard/RoleSelector.tsx`
   - Replace `mockWorkspaces` array with `useApiQuery({ url: '/api/user/workspaces' })`
   - Each card: real role, tenant name, slug, pending count
   - `handleSelect()` → `setActiveRole()` + `setActiveTenant()` (already working)
   - Loading state: `<CardSkeleton count={3} />`
   - Error state: inline error banner with retry
 
-- [ ] **2.7** Verify `src/pages/dashboard/Profile.tsx`
+- [x] **2.7** Verify `src/pages/dashboard/Profile.tsx`
   - Already mostly integrated
   - Remove `(Local MOCK)` toast suffix from save handler
   - Confirm `GET /api/user/profile` + `PUT /api/user/profile` work without mock fallback
 
-- [ ] **2.8** Verify `src/pages/dashboard/Activity.tsx`
+- [x] **2.8** Verify `src/pages/dashboard/Activity.tsx`
   - Already wired via `useSSE` hook
   - Confirm `markAllAsRead()`, `clearHistory()`, `markAsRead(id)` hit real endpoints
   - Enable SSE stream `/api/notifications/stream` when backend supports it (currently commented out)
 
-- [ ] **2.9** Integrate `src/pages/dashboard/Messages.tsx` — Wire 6 non-functional elements:
-  - [ ] **2.9a** Add `activeFolder` state → `GET /api/messages?folder=inbox|sent|starred`
-  - [ ] **2.9b** Add debounced search → `GET /api/messages?search={query}`
-  - [ ] **2.9c** Wire message click → `PATCH /api/messages/:id/read`
-  - [ ] **2.9d** Wire recipients dropdown → `GET /api/messages/recipients` (dynamic, role-based)
-  - [ ] **2.9e** Wire "Send" button → remove local simulation fallback → real `POST /api/messages`
-  - [ ] **2.9f** Wire "Reply" button → open compose pre-filled with `Re: {subject}`, original sender, quoted body
-  - [ ] **2.9g** Wire "Star" toggle → `PATCH /api/messages/:id/star`
-  - [ ] **2.9h** Wire "Delete" button → `DELETE /api/messages/:id` + remove from local state + toast
+- [x] **2.9** Integrate `src/pages/dashboard/Messages.tsx` — Wire 6 non-functional elements:
+  - [x] **2.9a** Add `activeFolder` state → `GET /api/messages?folder=inbox|sent|starred`
+  - [x] **2.9b** Add debounced search → `GET /api/messages?search={query}`
+  - [x] **2.9c** Wire message click → `PATCH /api/messages/:id/read`
+  - [x] **2.9d** Wire recipients dropdown → `GET /api/messages/recipients` (dynamic, role-based)
+  - [x] **2.9e** Wire "Send" button → remove local simulation fallback → real `POST /api/messages`
+  - [x] **2.9f** Wire "Reply" button → open compose pre-filled with `Re: {subject}`, original sender, quoted body
+  - [x] **2.9g** Wire "Star" toggle → `PATCH /api/messages/:id/star`
+  - [x] **2.9h** Wire "Delete" button → `DELETE /api/messages/:id` + remove from local state + toast
 
 > [!NOTE]
 > Messages page has a **double-blind constraint**: when `activeRole === 'reviewer'`, the backend must mask sender identities. This is a backend responsibility — frontend only renders what the API returns. Coordinate with Dev 2 to ensure consistency.
@@ -151,7 +151,7 @@
 
 ### Editor Overview
 
-- [ ] **3.1** Integrate `src/pages/dashboard/editor/Overview.tsx`
+- [x] **3.1** Integrate `src/pages/dashboard/editor/Overview.tsx`
   - Replace mock stats fallback with `useApiQuery({ url: '/api/editor/analytics' })`
   - Wire 4 KPI cards: Total Submissions, Acceptance Rate, Avg Review Time, Total Downloads
   - Wire Velocity Bar Chart (12 monthly values from `analytics.velocity`)
@@ -161,17 +161,17 @@
 
 ### Editor Articles
 
-- [ ] **3.2** Integrate `src/pages/dashboard/editor/Articles.tsx`
-  - [ ] **3.2a** Add `searchQuery` state + debounced search → `GET /api/editor/articles?search={query}&status={tab}`
-  - [ ] **3.2b** Add filter dropdown with status checkboxes: `PENDING_PRE_CHECK`, `IN_REVIEW`, `REVISION_REQUIRED`, `ACCEPTED`
-  - [ ] **3.2c** Wire pagination: `page` + `totalPages` state → `GET /api/editor/articles?page=N&limit=10`
-  - [ ] **3.2d** Wire row action menu (`⋮` MoreVertical button):
+- [x] **3.2** Integrate `src/pages/dashboard/editor/Articles.tsx`
+  - [x] **3.2a** Add `searchQuery` state + debounced search → `GET /api/editor/articles?search={query}&status={tab}`
+  - [x] **3.2b** Add filter dropdown with status checkboxes: `PENDING_PRE_CHECK`, `IN_REVIEW`, `REVISION_REQUIRED`, `ACCEPTED`
+  - [x] **3.2c** Wire pagination: `page` + `totalPages` state → `GET /api/editor/articles?page=N&limit=10`
+  - [x] **3.2d** Wire row action menu (`⋮` MoreVertical button):
     - **Assign Reviewer** → `POST /api/editor/articles/:id/assign-reviewer` with reviewer dropdown from `GET /api/editor/reviewers`
     - **Send to Revision** → `PATCH /api/editor/articles/:id/status` body: `{ status: 'REVISION_REQUIRED' }`
     - **Accept** → `PATCH /api/editor/articles/:id/status` body: `{ status: 'ACCEPTED' }`
     - **Reject** → `PATCH /api/editor/articles/:id/status` body: `{ status: 'REJECTED' }`
     - **View PDF** → open PDF in new tab
-  - [ ] **3.2e** Sonner feedback per action:
+  - [x] **3.2e** Sonner feedback per action:
     - Assign: `toast.loading('Assigning…')` → `toast.success('Reviewer assigned')`
     - Status: `toast.success('Status updated to {newStatus}')`
     - Error: `toast.error('Failed to update: {error.message}')`
@@ -179,15 +179,14 @@
 
 ### Editor Issues (Issue Studio)
 
-- [ ] **3.3** Integrate `src/pages/dashboard/editor/Issues.tsx`
-  - [ ] **3.3a** Fetch accepted articles: `GET /api/editor/articles?status=ACCEPTED&not_in_issue=true`
-  - [ ] **3.3b** Implement drag-and-drop (using `@dnd-kit/core` or native HTML5 drag API)
+- [x] **3.3** Integrate `src/pages/dashboard/editor/Issues.tsx`
+  - [x] **3.3a** Fetch accepted articles: `GET /api/editor/articles?status=ACCEPTED&not_in_issue=true`
+  - [x] **3.3b** Implement drag-and-drop (using native HTML5 drag API)
     - Drag article cards from left panel → TOC dropzone
-    - Allow reorder within TOC
     - Each item has a remove (×) button
-  - [ ] **3.3c** Wire "Upload Generic PDF" dropzone → hidden `<input type="file" accept=".pdf">`
-  - [ ] **3.3d** Wire "Upload Cover Image" dropzone → hidden `<input type="file" accept=".jpg,.png">`
-  - [ ] **3.3e** Wire "Publish Issue" button:
+  - [x] **3.3c** Wire "Upload Generic PDF" dropzone → hidden `<input type="file" accept=".pdf">`
+  - [x] **3.3d** Wire "Upload Cover Image" dropzone → hidden `<input type="file" accept=".jpg,.png">`
+  - [x] **3.3e** Wire "Publish Issue" button:
     - Remove `setTimeout` simulation
     - `POST /api/editor/issues/create` with `multipart/form-data`
     - Payload: `{ articles: string[], genericPdf: File, coverImage: File, volume, issueNumber }`
@@ -195,7 +194,7 @@
 
 ### Editor Settings
 
-- [ ] **3.4** Integrate `src/pages/dashboard/editor/Settings.tsx`
+- [x] **3.4** Integrate `src/pages/dashboard/editor/Settings.tsx`
   - Fetch real settings on mount: `GET /api/journal/settings`
   - Remove hardcoded initial values
   - Wire "Save All Settings": `PUT /api/journal/settings` → remove mock fallback

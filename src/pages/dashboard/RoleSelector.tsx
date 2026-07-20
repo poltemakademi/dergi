@@ -3,17 +3,15 @@ import { useLocaleStore } from '../../store/useLocaleStore';
 import { ArrowRight, BookOpen, Users, LayoutDashboard, PenTool, CheckSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useApiQuery } from '../../hooks/useApiQuery';
+import { CardSkeleton } from '../../components/skeletons/CardSkeleton';
 
 export default function RoleSelector() {
   const { setActiveRole, setActiveTenant, user } = useAuthStore();
   const { t } = useLocaleStore();
   const navigate = useNavigate();
 
-  const mockWorkspaces = [
-    { id: '1', role: 'editor', tenantName: 'Journal of Modern Science', tenantSlug: 'jms', lastActive: '2 hours ago', stat: `42 ${t('stat.pending')}` },
-    { id: '2', role: 'reviewer', tenantName: 'Journal of Modern Science', tenantSlug: 'jms', lastActive: '1 day ago', stat: `2 ${t('stat.assigned')}` },
-    { id: '3', role: 'author', tenantName: 'International Physics Review', tenantSlug: 'ipr', lastActive: '5 days ago', stat: `1 ${t('stat.inReview')}` },
-  ];
+  const { data: workspaces, isLoading, error, refetch } = useApiQuery<any[]>({ url: '/api/user/workspaces' });
 
   const handleSelect = (workspace: any) => {
     setActiveRole(workspace.role);
@@ -55,6 +53,18 @@ export default function RoleSelector() {
         </p>
       </motion.div>
 
+      <div className="mb-8">
+        {isLoading && <CardSkeleton count={3} />}
+        
+        {error && (
+          <div className="rounded-lg bg-red-50 p-4 border border-red-200 flex justify-between items-center">
+            <span className="text-red-700 text-sm">{error.message || 'Failed to load workspaces.'}</span>
+            <button onClick={() => refetch()} className="text-red-700 hover:text-red-800 text-sm font-medium">Retry</button>
+          </div>
+        )}
+      </div>
+
+      {!isLoading && !error && workspaces && (
       <motion.div 
         initial="hidden"
         animate="show"
@@ -67,7 +77,7 @@ export default function RoleSelector() {
         }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        {mockWorkspaces.map((ws) => (
+        {workspaces.map((ws) => (
           <motion.button
             key={ws.id}
             variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
@@ -98,6 +108,7 @@ export default function RoleSelector() {
           </motion.button>
         ))}
       </motion.div>
+      )}
     </div>
   );
 }

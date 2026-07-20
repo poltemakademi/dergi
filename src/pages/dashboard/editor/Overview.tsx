@@ -1,49 +1,12 @@
-import { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Download, CheckCircle, Clock, BarChart3, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { apiClient } from '../../../services/api/client';
 import { useLocaleStore } from '../../../store/useLocaleStore';
+import { useApiQuery } from '../../../hooks/useApiQuery';
+import { CardSkeleton } from '../../../components/skeletons/CardSkeleton';
 
 export default function Overview() {
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { t } = useLocaleStore();
-
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const response = await apiClient.get('/api/editor/analytics');
-        setAnalytics(response.data);
-        setError(null);
-      } catch (err: any) {
-        console.warn('Failed to fetch analytics, falling back to mock data:', err);
-        setAnalytics({
-          totalSubmissions: '1,245',
-          acceptanceRate: '23.4%',
-          avgReviewTime: '14.2 days',
-          totalDownloads: '84.2k',
-          trends: {
-            submissions: '+12%',
-            acceptance: '-2%',
-            reviewTime: '-1.4',
-            downloads: '+8.5%'
-          },
-          velocity: [40, 55, 30, 70, 85, 60, 45, 90, 110, 80, 65, 95],
-          distribution: [
-            { label: t('stat.inReview') || 'In Review', count: 45, color: 'bg-amber-500', pct: 45 },
-            { label: 'Revision Required', count: 12, color: 'bg-rose-500', pct: 12 },
-            { label: 'Accepted', count: 28, color: 'bg-emerald-500', pct: 28 },
-            { label: t('stat.pending') || 'Pending', count: 8, color: 'bg-sky-500', pct: 8 }
-          ]
-        });
-        setError(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, [t]);
+  const { data: analytics, isLoading, error } = useApiQuery<any>({ url: '/api/editor/analytics' });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -64,9 +27,9 @@ export default function Overview() {
 
   if (error) {
     return (
-      <div className="p-12 flex flex-col items-center justify-center text-rose-500 gap-4">
+      <div className="p-12 flex flex-col items-center justify-center text-rose-500 gap-4 bg-white rounded-2xl border border-slate-200 shadow-sm mt-6">
         <AlertTriangle className="w-8 h-8" />
-        <p className="font-medium">{error}</p>
+        <p className="font-medium">{error.message || 'Failed to load analytics data.'}</p>
       </div>
     );
   }
@@ -83,7 +46,11 @@ export default function Overview() {
         <h2 className="text-xl font-bold text-slate-900">{t('overview.title')}</h2>
       </div>
 
-      {/* KPI Cards */}
+      {isLoading ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <>
+          {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { title: t('overview.totalSubmissions'), value: analytics?.totalSubmissions || '0', icon: FileText, trend: analytics?.trends?.submissions || '+0%' },
@@ -168,6 +135,8 @@ export default function Overview() {
           </div>
         </motion.div>
       </div>
+        </>
+      )}
     </motion.div>
   );
 }

@@ -1,15 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { User, Mail, Phone, Link as LinkIcon, Building2, Save, GraduationCap, FileText, Briefcase } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { apiClient } from '../../services/api/client';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { isProfileComplete } from '../../utils/profileValidation';
 import { toast } from 'sonner';
+import { useApiQuery } from '../../hooks/useApiQuery';
+import { useApiMutation } from '../../hooks/useApiMutation';
+import { FormSkeleton } from '../../components/skeletons/FormSkeleton';
 
 export default function Profile() {
   const { user, activeRole, updateUser } = useAuthStore();
   const { t, locale } = useLocaleStore();
-  const [isSaving, setIsSaving] = useState(false);
+
+  const { data: profileData, isLoading: isFetching } = useApiQuery<any>({ url: '/api/user/profile' });
+  const { mutate: updateProfile, isLoading: isSaving } = useApiMutation('/api/user/profile', {
+    method: 'PUT',
+    onSuccess: () => {
+      updateUser(formData);
+    }
+  });
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -23,16 +33,10 @@ export default function Profile() {
 
   // Fetch complete profile on mount
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await apiClient.get('/api/user/profile');
-        setFormData(prev => ({ ...prev, ...response.data }));
-      } catch (error) {
-        console.error('Failed to load profile details:', error);
-      }
-    };
-    fetchProfile();
-  }, []);
+    if (profileData) {
+      setFormData(prev => ({ ...prev, ...profileData }));
+    }
+  }, [profileData]);
 
   const { isValid, missingFields } = useMemo(() => isProfileComplete(activeRole, formData), [activeRole, formData]);
 
@@ -43,19 +47,10 @@ export default function Profile() {
       return;
     }
 
-    setIsSaving(true);
     try {
-      await apiClient.put('/api/user/profile', formData);
-      // Update global user state immediately
-      updateUser(formData);
-      toast.success(locale === 'tr' ? 'Profil güncellendi' : 'Profile updated successfully');
-    } catch (error: any) {
-      console.warn('Backend connection failed, applying changes locally for mockup:', error);
-      // Fallback: update global user state anyway so the lock screen goes away in our demo
-      updateUser(formData);
-      toast.success(locale === 'tr' ? 'Profil güncellendi (Yerel MOCK)' : 'Profile updated (Local MOCK)');
-    } finally {
-      setIsSaving(false);
+      await updateProfile(formData);
+    } catch (error) {
+      // Error is handled by useApiMutation sonner integration
     }
   };
 
@@ -81,6 +76,11 @@ export default function Profile() {
           </div>
         </div>
 
+        {isFetching ? (
+          <div className="p-8">
+            <FormSkeleton fields={5} />
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -200,6 +200,7 @@ export default function Profile() {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

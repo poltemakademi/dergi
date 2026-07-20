@@ -1,127 +1,91 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Star, Inbox as InboxIcon, Send, AlertCircle, X, Reply, Trash2, Loader2 } from 'lucide-react';
-import { apiClient } from '../../services/api/client';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useApiQuery } from '../../hooks/useApiQuery';
+import { useApiMutation } from '../../hooks/useApiMutation';
 
 export default function Messages() {
-  const [messages, setMessages] = useState<any[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { t, locale } = useLocaleStore();
   const { activeRole, user } = useAuthStore();
+  const [folder, setFolder] = useState<'inbox' | 'sent' | 'starred'>('inbox');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const { data: messages = [], isLoading, error, refetch } = useApiQuery<any[]>({
+    url: '/api/messages',
+    params: { folder, q: searchQuery }
+  });
+
+  const { data: recipients = [] } = useApiQuery<any[]>({
+    url: '/api/messages/recipients'
+  });
+
+  const { mutate: sendMessage, isLoading: isSending } = useApiMutation('/api/messages', {
+    method: 'POST',
+    onSuccess: () => {
+      setIsComposeOpen(false);
+      setComposeTo('');
+      setComposeSubject('');
+      setComposeContent('');
+      refetch();
+    },
+    showSuccessToast: locale === 'tr' ? 'Mesajınız başarıyla gönderildi' : 'Message sent successfully'
+  });
+
+  const { mutate: deleteMessage } = useApiMutation<{ id: string }, any>(
+    (payload) => `/api/messages/${payload.id}`, 
+    { method: 'DELETE', onSuccess: () => { setSelectedMessage(null); refetch(); }, showSuccessToast: true }
+  );
+
+  const { mutate: starMessage } = useApiMutation<{ id: string }, any>(
+    (payload) => `/api/messages/${payload.id}/star`, 
+    { method: 'PATCH', onSuccess: () => refetch(), showSuccessToast: false }
+  );
+  
+  const { mutate: markAsRead } = useApiMutation<{ id: string }, any>(
+    (payload) => `/api/messages/${payload.id}/read`, 
+    { method: 'PATCH', onSuccess: () => refetch(), showSuccessToast: false, showErrorToast: false }
+  );
 
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeContent, setComposeContent] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
-  const getRoleMockMessages = () => {
-    switch (activeRole) {
-      case 'editor':
-      case 'super_admin':
-        return [
-          { id: '1', sender: 'Dr. Ayşe Yılmaz', email: 'ayse.yilmaz@university.edu.tr', subject: 'New Submission: Deep Learning in Medicine', preview: 'A new manuscript has been submitted to the AI section...', content: 'Dear Editor,\n\nI have submitted my latest manuscript titled "Deep Learning in Medicine" to the AI section. Please review the attached files and let me know if any further changes are required.\n\nBest regards,\nDr. Ayşe Yılmaz', date: '10:45 AM', unread: true },
-          { id: '2', sender: 'System', email: 'noreply@novaijournal.com', subject: 'Weekly Analytics Report', preview: 'Your journal received 15 new submissions this week. Acceptance rate is at 23%.', content: 'Hello,\n\nHere is your weekly analytics report:\n- New Submissions: 15\n- Acceptance Rate: 23%\n- Pending Reviews: 8\n\nPlease log in to the dashboard to see detailed insights.', date: 'Yesterday', unread: false },
-          { id: '3', sender: 'Prof. John Doe', email: 'j.doe@institute.org', subject: 'Review Completed', preview: 'I have submitted my review for the manuscript #1042.', content: 'Dear Editor,\n\nI have completed the review for manuscript #1042. I recommend a major revision. Detailed comments are attached in the system.\n\nRegards,\nProf. John Doe', date: 'Oct 12', unread: false }
-        ];
-      case 'author':
-        return [
-          { id: '1', sender: 'Editorial Office', email: 'editor@novaijournal.com', subject: 'Manuscript Received', preview: 'We have successfully received your submission titled "Quantum Computing Advances".', content: 'Dear Author,\n\nWe have successfully received your submission titled "Quantum Computing Advances". It is currently undergoing preliminary checks. You will be notified once it is assigned to reviewers.\n\nSincerely,\nEditorial Office', date: '09:00 AM', unread: true },
-          { id: '2', sender: 'System Notification', email: 'noreply@novaijournal.com', subject: 'ORCID Verification Successful', preview: 'Your ORCID profile has been successfully linked to your account.', content: 'Hello,\n\nYour ORCID profile has been successfully linked and verified. This will be visible on all your future publications.\n\nThanks.', date: 'Yesterday', unread: false }
-        ];
-      case 'reviewer':
-        return [
-          { id: '1', sender: 'Managing Editor', email: 'managing@novaijournal.com', subject: 'Invitation to Review', preview: 'We would like to invite you to review a new manuscript in your field of expertise.', content: 'Dear Reviewer,\n\nBased on your expertise, we would like to invite you to review a new manuscript titled "Advanced Materials in Engineering". Please log in to accept or decline the invitation.\n\nBest,\nManaging Editor', date: '11:30 AM', unread: true },
-          { id: '2', sender: 'System Notification', email: 'noreply@novaijournal.com', subject: 'Reminder: Review Due in 3 Days', preview: 'This is a gentle reminder that your review for manuscript #892 is due soon.', content: 'Hello,\n\nThis is a gentle reminder that your review for manuscript #892 is due in 3 days. Please submit your comments as soon as possible.\n\nThanks.', date: '2 Days Ago', unread: false },
-          { id: '3', sender: 'Editorial Office', email: 'editor@novaijournal.com', subject: 'Thank You for Reviewing', preview: 'Thank you for your valuable contribution and timely review of the previous manuscript.', content: 'Dear Reviewer,\n\nThank you for your valuable contribution and timely review of the manuscript. Your efforts help maintain the high quality of our journal.\n\nSincerely,\nEditorial Office', date: 'Last Week', unread: false }
-        ];
-      case 'layout_editor':
-        return [
-          { id: '1', sender: 'Chief Editor', email: 'chief@novaijournal.com', subject: 'Issue #45 Ready for Typesetting', preview: 'All articles for Issue #45 have been approved. Please begin the galley proofing process.', content: 'Hello,\n\nAll articles for Issue #45 have been approved by the authors. Please begin the galley proofing and typesetting process. Target publication date is next month.\n\nBest,\nChief Editor', date: '08:15 AM', unread: true },
-          { id: '2', sender: 'Author (M. Demir)', email: 'm.demir@university.edu', subject: 'Galley Proof Corrections', preview: 'I have reviewed the proofs and highlighted two minor typos on page 4.', content: 'Dear Layout Editor,\n\nI have reviewed the galley proofs. Everything looks great, but I found two minor typos on page 4. I have added sticky notes to the PDF.\n\nRegards,\nM. Demir', date: 'Yesterday', unread: false }
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const fetchMessages = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiClient.get('/api/messages');
-      setMessages(response.data);
-      setError(null);
-    } catch (err: any) {
-      console.warn('Failed to fetch messages, simulating fallback:', err);
-      setMessages(getRoleMockMessages());
-      setError(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMessages();
-  }, [activeRole]);
-
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!composeTo || !composeSubject || !composeContent) {
       toast.error(locale === 'tr' ? 'Lütfen tüm alanları doldurun' : 'Please fill all fields');
       return;
     }
-
-    setIsSending(true);
-    try {
-      await apiClient.post('/api/messages', {
-        to: composeTo,
-        subject: composeSubject,
-        content: composeContent,
-        sender: user?.name || activeRole
-      });
-      // Try real API first
-      toast.success(locale === 'tr' ? 'Mesajınız başarıyla gönderildi' : 'Message sent successfully');
-      setIsComposeOpen(false);
-      setComposeTo('');
-      setComposeSubject('');
-      setComposeContent('');
-      fetchMessages();
-    } catch (err: any) {
-      console.warn('Failed to send message via API, simulating locally:', err);
-      
-      // Simulate success locally since backend is unavailable
-      const simulatedMessage = {
-        id: Math.random().toString(36).substr(2, 9),
-        sender: locale === 'tr' ? 'Ben' : 'Me',
-        email: user?.email || 'my-email@example.com',
-        subject: composeSubject,
-        preview: composeContent.substring(0, 50) + '...',
-        content: composeContent,
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        unread: false
-      };
-      
-      // Add simulated message to top of list
-      setMessages(prev => [simulatedMessage, ...prev]);
-      
-      toast.success(locale === 'tr' ? 'Mesajınız başarıyla gönderildi (Simülasyon)' : 'Message sent successfully (Simulation)');
-      setIsComposeOpen(false);
-      setComposeTo('');
-      setComposeSubject('');
-      setComposeContent('');
-    } finally {
-      setIsSending(false);
-    }
+    sendMessage({ to: composeTo, subject: composeSubject, content: composeContent, sender: user?.name || activeRole });
   };
 
   const handleSelectMessage = (msg: any) => {
     setSelectedMessage(msg);
     if (msg.unread) {
-      setMessages(messages.map(m => m.id === msg.id ? { ...m, unread: false } : m));
+      markAsRead({ id: msg.id });
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedMessage) {
+      deleteMessage({ id: selectedMessage.id });
+    }
+  };
+
+  const handleStar = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    starMessage({ id });
+  };
+
+  const handleReply = () => {
+    if (selectedMessage) {
+      setComposeTo(selectedMessage.email || selectedMessage.sender);
+      setComposeSubject(`Re: ${selectedMessage.subject}`);
+      setIsComposeOpen(true);
     }
   };
 
@@ -138,15 +102,23 @@ export default function Messages() {
           </button>
         </div>
         <div className="p-2 space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white text-indigo-600 font-bold shadow-sm border border-slate-100">
+          <button 
+            onClick={() => setFolder('inbox')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold transition-colors ${folder === 'inbox' ? 'bg-white text-indigo-600 shadow-sm border border-slate-100' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
             <InboxIcon className="w-5 h-5" /> {t('msg.inbox')}
-            <span className="ml-auto bg-indigo-100 text-indigo-600 text-xs px-2 py-0.5 rounded-full">{messages.filter(m => m.unread).length || 0}</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors">
-            <Send className="w-5 h-5 text-slate-400" /> {t('msg.sent')}
+          <button 
+            onClick={() => setFolder('sent')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold transition-colors ${folder === 'sent' ? 'bg-white text-indigo-600 shadow-sm border border-slate-100' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            <Send className="w-5 h-5" /> {t('msg.sent')}
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors">
-            <Star className="w-5 h-5 text-slate-400" /> {t('msg.starred')}
+          <button 
+            onClick={() => setFolder('starred')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold transition-colors ${folder === 'starred' ? 'bg-white text-indigo-600 shadow-sm border border-slate-100' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            <Star className="w-5 h-5" /> {t('msg.starred')}
           </button>
         </div>
       </div>
@@ -156,7 +128,13 @@ export default function Messages() {
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder={t('msg.search')} className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all" />
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('msg.search')} 
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all" 
+            />
           </div>
         </div>
 
@@ -165,12 +143,12 @@ export default function Messages() {
             <div className="p-8 flex justify-center items-center text-slate-400">{t('dashboard.loading')}</div>
           ) : error ? (
             <div className="p-8 flex justify-center items-center text-red-500 gap-2">
-              <AlertCircle className="w-5 h-5" /> {error}
+              <AlertCircle className="w-5 h-5" /> {error.message || 'Failed to load messages'}
             </div>
           ) : messages.length === 0 ? (
             <div className="p-8 flex justify-center items-center text-slate-400">{t('msg.noMessages')}</div>
           ) : (
-            messages.map(msg => (
+            messages.map((msg: any) => (
               <div 
                 key={msg.id} 
                 onClick={() => handleSelectMessage(msg)}
@@ -184,6 +162,11 @@ export default function Messages() {
                   <h5 className={`text-sm mb-1 ${msg.unread ? 'font-bold text-slate-800' : 'text-slate-700'}`}>{msg.subject}</h5>
                   <p className="text-sm text-slate-500 truncate">{msg.preview || msg.content}</p>
                 </div>
+                <div className="shrink-0 flex items-center">
+                  <button onClick={(e) => handleStar(e, msg.id)} className="text-slate-400 hover:text-amber-500">
+                    <Star className={`w-4 h-4 ${msg.starred ? 'fill-amber-500 text-amber-500' : ''}`} />
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -194,21 +177,19 @@ export default function Messages() {
       <div className={`flex-1 flex flex-col bg-slate-50/30 ${!selectedMessage ? 'hidden md:flex' : 'flex'}`}>
         {selectedMessage ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {/* Detail Header */}
             <div className="p-6 border-b border-slate-100 bg-white shrink-0">
               <div className="flex items-start justify-between mb-6">
                 <h2 className="text-xl font-bold text-slate-900">{selectedMessage.subject}</h2>
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors tooltip-trigger">
+                  <button onClick={handleReply} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors tooltip-trigger">
                     <Reply className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
-                    <Star className="w-5 h-5" />
+                  <button onClick={(e) => handleStar(e, selectedMessage.id)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
+                    <Star className={`w-5 h-5 ${selectedMessage.starred ? 'fill-amber-500 text-amber-500' : ''}`} />
                   </button>
-                  <button className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" onClick={() => setSelectedMessage(null)}>
+                  <button onClick={handleDelete} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                     <Trash2 className="w-5 h-5" />
                   </button>
-                  {/* Mobile Back Button */}
                   <button className="md:hidden p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors ml-2" onClick={() => setSelectedMessage(null)}>
                     <X className="w-5 h-5" />
                   </button>
@@ -217,7 +198,7 @@ export default function Messages() {
               
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                  {selectedMessage.sender.charAt(0)}
+                  {selectedMessage.sender?.charAt(0) || 'U'}
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900">{selectedMessage.sender}</h4>
@@ -229,7 +210,6 @@ export default function Messages() {
               </div>
             </div>
 
-            {/* Detail Body */}
             <div className="p-8 overflow-y-auto flex-1 text-slate-700 whitespace-pre-wrap leading-relaxed">
               {selectedMessage.content}
             </div>
@@ -267,9 +247,13 @@ export default function Messages() {
                     className={`flex-1 bg-transparent border-none focus:ring-0 ${composeTo ? 'text-slate-800' : 'text-slate-400'}`}
                   >
                     <option value="" disabled>{locale === 'tr' ? 'Alıcı seçin...' : 'Select recipient...'}</option>
-                    <option value="editor@novaijournal.com">{locale === 'tr' ? 'Baş Editör (editor@novaijournal.com)' : 'Editor-in-Chief (editor@novaijournal.com)'}</option>
-                    <option value="managing@novaijournal.com">{locale === 'tr' ? 'Sorumlu Editör (managing@novaijournal.com)' : 'Managing Editor (managing@novaijournal.com)'}</option>
-                    <option value="support@novaijournal.com">{locale === 'tr' ? 'Teknik Destek (support@novaijournal.com)' : 'Technical Support (support@novaijournal.com)'}</option>
+                    {recipients.map(r => (
+                      <option key={r.email || r.id} value={r.email || r.id}>{r.name} ({r.role})</option>
+                    ))}
+                    {/* Add dynamic option if replying to someone not in list */}
+                    {composeTo && !recipients.find(r => r.email === composeTo || r.id === composeTo) && (
+                       <option value={composeTo}>{composeTo}</option>
+                    )}
                   </select>
                 </div>
                 <div className="flex items-center border-b border-slate-100 pb-2">

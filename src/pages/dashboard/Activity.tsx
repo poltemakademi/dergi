@@ -2,15 +2,22 @@ import { useState } from 'react';
 import { Bell, Check, Info, AlertTriangle, CheckCircle, Clock, Filter, Trash2 } from 'lucide-react';
 import { useSSE, type Notification } from '../../hooks/useSSE';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import { apiClient } from '../../services/api/client';
 import { useLocaleStore } from '../../store/useLocaleStore';
+import { useApiMutation } from '../../hooks/useApiMutation';
 
 export default function Activity() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, refresh } = useSSE();
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
-  const [isDeleting, setIsDeleting] = useState(false);
   const { t, locale } = useLocaleStore();
+
+  const { mutate: clearHistoryMutation, isLoading: isDeleting } = useApiMutation('/api/notifications', {
+    method: 'DELETE',
+    onSuccess: () => {
+      refresh();
+    },
+    showSuccessToast: locale === 'tr' ? 'Bildirim geçmişi temizlendi.' : 'Notification history cleared.'
+  });
 
   const filteredNotifications = notifications.filter(n => filter === 'ALL' || !n.isRead);
 
@@ -37,16 +44,7 @@ export default function Activity() {
 
   const clearAllHistory = async () => {
     if (!window.confirm(locale === 'tr' ? 'Tüm bildirim geçmişini silmek istediğinize emin misiniz?' : 'Are you sure you want to clear all notification history?')) return;
-    setIsDeleting(true);
-    try {
-      await apiClient.delete('/api/notifications');
-      toast.success(locale === 'tr' ? 'Bildirim geçmişi temizlendi.' : 'Notification history cleared.');
-      refresh();
-    } catch (err) {
-      toast.error(t('dashboard.error'));
-    } finally {
-      setIsDeleting(false);
-    }
+    clearHistoryMutation();
   };
 
   return (

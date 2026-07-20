@@ -1,39 +1,66 @@
-import { useState } from 'react';
-import { Save, Globe, Image as ImageIcon, BookOpen } from 'lucide-react';
-import { apiClient } from '../../../services/api/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { Save, Globe, Image as ImageIcon, BookOpen, AlertTriangle } from 'lucide-react';
 import { useLocaleStore } from '../../../store/useLocaleStore';
+import { useApiQuery } from '../../../hooks/useApiQuery';
+import { useApiMutation } from '../../../hooks/useApiMutation';
+import { FormSkeleton } from '../../../components/skeletons/FormSkeleton';
 
 export default function Settings() {
-  const [isSaving, setIsSaving] = useState(false);
   const { t, locale } = useLocaleStore();
+  
+  const { data: fetchedSettings, isLoading, error } = useApiQuery<any>({
+    url: '/api/journal/settings'
+  });
+
   const [settings, setSettings] = useState({
-    journalName: 'Journal of Modern Science',
-    abbreviation: 'JMS',
-    issn: '1234-5678',
-    eIssn: '8765-4321',
-    aimsScope: 'The Journal of Modern Science is an open-access peer-reviewed journal dedicated to publishing high-quality research...',
-    crossrefPrefix: '10.1234',
+    journalName: '',
+    abbreviation: '',
+    issn: '',
+    eIssn: '',
+    aimsScope: '',
+    crossrefPrefix: '',
     doajKey: ''
+  });
+
+  useEffect(() => {
+    if (fetchedSettings) {
+      setSettings({
+        journalName: fetchedSettings.journalName || '',
+        abbreviation: fetchedSettings.abbreviation || '',
+        issn: fetchedSettings.issn || '',
+        eIssn: fetchedSettings.eIssn || '',
+        aimsScope: fetchedSettings.aimsScope || '',
+        crossrefPrefix: fetchedSettings.crossrefPrefix || '',
+        doajKey: fetchedSettings.doajKey || ''
+      });
+    }
+  }, [fetchedSettings]);
+
+  const { mutate: updateSettings, isLoading: isSaving } = useApiMutation('/api/journal/settings', {
+    method: 'PUT',
+    showSuccessToast: locale === 'tr' ? 'Ayarlar başarıyla kaydedildi' : 'Settings saved successfully'
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setSettings(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await apiClient.put('/api/editor/settings', settings);
-      toast.success(locale === 'tr' ? 'Ayarlar başarıyla kaydedildi' : 'Settings saved successfully');
-    } catch (err: any) {
-      console.warn('Backend unavailable, simulating save locally:', err);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      toast.success(locale === 'tr' ? 'Ayarlar başarıyla kaydedildi (Yerel)' : 'Settings saved successfully (Local Mock)');
-    } finally {
-      setIsSaving(false);
-    }
+  const handleSave = () => {
+    updateSettings(settings);
   };
+
+  if (isLoading) {
+    return <FormSkeleton fields={7} />;
+  }
+
+  if (error) {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center text-rose-500 gap-4 bg-white rounded-2xl border border-slate-200 shadow-sm mt-6">
+        <AlertTriangle className="w-8 h-8" />
+        <p className="font-medium">{error.message || 'Failed to load settings.'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl space-y-8">
