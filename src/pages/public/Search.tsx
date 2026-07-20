@@ -20,7 +20,7 @@ export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get('q') || '';
 
-  const { journals, fetchJournals, isLoading: isJournalsLoading } = useJournalStore();
+  const { journals, fetchJournals } = useJournalStore();
   const [searchInput, setSearchInput] = useState(queryParam);
   const [searchResults, setSearchResults] = useState<{ articles: any[]; journals: any[]; doiMatches?: any[] } | null>(null);
   const [isSearching, setIsSearching] = useState(false);

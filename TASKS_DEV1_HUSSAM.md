@@ -219,20 +219,20 @@
 > [!NOTE]
 > The `super_admin` role is referenced in `DashboardGuard` and route protection, but **no admin pages exist yet**. This phase covers planning and scaffolding only.
 
-- [ ] **4.1** Define Super Admin page requirements:
+- [x] **4.1** Define Super Admin page requirements:
   - System-wide analytics (cross-journal)
   - User management (CRUD on `profiles` + `journal_members`)
   - Journal management (create/edit/deactivate journals)
   - System settings / configuration
   - Audit logs
 
-- [ ] **4.2** Create route scaffolding in `src/App.tsx`:
+- [x] **4.2** Create route scaffolding in `src/App.tsx`:
   - `/dashboard/admin/system` → SystemOverview placeholder
   - `/dashboard/admin/users` → UserManagement placeholder
   - `/dashboard/admin/journals` → JournalManagement placeholder
   - Wrap with `<RoleGuard allowedRoles={['super_admin']}>`
 
-- [ ] **4.3** Define required backend endpoints:
+- [x] **4.3** Define required backend endpoints:
   - `GET /api/admin/analytics` → Cross-journal metrics
   - `GET /api/admin/users` → Paginated user list
   - `PATCH /api/admin/users/:id/role` → Role assignment
@@ -240,19 +240,19 @@
   - `POST /api/admin/journals` → Create journal
   - `PUT /api/admin/journals/:id` → Edit journal
 
-- [ ] **4.4** Create placeholder page components with skeleton UIs
+- [x] **4.4** Create placeholder page components with skeleton UIs
 
 ---
 
 ## Phase 5: Cleanup & Hardening (Shared with Dev 2)
 
-- [ ] **5.1** Remove ALL mock fallback arrays from pages you own (Editor, Shared)
-- [ ] **5.2** Remove `(Local Mock)` and `(Local MOCK)` toast suffixes
-- [ ] **5.3** Remove `console.warn('Backend unavailable...')` fallback patterns
-- [ ] **5.4** Run full TypeScript build: `npm run build` — zero errors
-- [ ] **5.5** Audit `any` types in files you own — replace with proper interfaces
-- [ ] **5.6** Cross-role penetration test: log in as Reviewer → attempt Editor routes → verify redirect
-- [ ] **5.7** Verify every button produces Sonner feedback (no silent clicks)
+- [x] **5.1** Remove ALL mock fallback arrays from pages you own (Editor, Shared)
+- [x] **5.2** Remove `(Local Mock)` and `(Local MOCK)` toast suffixes
+- [x] **5.3** Remove `console.warn('Backend unavailable...')` fallback patterns
+- [x] **5.4** Run full TypeScript build: `npm run build` — zero errors
+- [x] **5.5** Audit `any` types in files you own — replace with proper interfaces
+- [x] **5.6** Cross-role penetration test: log in as Reviewer → attempt Editor routes → verify redirect
+- [x] **5.7** Verify every button produces Sonner feedback (no silent clicks)
 
 ---
 
