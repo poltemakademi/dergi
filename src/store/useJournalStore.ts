@@ -1,12 +1,6 @@
 import { create } from 'zustand';
-<<<<<<< HEAD
-import { apiClient } from '../services/api/client';
-=======
 import { supabase } from '../lib/supabaseClient';
 import { MOCK_JOURNALS } from '../lib/mockData';
-import type { MockJournal } from '../lib/mockData';
-
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
 
 interface JournalState {
   journals: any[];
@@ -23,20 +17,11 @@ export const useJournalStore = create<JournalState>((set) => ({
   fetchJournals: async () => {
     set({ isLoading: true, error: null });
     try {
-<<<<<<< HEAD
-      const response = await apiClient.get('/api/global/search', {
-        params: { q: '', type: 'journals' }
-      });
-      const fetchedData = response.data;
-      if (Array.isArray(fetchedData)) {
-        set({ journals: fetchedData, isLoading: false });
-=======
       const { data: fetchedData, error } = await supabase
         .from('journals')
         .select('*');
 
       if (error) throw error;
-
 
       // If we receive valid journals from the server, we use them.
       // We will also merge them with mock data details (like covers, ISSN, tr names) 
@@ -76,13 +61,12 @@ export const useJournalStore = create<JournalState>((set) => ({
           };
         });
         set({ journals: mergedJournals, isLoading: false });
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
       } else {
-        set({ journals: [], isLoading: false });
+        set({ journals: MOCK_JOURNALS as any[], isLoading: false });
       }
     } catch (err: any) {
       console.warn('Failed to fetch live journals:', err.message || err);
-      set({ journals: [], error: err.message || 'Failed to fetch journals', isLoading: false });
+      set({ journals: MOCK_JOURNALS as any[], error: null, isLoading: false });
     }
   }
 }));

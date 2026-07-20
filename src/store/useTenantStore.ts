@@ -1,10 +1,6 @@
 import { create } from 'zustand';
-<<<<<<< HEAD
-import { apiClient } from '../services/api/client';
-=======
 import { supabase } from '../lib/supabaseClient';
 import { MOCK_JOURNALS } from '../lib/mockData';
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
 
 export interface TenantMetadata {
   id: string;
@@ -106,36 +102,6 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchMetadata: async (slug: string) => {
     set({ isLoading: true, error: null });
     try {
-<<<<<<< HEAD
-      const response = await apiClient.get(`/api/tenant/${slug}/metadata`);
-      const fetched = response.data;
-      
-      const mergedMetadata: TenantMetadata = {
-        id: fetched?.id || 'JOURNAL',
-        slug: fetched?.slug || slug,
-        name: fetched?.name || '',
-        tr: fetched?.tr || fetched?.name || '',
-        issn: fetched?.issn || 'XXXX-XXXX',
-        index: fetched?.index || 'Crossref Indexed',
-        indexColor: fetched?.indexColor || 'text-slate-700 bg-slate-50 border-slate-200',
-        cover: fetched?.cover || fetched?.cover_image || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop',
-        impactFactor: fetched?.impactFactor || '0.0',
-        reviewTime: fetched?.reviewTime || '4 Weeks Avg',
-        acceptRate: fetched?.acceptRate || '20%',
-        articlesCount: fetched?.articlesCount || '0',
-        primaryColor: fetched?.primaryColor || fetched?.brand_color || '#4f46e5',
-        secondaryColor: fetched?.secondaryColor || '#6366f1',
-        description: fetched?.description || { EN: '', TR: '' },
-        about: fetched?.about || { EN: '', TR: '' },
-        aimsScope: fetched?.aimsScope || { EN: '', TR: '' },
-        writingPrinciples: fetched?.writingPrinciples || { EN: '', TR: '' },
-        publisher: fetched?.publisher || { EN: '', TR: '' },
-        contact: fetched?.contact || { EN: '', TR: '' },
-        editorialBoard: fetched?.editorialBoard || [],
-        advisoryBoard: fetched?.advisoryBoard || [],
-        featuredArticles: fetched?.featuredArticles || [],
-        announcements: fetched?.announcements || []
-=======
       // Robust slug search: try eq('slug', slug) first, fallback to matching all
       let fetched: any = null;
       const { data: bySlug, error: slugErr } = await supabase
@@ -187,15 +153,10 @@ export const useTenantStore = create<TenantState>((set) => ({
         editorialBoard: fetched?.editorialBoard || mockMatch.editorialBoard || [],
         advisoryBoard: fetched?.advisoryBoard || mockMatch.advisoryBoard || [],
         featuredArticles: fetched?.featuredArticles || mockMatch.articles || []
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
       };
 
       set({ metadata: mergedMetadata, isLoading: false });
     } catch (err: any) {
-<<<<<<< HEAD
-      console.warn('Failed to fetch dynamic tenant metadata:', err.message || err);
-      set({ metadata: null, error: err.message || 'Failed to fetch metadata', isLoading: false });
-=======
       console.warn('Failed to fetch dynamic tenant metadata, using mock fallback:', err.message || err);
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
@@ -229,7 +190,6 @@ export const useTenantStore = create<TenantState>((set) => ({
       };
 
       set({ metadata: fallbackMetadata, isLoading: false });
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
     }
   },
 
@@ -319,10 +279,6 @@ export const useTenantStore = create<TenantState>((set) => ({
         set({ currentIssue: null, isLoading: false });
       }
     } catch (err: any) {
-<<<<<<< HEAD
-      console.warn('Failed to fetch latest issue:', err.message || err);
-      set({ currentIssue: null, error: err.message || 'Failed to fetch latest issue', isLoading: false });
-=======
       console.warn('Failed to fetch latest issue, using mock fallback:', err.message || err);
       // Map mock match articles as fallback
       const mockMatch = MOCK_JOURNALS.find(
@@ -357,7 +313,6 @@ export const useTenantStore = create<TenantState>((set) => ({
       };
 
       set({ currentIssue: fallbackIssue, isLoading: false });
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
     }
   },
 
@@ -449,10 +404,6 @@ export const useTenantStore = create<TenantState>((set) => ({
 
       set({ activeArticle: articleDetail, isLoading: false });
     } catch (err: any) {
-<<<<<<< HEAD
-      console.warn('Failed to fetch article details:', err.message || err);
-      set({ activeArticle: null, error: err.message || 'Failed to fetch article', isLoading: false });
-=======
       console.warn('Failed to fetch article details, using mock fallback:', err.message || err);
       
       const mockMatch = MOCK_JOURNALS.find(
@@ -483,7 +434,6 @@ export const useTenantStore = create<TenantState>((set) => ({
       };
 
       set({ activeArticle: fallbackArt, isLoading: false });
->>>>>>> e6d268e01d9e6474578efb8727f3797dce4b8ea7
     }
   },
 
