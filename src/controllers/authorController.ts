@@ -10,30 +10,11 @@ export const getAuthorSubmissions = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    // Fetch submissions where this user is an author
-    // First, find the submission IDs linked to this user in submission_authors
-    const { data: authoredData, error: authorsError } = await supabase
-      .from('submission_authors')
-      .select('submission_id')
-      .eq('user_id', userId);
-
-    if (authorsError) {
-      res.status(500).json({ error: 'Failed to retrieve author links', details: authorsError.message });
-      return;
-    }
-
-    if (!authoredData || authoredData.length === 0) {
-      res.status(200).json({ data: [] });
-      return;
-    }
-
-    const submissionIds = authoredData.map(a => a.submission_id);
-
-    // Fetch the actual submissions
+    // Fetch submissions where this user is the author
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
       .select('*')
-      .in('id', submissionIds)
+      .eq('author_id', userId)
       .order('created_at', { ascending: false });
 
     if (submissionsError) {
@@ -133,6 +114,7 @@ export const submitManuscript = async (req: AuthRequest, res: Response): Promise
   }
 };
 
+<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // NEW: GET /api/author/submissions/:id
 // Returns single submission + status history (used by Track.tsx)
@@ -365,10 +347,19 @@ export const getAuthorSubmissions = async (req: AuthRequest, res: Response): Pro
   try {
     const userId = req.user?.id;
     if (!userId) {
+=======
+export const getSubmissionById = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    if (!userId) {
+>>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
       res.status(401).json({ error: 'Unauthorized: User ID missing' });
       return;
     }
 
+<<<<<<< HEAD
     // Fetch submissions where this user is an author
     // First, find the submission IDs linked to this user in submission_authors
     const { data: authoredData, error: authorsError } = await supabase
@@ -489,5 +480,28 @@ export const submitManuscript = async (req: AuthRequest, res: Response): Promise
     res.status(201).json({ message: 'Submission successful', data: newSubmission });
   } catch (err: any) {
     res.status(500).json({ error: 'Internal server error', details: err.message });
+=======
+    const { data: submission, error: submissionError } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (submissionError || !submission) {
+      res.status(404).json({ error: 'Not Found' });
+      return;
+    }
+
+    // Optionally check if the user is authorized to view this submission
+    // For now, if they are the author, they can view it.
+    if (submission.author_id !== userId) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    res.status(200).json({ data: submission });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error' });
+>>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
   }
 };

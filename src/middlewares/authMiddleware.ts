@@ -1,10 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email?: string;
+    name?: string;
     roles?: {
       journal_id: string;
       role: string;
@@ -21,6 +22,16 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
     }
 
     const token = authHeader.split(' ')[1];
+
+    // FOR DEVELOPMENT ONLY: Allow RoleSimulator mock token
+    if (token.startsWith('demo-') && process.env.NODE_ENV !== 'production') {
+      req.user = {
+        id: '9077a2da-0d48-4505-9989-b68ec3a5dba7',
+        email: 'demo@example.com',
+        roles: [{ journal_id: 'mock-journal', role: 'author' }]
+      };
+      return next();
+    }
 
     // Verify token with Supabase Auth
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
