@@ -19,6 +19,8 @@ export default function Issues() {
   const [issueArticles, setIssueArticles] = useState<any[]>([]);
   const [genericPdf, setGenericPdf] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [volume, setVolume] = useState('');
+  const [issueNumber, setIssueNumber] = useState('');
 
   const genericPdfInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +32,8 @@ export default function Issues() {
       setIssueArticles([]);
       setGenericPdf(null);
       setCoverImage(null);
+      setVolume('');
+      setIssueNumber('');
       refetch();
     }
   });
@@ -72,14 +76,18 @@ export default function Issues() {
       toast.error(locale === 'tr' ? 'En az bir makale eklemelisiniz.' : 'You must add at least one article.');
       return;
     }
+    if (!volume.trim() || !issueNumber.trim()) {
+      toast.error(locale === 'tr' ? 'Cilt ve sayı numarası zorunludur.' : 'Volume and issue number are required.');
+      return;
+    }
     
     // Using FormData for multipart/form-data
     const formData = new FormData();
     issueArticles.forEach(a => formData.append('articles[]', a.id));
     if (genericPdf) formData.append('genericPdf', genericPdf);
     if (coverImage) formData.append('coverImage', coverImage);
-    formData.append('volume', '15'); // Static for now, can be state
-    formData.append('issueNumber', '2');
+    formData.append('volume', volume.trim());
+    formData.append('issueNumber', issueNumber.trim());
 
     publishIssue(formData, { headers: { 'Content-Type': 'multipart/form-data' } });
   };
@@ -134,9 +142,38 @@ export default function Issues() {
           <div>
             <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
               <Book className="w-7 h-7 text-indigo-500" />
-              {locale === 'tr' ? 'Cilt 15, Sayı 2 (Yaklaşan)' : 'Volume 15, Issue 2 (Upcoming)'}
+              {locale === 'tr' ? 'Yeni Sayı Oluştur' : 'Create New Issue'}
             </h2>
             <p className="text-slate-500 mt-2 text-sm">{locale === 'tr' ? 'Sonraki sayıyı oluşturmak için kabul edilen makaleleri buraya sürükleyip bırakın.' : 'Drag and drop accepted articles here to build the next issue.'}</p>
+            {/* Dynamic Volume/Issue Number Inputs */}
+            <div className="flex gap-4 mt-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  {locale === 'tr' ? 'Cilt No.' : 'Volume'}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={volume}
+                  onChange={(e) => setVolume(e.target.value)}
+                  placeholder={locale === 'tr' ? 'ör. 15' : 'e.g. 15'}
+                  className="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  {locale === 'tr' ? 'Sayı No.' : 'Issue No.'}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={issueNumber}
+                  onChange={(e) => setIssueNumber(e.target.value)}
+                  placeholder={locale === 'tr' ? 'ör. 2' : 'e.g. 2'}
+                  className="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                />
+              </div>
+            </div>
           </div>
           <button 
             onClick={handlePublish}

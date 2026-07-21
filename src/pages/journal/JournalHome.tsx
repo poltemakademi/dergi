@@ -35,9 +35,9 @@ export default function JournalHome() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Fetch metadata if missing or slug changed
+  // Fetch metadata if missing or journal changed
   useEffect(() => {
-    if (tenant_slug && (!metadata || metadata.slug !== tenant_slug)) {
+    if (tenant_slug && (!metadata || (metadata.slug !== tenant_slug && metadata.id !== tenant_slug))) {
       fetchMetadata(tenant_slug);
     }
   }, [tenant_slug, metadata, fetchMetadata]);

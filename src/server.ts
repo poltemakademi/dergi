@@ -8,6 +8,7 @@ import { supabase } from './config/supabase';
 import authorRoutes from './routes/authorRoutes';
 import editorRoutes from './routes/editorRoutes';
 import reviewerRoutes from './routes/reviewerRoutes';
+import layoutRoutes from './routes/layoutRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/author', authorRoutes);
 app.use('/api/editor', editorRoutes);
 app.use('/api/reviewer', reviewerRoutes);
+app.use('/api/layout', layoutRoutes);
 // Note: Issue routes (like /api/editor/issues/create) are already mounted inside editorRoutes.
 
 // Handle 404 - Route Not Found

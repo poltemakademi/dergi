@@ -102,24 +102,43 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchMetadata: async (slug: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Robust slug search: try eq('slug', slug) first, fallback to matching all
-      let fetched: any = null;
-      const { data: bySlug, error: slugErr } = await supabase
-        .from('journals')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+      // Detect if the "slug" is actually a UUID (journal ID from the URL)
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = UUID_REGEX.test(slug);
 
-      if (!slugErr && bySlug) {
-        fetched = bySlug;
+      let fetched: any = null;
+
+      if (isUUID) {
+        // Fetch directly by journal ID
+        const { data: byId, error: idErr } = await supabase
+          .from('journals')
+          .select('*')
+          .eq('id', slug)
+          .maybeSingle();
+
+        if (!idErr && byId) {
+          fetched = byId;
+        }
       } else {
-        const { data: allJournals } = await supabase.from('journals').select('*');
-        if (allJournals) {
-          fetched = allJournals.find(
-            (j: any) =>
-              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-          );
+        // Try to find by slug field if it exists
+        const { data: bySlug, error: slugErr } = await supabase
+          .from('journals')
+          .select('*')
+          .eq('slug', slug)
+          .maybeSingle();
+
+        if (!slugErr && bySlug) {
+          fetched = bySlug;
+        } else {
+          // Fallback: scan all journals by name
+          const { data: allJournals } = await supabase.from('journals').select('*');
+          if (allJournals) {
+            fetched = allJournals.find(
+              (j: any) =>
+                (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+                (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+            );
+          }
         }
       }
 
@@ -131,7 +150,7 @@ export const useTenantStore = create<TenantState>((set) => ({
 
       const mergedMetadata: TenantMetadata = {
         id: fetched?.id || mockMatch.id,
-        slug: fetched?.slug || mockMatch.slug,
+        slug: fetched?.slug || fetched?.id || mockMatch.slug,
         name: fetched?.name || mockMatch.name,
         tr: fetched?.tr || mockMatch.tr || fetched?.name || mockMatch.tr,
         issn: fetched?.issn || mockMatch.issn || 'XXXX-XXXX',
@@ -196,18 +215,26 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchCurrentIssue: async (slug: string) => {
     set({ isLoading: true, error: null });
     try {
-      let journalId = null;
-      const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
-      if (journal) {
-        journalId = journal.id;
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = UUID_REGEX.test(slug);
+
+      let journalId: string | null = null;
+
+      if (isUUID) {
+        journalId = slug;
       } else {
-        const { data: all } = await supabase.from('journals').select('id, name, slug');
-        const found = all?.find(
-          (j: any) =>
-            (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-            (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-        );
-        journalId = found?.id;
+        const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
+        if (journal) {
+          journalId = journal.id;
+        } else {
+          const { data: all } = await supabase.from('journals').select('id, name, slug');
+          const found = all?.find(
+            (j: any) =>
+              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+          );
+          journalId = found?.id;
+        }
       }
 
       if (!journalId) throw new Error('Journal not found');
@@ -319,18 +346,26 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchArchives: async (slug: string) => {
     set({ isLoading: true, error: null });
     try {
-      let journalId = null;
-      const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
-      if (journal) {
-        journalId = journal.id;
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = UUID_REGEX.test(slug);
+
+      let journalId: string | null = null;
+
+      if (isUUID) {
+        journalId = slug;
       } else {
-        const { data: all } = await supabase.from('journals').select('id, name, slug');
-        const found = all?.find(
-          (j: any) =>
-            (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-            (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-        );
-        journalId = found?.id;
+        const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
+        if (journal) {
+          journalId = journal.id;
+        } else {
+          const { data: all } = await supabase.from('journals').select('id, name, slug');
+          const found = all?.find(
+            (j: any) =>
+              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+          );
+          journalId = found?.id;
+        }
       }
 
       if (!journalId) throw new Error('Journal not found');
