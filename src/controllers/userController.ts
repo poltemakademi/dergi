@@ -1,6 +1,6 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middlewares/authMiddleware';
+import type { AuthRequest } from '../middlewares/authMiddleware';
 
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -30,6 +30,8 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       department: data.field,
       title_field: data.title,
       orcid: data.orcid_id,
+      bio: data.academic_interest,
+      country: data.country,
     };
 
     res.status(200).json({ data: frontendData });
@@ -46,7 +48,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { id, name, email, department, title_field, orcid, ...updates } = req.body;
+    const { id, name, email, department, title_field, orcid, bio, country, ...updates } = req.body;
 
     const allowedColumns = [
       'title', 'name_surname', 'academic_email', 'phone', 
@@ -62,6 +64,8 @@ export const updateUserProfile = async (req: AuthRequest, res: Response): Promis
     if (department !== undefined) cleanUpdates.field = department;
     if (title_field !== undefined) cleanUpdates.title = title_field;
     if (orcid !== undefined) cleanUpdates.orcid_id = orcid;
+    if (bio !== undefined) cleanUpdates.academic_interest = bio;
+    if (country !== undefined) cleanUpdates.country = country;
 
     for (const key of Object.keys(updates)) {
       if (allowedColumns.includes(key)) {
@@ -101,7 +105,7 @@ export const getUserWorkspaces = async (req: AuthRequest, res: Response): Promis
     // 1. Fetch memberships from journal_members
     const { data: memberships, error: memError } = await supabase
       .from('journal_members')
-      .select('*, journals(name, slug)')
+      .select('*, journals(name)')
       .eq('user_id', userId);
 
     if (memError) {

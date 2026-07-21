@@ -39,7 +39,11 @@ export default function Assigned() {
     }
   };
 
-  const queue = assignedQueue || [];
+  const queue = Array.isArray(assignedQueue) 
+    ? assignedQueue 
+    : Array.isArray((assignedQueue as any)?.data) 
+      ? (assignedQueue as any).data 
+      : [];
 
   return (
     <div className="max-w-4xl mx-auto">

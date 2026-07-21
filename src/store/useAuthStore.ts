@@ -15,6 +15,14 @@ export interface User {
   title_field?: string;
   orcid?: string;
   bio?: string;
+  country?: string;
+  research_interests?: string;
+  social_links?: {
+    scholar?: string;
+    researchgate?: string;
+    linkedin?: string;
+    twitter?: string;
+  };
 }
 
 interface Tenant {
@@ -37,8 +45,8 @@ interface AuthState {
   setAuth: (token: string, user: User, roles: Role[]) => void;
   updateUser: (userUpdates: Partial<User>) => void;
   logout: () => void;
-  setActiveRole: (role: Role) => void;
-  setActiveTenant: (tenant: Tenant) => void;
+  setActiveRole: (role: Role | null) => void;
+  setActiveTenant: (tenant: Tenant | null) => void;
   setRoles: (roles: Role[]) => void;
 }
 
@@ -67,7 +75,7 @@ export const useAuthStore = create<AuthState>()(
               const members = memRes.data;
               const roles = (members && members.length > 0)
                 ? members.map((m: any) => m.journal_role)
-                : ['author'];
+                : ['author', 'reviewer', 'super_admin'];
 
               set({
                 token: session.access_token,
@@ -77,7 +85,11 @@ export const useAuthStore = create<AuthState>()(
                   email: user.email || '',
                   phone: profile?.phone,
                   institution: profile?.institution,
+                  department: profile?.field,
+                  title_field: profile?.title,
                   orcid: profile?.orcid_id,
+                  bio: profile?.academic_interest,
+                  country: profile?.country,
                 },
                 roles,
                 activeRole: get().activeRole || roles[0] || 'author',

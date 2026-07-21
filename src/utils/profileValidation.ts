@@ -15,6 +15,7 @@ export const isProfileComplete = (role: string | null | undefined, profile: any)
     case 'yazar':
       if (!profile.institution) missingFields.push('institution');
       if (!profile.orcid) missingFields.push('orcid');
+      if (!profile.country) missingFields.push('country');
       break;
 
     case 'reviewer':
@@ -22,6 +23,7 @@ export const isProfileComplete = (role: string | null | undefined, profile: any)
       if (!profile.institution) missingFields.push('institution');
       if (!profile.department) missingFields.push('department');
       if (!profile.bio) missingFields.push('bio');
+      if (!profile.country) missingFields.push('country');
       break;
 
     case 'editor':

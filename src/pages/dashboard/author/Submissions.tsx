@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle, ArrowLeft, RefreshCcw, CheckCircle2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle, RefreshCcw, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
@@ -14,7 +14,6 @@ export interface Submission {
 
 export default function Submissions() {
   const { t, locale } = useLocaleStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -52,15 +51,7 @@ export default function Submissions() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="mb-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          {t('dashboard.back')}
-        </button>
-      </div>
+
 
       <div className="flex justify-between items-center mb-8">
         <div>

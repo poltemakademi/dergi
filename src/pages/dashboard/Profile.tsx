@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { User, Mail, Phone, Link as LinkIcon, Building2, Save, GraduationCap, FileText, Briefcase } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { User, Mail, Phone, Link as LinkIcon, Building2, Save, GraduationCap, FileText, Briefcase, MapPin, Hash, Camera, Globe } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { isProfileComplete } from '../../utils/profileValidation';
@@ -12,7 +12,7 @@ export default function Profile() {
   const { user, activeRole, updateUser } = useAuthStore();
   const { t, locale } = useLocaleStore();
 
-  const { data: profileData, isLoading: isFetching } = useApiQuery<any>({ url: '/api/user/profile' });
+  const { data: profileResponse, isLoading: isFetching, error, refetch } = useApiQuery<any>({ url: '/api/user/profile' });
   const { mutate: updateProfile, isLoading: isSaving } = useApiMutation('/api/user/profile', {
     method: 'PUT',
     onSuccess: () => {
@@ -28,15 +28,49 @@ export default function Profile() {
     department: user?.department || '',
     title_field: user?.title_field || '',
     orcid: user?.orcid || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    country: user?.country || '',
+    research_interests: user?.research_interests || '',
+    social_links: {
+      scholar: user?.social_links?.scholar || '',
+      researchgate: user?.social_links?.researchgate || '',
+      linkedin: user?.social_links?.linkedin || '',
+      twitter: user?.social_links?.twitter || ''
+    }
   });
+
+  const initialAvatar = user?.avatar?.startsWith('blob:') ? null : (user?.avatar || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatar);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setAvatarPreview(base64String);
+        setFormData(prev => ({ ...prev, avatar: base64String }));
+        toast.success(locale === 'tr' ? 'Profil fotoğrafı seçildi.' : 'Profile photo selected.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Fetch complete profile on mount
   useEffect(() => {
-    if (profileData) {
-      setFormData(prev => ({ ...prev, ...profileData }));
+    if (profileResponse) {
+      const pData = profileResponse.data || profileResponse;
+      setFormData(prev => ({ 
+        ...prev, 
+        ...pData,
+        social_links: {
+          ...prev.social_links,
+          ...(pData.social_links || {})
+        }
+      }));
     }
-  }, [profileData]);
+  }, [profileResponse]);
 
   const { isValid, missingFields } = useMemo(() => isProfileComplete(activeRole, formData), [activeRole, formData]);
 
@@ -71,14 +105,35 @@ export default function Profile() {
             <h2 className="text-xl font-bold text-slate-800">{t('profile.title')}</h2>
             <p className="text-sm text-slate-500 mt-1">{t('profile.subtitle')}</p>
           </div>
-          <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center border-4 border-white shadow-md">
-            <User className="w-8 h-8 text-indigo-500" />
+          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden transition-all group-hover:ring-4 group-hover:ring-indigo-100 relative">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+              ) : (
+                <User className="w-10 h-10 text-indigo-500 group-hover:opacity-0 transition-opacity" />
+              )}
+              <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
           </div>
         </div>
 
         {isFetching ? (
           <div className="p-8">
             <FormSkeleton fields={5} />
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mb-2">
+              <Globe className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">{locale === 'tr' ? 'Profil Yüklenemedi' : 'Failed to Load Profile'}</h3>
+            <p className="text-slate-500 text-sm">{error.message}</p>
+            <button onClick={() => refetch()} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800">
+              {locale === 'tr' ? 'Yeniden Dene' : 'Retry'}
+            </button>
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
@@ -103,7 +158,7 @@ export default function Profile() {
               </label>
               <input 
                 type="email" 
-                value={formData.email} 
+                value={formData.email || ''} 
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className={getInputClass('email')} 
               />
@@ -116,7 +171,7 @@ export default function Profile() {
               </label>
               <input 
                 type="tel" 
-                value={formData.phone} 
+                value={formData.phone || ''} 
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                 className={getInputClass('phone')} 
               />
@@ -129,7 +184,7 @@ export default function Profile() {
               </label>
               <input 
                 type="text" 
-                value={formData.institution} 
+                value={formData.institution || ''} 
                 onChange={(e) => setFormData({...formData, institution: e.target.value})}
                 className={getInputClass('institution')} 
               />
@@ -142,7 +197,7 @@ export default function Profile() {
               </label>
               <input 
                 type="text" 
-                value={formData.department} 
+                value={formData.department || ''} 
                 onChange={(e) => setFormData({...formData, department: e.target.value})}
                 className={getInputClass('department')} 
               />
@@ -155,9 +210,37 @@ export default function Profile() {
               </label>
               <input 
                 type="text" 
-                value={formData.title_field} 
+                value={formData.title_field || ''} 
                 onChange={(e) => setFormData({...formData, title_field: e.target.value})}
                 className={getInputClass('title_field')} 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-slate-400" /> {locale === 'tr' ? 'Ülke' : 'Country'}
+                {isFieldRequired('country') && <span className="text-rose-500">*</span>}
+              </label>
+              <input 
+                type="text" 
+                value={formData.country || ''} 
+                onChange={(e) => setFormData({...formData, country: e.target.value})}
+                className={getInputClass('country')} 
+                placeholder={locale === 'tr' ? 'Örn: Türkiye' : 'e.g., Turkey'}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <Hash className="w-4 h-4 text-slate-400" /> {locale === 'tr' ? 'Araştırma İlgi Alanları' : 'Research Interests'}
+                {isFieldRequired('research_interests') && <span className="text-rose-500">*</span>}
+              </label>
+              <input 
+                type="text" 
+                value={formData.research_interests || ''} 
+                onChange={(e) => setFormData({...formData, research_interests: e.target.value})}
+                className={getInputClass('research_interests')} 
+                placeholder={locale === 'tr' ? 'Virgülle ayırarak yazın (Örn: Yapay Zeka, Veri Madenciliği)' : 'Comma separated (e.g., AI, Data Mining)'}
               />
             </div>
 
@@ -168,7 +251,7 @@ export default function Profile() {
               </label>
               <input 
                 type="text" 
-                value={formData.orcid} 
+                value={formData.orcid || ''} 
                 onChange={(e) => setFormData({...formData, orcid: e.target.value})}
                 className={`${getInputClass('orcid')} font-mono text-sm`} 
               />
@@ -180,12 +263,70 @@ export default function Profile() {
                 {isFieldRequired('bio') && <span className="text-rose-500">*</span>}
               </label>
               <textarea 
-                value={formData.bio} 
+                value={formData.bio || ''} 
                 onChange={(e) => setFormData({...formData, bio: e.target.value})}
                 rows={4}
                 className={`${getInputClass('bio')} resize-none`} 
                 placeholder={locale === 'tr' ? 'Akademik geçmişinizden ve uzmanlık alanlarınızdan bahsedin...' : 'Describe your academic background and areas of expertise...'}
               />
+            </div>
+            
+            {/* Social & Academic Links Section */}
+            <div className="md:col-span-2 space-y-4 pt-6 border-t border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">{locale === 'tr' ? 'Akademik & Sosyal Profiller' : 'Academic & Social Profiles'}</h3>
+                <p className="text-xs text-slate-500 mt-1">{locale === 'tr' ? 'Araştırma profillerinizin linklerini ekleyin.' : 'Add links to your research profiles.'}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-100 p-1.5 rounded text-slate-500">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <input 
+                    type="url" 
+                    value={formData.social_links.scholar} 
+                    onChange={(e) => setFormData({...formData, social_links: {...formData.social_links, scholar: e.target.value}})}
+                    className="w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm" 
+                    placeholder="Google Scholar URL"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-100 p-1.5 rounded text-slate-500 font-bold text-xs">
+                    RG
+                  </div>
+                  <input 
+                    type="url" 
+                    value={formData.social_links.researchgate} 
+                    onChange={(e) => setFormData({...formData, social_links: {...formData.social_links, researchgate: e.target.value}})}
+                    className="w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm" 
+                    placeholder="ResearchGate URL"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-100 p-1.5 rounded text-slate-500 font-bold text-xs">
+                    in
+                  </div>
+                  <input 
+                    type="url" 
+                    value={formData.social_links.linkedin} 
+                    onChange={(e) => setFormData({...formData, social_links: {...formData.social_links, linkedin: e.target.value}})}
+                    className="w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm" 
+                    placeholder="LinkedIn URL"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-100 p-1.5 rounded text-slate-500 font-bold text-xs">
+                    X
+                  </div>
+                  <input 
+                    type="url" 
+                    value={formData.social_links.twitter} 
+                    onChange={(e) => setFormData({...formData, social_links: {...formData.social_links, twitter: e.target.value}})}
+                    className="w-full pl-12 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm" 
+                    placeholder="Twitter (X) URL"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

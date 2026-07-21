@@ -49,8 +49,10 @@ import AuthorSubmitWizard from './pages/dashboard/author/SubmitWizard';
 import AuthorTrack from './pages/dashboard/author/Track';
 
 // Reviewer Pages
+import ReviewerInvitations from './pages/dashboard/reviewer/Invitations';
 import ReviewerAssigned from './pages/dashboard/reviewer/Assigned';
 import ReviewerEvaluate from './pages/dashboard/reviewer/Evaluate';
+import ReviewerHistory from './pages/dashboard/reviewer/History';
 
 // Layout Editor Pages
 import LayoutQueue from './pages/dashboard/layout/Queue';
@@ -120,8 +122,10 @@ export default function App() {
             <Route path="yazar/track/:id" element={<RoleGuard allowedRoles={['author']}><AuthorTrack /></RoleGuard>} />
 
             {/* Reviewer Routes */}
+            <Route path="reviewer/invitations" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerInvitations /></RoleGuard>} />
             <Route path="reviewer/assigned" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerAssigned /></RoleGuard>} />
             <Route path="reviewer/evaluate/:id" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerEvaluate /></RoleGuard>} />
+            <Route path="reviewer/history" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerHistory /></RoleGuard>} />
 
             {/* Layout Editor Routes */}
             <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutQueue /></RoleGuard>} />

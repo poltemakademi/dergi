@@ -24,7 +24,7 @@ export const translations = {
     // Header
     'header.search': 'Search...',
     
-    // Role Selector
+    // Workspace Selector
     'roleSelect.welcome': 'Welcome back',
     'roleSelect.subtitle': 'Select your context to continue. Your workspace will automatically adapt to the permissions and tools required for your selected role.',
     'roleSelect.enter': 'Enter',
@@ -122,7 +122,7 @@ export const translations = {
     // Header
     'header.search': 'Ara...',
     
-    // Role Selector
+    // Workspace Selector
     'roleSelect.welcome': 'Tekrar hoş geldiniz',
     'roleSelect.subtitle': 'Devam etmek için bağlamınızı seçin. Çalışma alanınız, seçtiğiniz rol için gereken izinlere ve araçlara otomatik olarak uyum sağlayacaktır.',
     'roleSelect.enter': 'Giriş Yap',

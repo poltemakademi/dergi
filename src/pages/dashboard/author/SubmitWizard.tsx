@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSubmissionStore } from '../../../store/useSubmissionStore';
-import { Check, ChevronRight, Upload, Users, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Check, ChevronRight, Upload, Users, FileText, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -16,7 +16,7 @@ interface SubmitResponse {
 export default function SubmitWizard() {
   const { currentStep, nextStep, prevStep, metadata, updateMetadata, fileUploaded, setFileUploaded, reset, authors, addAuthor, removeAuthor } = useSubmissionStore();
   const navigate = useNavigate();
-  const { t } = useLocaleStore();
+  const { locale } = useLocaleStore();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAddingAuthor, setIsAddingAuthor] = useState(false);
   const [newAuthor, setNewAuthor] = useState({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
@@ -58,6 +58,13 @@ export default function SubmitWizard() {
       }
     }
 
+    if (currentStep === 2 && isAddingAuthor) {
+      if (newAuthor.name?.trim() || newAuthor.email?.trim()) {
+        toast.warning(locale === 'tr' ? 'Lütfen önce yazdığınız yazarı kaydedin.' : 'Please save the author you are currently adding before proceeding.');
+        return;
+      }
+    }
+
     nextStep();
   };
 
@@ -90,15 +97,7 @@ export default function SubmitWizard() {
 
   return (
     <div className="max-w-4xl mx-auto py-6">
-      <div className="mb-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-white hover:bg-indigo-50/20 border border-slate-200/80 hover:border-indigo-200/60 rounded-xl shadow-sm hover:shadow transition-all duration-300 group cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          {t('dashboard.back')}
-        </button>
-      </div>
+
 
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -225,9 +224,9 @@ export default function SubmitWizard() {
                           setNewAuthor({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
                           setIsAddingAuthor(false);
                         }}
-                        className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-bold hover:bg-slate-800"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-colors"
                       >
-                        Save Author
+                        <Plus className="w-4 h-4" /> Save Author
                       </button>
                       <button onClick={() => setIsAddingAuthor(false)} className="px-4 py-2 border border-slate-200 text-slate-600 rounded-md text-sm font-bold hover:bg-slate-100">
                         Cancel
