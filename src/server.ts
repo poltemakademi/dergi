@@ -9,14 +9,11 @@ import { supabase } from './config/supabase';
 import authorRoutes from './routes/authorRoutes';
 import editorRoutes from './routes/editorRoutes';
 import reviewerRoutes from './routes/reviewerRoutes';
-<<<<<<< HEAD
 import layoutRoutes from './routes/layoutRoutes';
-=======
 import userRoutes from './routes/userRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import adminRoutes from './routes/adminRoutes';
 import messageRoutes from './routes/messageRoutes';
->>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
 
 // Load environment variables
 dotenv.config();
@@ -42,14 +39,11 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/author', authorRoutes);
 app.use('/api/editor', editorRoutes);
 app.use('/api/reviewer', reviewerRoutes);
-<<<<<<< HEAD
 app.use('/api/layout', layoutRoutes);
-=======
 app.use('/api/user', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
->>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
 // Note: Issue routes (like /api/editor/issues/create) are already mounted inside editorRoutes.
 
 // Handle 404 - Route Not Found
@@ -78,7 +72,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 // 4. Server Startup
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
-  
+
   // Verify Supabase DB connection via config
   if (supabase) {
     console.log('✅ Supabase Client Initialized via Service Role Key.');

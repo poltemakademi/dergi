@@ -23,6 +23,7 @@ import CurrentIssue from './pages/journal/CurrentIssue';
 import Archives from './pages/journal/Archives';
 import ArticleDetail from './pages/journal/ArticleDetail';
 import CMSPage from './pages/journal/CMSPage';
+import AboutJournal from './pages/journal/AboutJournal';
 import AuthorApplications from './pages/public/AuthorApplications';
 import TechnicalDocs from './pages/public/TechnicalDocs';
 import ApiReference from './pages/public/ApiReference';
@@ -136,12 +137,14 @@ export default function App() {
 
           {/* --- 3. Individual Tenant Gateway (Journal Pages) --- */}
           <Route path="/:tenant_slug" element={<JournalLayout />}>
-            <Route index element={<JournalHome />} />
+            <Route index element={<AboutJournal />} />
+            <Route path="home" element={<JournalHome />} />
             <Route path="current" element={<CurrentIssue />} />
             <Route path="archives" element={<Archives />} />
             <Route path="article/:id" element={<ArticleDetail />} />
             <Route path="policies" element={<CMSPage type="policies" />} />
             <Route path="board" element={<CMSPage type="board" />} />
+            <Route path="am" element={<AboutJournal />} />
           </Route>
         </Routes>
       </BrowserRouter>

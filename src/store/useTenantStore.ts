@@ -142,36 +142,41 @@ export const useTenantStore = create<TenantState>((set) => ({
         }
       }
 
-      // Load fallback mock match to ensure UI remains complete and visually premium
+      // Try to find a matching mock journal by ID, slug, or name (case-insensitive)
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
-          mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-      ) || MOCK_JOURNALS[0];
+          mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
+          mj.id.toLowerCase() === (fetched?.id || '').toString().toLowerCase() ||
+          mj.name.toLowerCase() === (fetched?.name || '').toString().toLowerCase()
+      );
 
       const mergedMetadata: TenantMetadata = {
-        id: fetched?.id || mockMatch.id,
-        slug: fetched?.slug || fetched?.id || mockMatch.slug,
-        name: fetched?.name || mockMatch.name,
-        tr: fetched?.tr || mockMatch.tr || fetched?.name || mockMatch.tr,
-        issn: fetched?.issn || mockMatch.issn || 'XXXX-XXXX',
-        index: fetched?.index || mockMatch.index || 'Crossref Indexed',
-        indexColor: fetched?.indexColor || mockMatch.indexColor || 'text-slate-700 bg-slate-50 border-slate-200',
-        cover: fetched?.cover || fetched?.cover_image || mockMatch.cover || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop',
-        impactFactor: fetched?.impactFactor || mockMatch.impactFactor || '0.0',
-        reviewTime: fetched?.reviewTime || mockMatch.reviewTime || '4 Weeks Avg',
-        acceptRate: fetched?.acceptRate || mockMatch.acceptRate || '20%',
-        articlesCount: fetched?.articlesCount || mockMatch.articlesCount || '0',
+        id: fetched?.id || mockMatch?.id || 'JOURNAL',
+        slug: fetched?.slug || fetched?.id || mockMatch?.slug || slug,
+        name: fetched?.name || mockMatch?.name || 'Academic Journal',
+        tr: fetched?.tr || fetched?.name || mockMatch?.tr || 'Akademik Dergi',
+        issn: fetched?.issn || mockMatch?.issn || 'XXXX-XXXX',
+        index: fetched?.index || mockMatch?.index || 'Crossref Indexed',
+        indexColor: fetched?.indexColor || mockMatch?.indexColor || 'text-slate-700 bg-slate-50 border-slate-200',
+        cover: fetched?.cover || fetched?.cover_image || mockMatch?.cover || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop',
+        impactFactor: fetched?.impactFactor || mockMatch?.impactFactor || '0.0',
+        reviewTime: fetched?.reviewTime || mockMatch?.reviewTime || '4 Weeks Avg',
+        acceptRate: fetched?.acceptRate || mockMatch?.acceptRate || '20%',
+        articlesCount: fetched?.articlesCount || mockMatch?.articlesCount || '0',
         primaryColor: fetched?.primaryColor || fetched?.brand_color || '#4f46e5', // Default Indigo-600
         secondaryColor: fetched?.secondaryColor || '#6366f1',
-        description: fetched?.description || mockMatch.description || { EN: '', TR: '' },
-        about: fetched?.about || mockMatch.about || { EN: '', TR: '' },
-        aimsScope: fetched?.aimsScope || mockMatch.aimsScope || { EN: '', TR: '' },
-        writingPrinciples: fetched?.writingPrinciples || mockMatch.writingPrinciples || { EN: '', TR: '' },
-        publisher: fetched?.publisher || mockMatch.publisher || { EN: '', TR: '' },
-        contact: fetched?.contact || mockMatch.contact || { EN: '', TR: '' },
-        editorialBoard: fetched?.editorialBoard || mockMatch.editorialBoard || [],
-        advisoryBoard: fetched?.advisoryBoard || mockMatch.advisoryBoard || [],
-        featuredArticles: fetched?.featuredArticles || mockMatch.articles || []
+        description: fetched?.description || mockMatch?.description || { EN: fetched?.name || '', TR: fetched?.name || '' },
+        about: fetched?.about || mockMatch?.about || { 
+          EN: `Welcome to the official portal of ${fetched?.name || 'Academic Journal'}.`, 
+          TR: `${fetched?.name || 'Akademik Dergi'} resmi portalına hoş geldiniz.` 
+        },
+        aimsScope: fetched?.aimsScope || mockMatch?.aimsScope || { EN: 'Aims and scope details will be added.', TR: 'Amaç ve kapsam detayları eklenecektir.' },
+        writingPrinciples: fetched?.writingPrinciples || mockMatch?.writingPrinciples || { EN: 'Writing principles will be added.', TR: 'Yazım kuralları eklenecektir.' },
+        publisher: fetched?.publisher || mockMatch?.publisher || { EN: 'Publisher details will be added.', TR: 'Yayıncı bilgileri eklenecektir.' },
+        contact: fetched?.contact || mockMatch?.contact || { EN: 'Contact details will be added.', TR: 'İletişim bilgileri eklenecektir.' },
+        editorialBoard: fetched?.editorialBoard || mockMatch?.editorialBoard || [],
+        advisoryBoard: fetched?.advisoryBoard || mockMatch?.advisoryBoard || [],
+        featuredArticles: fetched?.featuredArticles || mockMatch?.articles || []
       };
 
       set({ metadata: mergedMetadata, isLoading: false });
@@ -257,20 +262,21 @@ export const useTenantStore = create<TenantState>((set) => ({
 
         const mockMatch = MOCK_JOURNALS.find(
           (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
-            mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-        ) || MOCK_JOURNALS[0];
+            mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
+            mj.id.toLowerCase() === journalId?.toLowerCase()
+        );
 
         const articles = !artErr && issueArticles ? issueArticles.map((ia: any) => {
           const art = ia.submissions;
-          const matchedMockArt = mockMatch.articles.find(
+          const matchedMockArt = mockMatch?.articles.find(
             (ma: any) => ma.title.toLowerCase() === (art?.title || '').toLowerCase()
-          ) || mockMatch.articles[0];
+          );
 
           return {
             id: art?.id || ia.submission_id,
-            title: art?.title || matchedMockArt?.title || 'Untitled',
-            titleEn: art?.title || matchedMockArt?.title || 'Untitled',
-            titleTr: art?.title || matchedMockArt?.title || 'Untitled',
+            title: art?.title || matchedMockArt?.title || 'Untitled Article',
+            titleEn: art?.title || matchedMockArt?.title || 'Untitled Article',
+            titleTr: art?.title || matchedMockArt?.title || 'İsimsiz Makale',
             author: art?.submission_authors?.[0]?.display_name || matchedMockArt?.author || 'Unknown Author',
             authors: art?.submission_authors?.map((a: any) => ({
               name: a.display_name,
@@ -311,35 +317,66 @@ export const useTenantStore = create<TenantState>((set) => ({
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
           mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-      ) || MOCK_JOURNALS[0];
+      );
 
-      const fallbackIssue: TenantIssue = {
-        id: 'latest-issue-mock',
-        journal_id: mockMatch.id,
-        issue_title_native: 'Son Sayı',
-        issue_title_english: 'Latest Issue',
-        issue_volume: '5',
-        issue_number: '1',
-        published_at: new Date().toISOString(),
-        articles: mockMatch.articles.map((art) => ({
-          id: art.id,
-          title: art.title,
-          titleEn: art.title,
-          titleTr: art.title,
-          author: art.author,
-          authors: [{ name: art.author, affiliation: 'Academic Institution' }],
-          doi: art.doi,
-          abstract: art.abstract,
-          abstractEn: art.abstract,
-          abstractTr: art.abstract,
-          pages: art.pages,
-          published: 'June 2026',
-          issue: 'Vol. 5 No. 1 (2026)',
-          keywords: ['Academic', 'Research']
-        }))
-      };
-
-      set({ currentIssue: fallbackIssue, isLoading: false });
+      if (mockMatch) {
+        const fallbackIssue: TenantIssue = {
+          id: 'latest-issue-mock',
+          journal_id: mockMatch.id,
+          issue_title_native: 'Son Sayı',
+          issue_title_english: 'Latest Issue',
+          issue_volume: '5',
+          issue_number: '1',
+          published_at: new Date().toISOString(),
+          articles: mockMatch.articles.map((art) => ({
+            id: art.id,
+            title: art.title,
+            titleEn: art.title,
+            titleTr: art.title,
+            author: art.author,
+            authors: [{ name: art.author, affiliation: 'Academic Institution' }],
+            doi: art.doi,
+            abstract: art.abstract,
+            abstractEn: art.abstract,
+            abstractTr: art.abstract,
+            pages: art.pages,
+            published: 'June 2026',
+            issue: 'Vol. 5 No. 1 (2026)',
+            keywords: ['Academic', 'Research']
+          }))
+        };
+        set({ currentIssue: fallbackIssue, isLoading: false });
+      } else {
+        // Fallback for custom DB journal when fetch fails or database issue is missing
+        const fallbackIssue: TenantIssue = {
+          id: 'latest-issue-mock',
+          journal_id: slug,
+          issue_title_native: 'Son Sayı',
+          issue_title_english: 'Latest Issue',
+          issue_volume: '1',
+          issue_number: '1',
+          published_at: new Date().toISOString(),
+          articles: [
+            {
+              id: 'mock-art-1',
+              title: 'Giriş Makalesi',
+              titleEn: 'Introductory Article',
+              titleTr: 'Giriş Makalesi',
+              author: 'Yazar Adı Soyadı',
+              authors: [{ name: 'Yazar Adı Soyadı', affiliation: 'Poltem Akademi' }],
+              doi: `10.2667/poltem.2026.1001`,
+              abstract: 'Bu makale test ve önizleme amacıyla eklenmiştir.',
+              abstractEn: 'This article is added for testing and preview purposes.',
+              abstractTr: 'Bu makale test ve önizleme amacıyla eklenmiştir.',
+              pages: '1-10',
+              published: 'Temmuz 2026',
+              issue: 'Cilt 1 Sayı 1 (2026)',
+              keywords: ['Academic', 'Research']
+            }
+          ]
+        };
+        set({ currentIssue: fallbackIssue, isLoading: false });
+      }
     }
   },
 
@@ -406,11 +443,11 @@ export const useTenantStore = create<TenantState>((set) => ({
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
           mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-      ) || MOCK_JOURNALS[0];
+      );
       
-      const matchedMockArt = mockMatch.articles.find(
+      const matchedMockArt = mockMatch?.articles.find(
         (ma: any) => ma.title.toLowerCase() === (art?.title || '').toLowerCase() || ma.id.toString() === id.toString()
-      ) || mockMatch.articles[0];
+      );
 
       const articleDetail: TenantArticle = {
         id: art.id,
@@ -444,31 +481,53 @@ export const useTenantStore = create<TenantState>((set) => ({
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
           mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-      ) || MOCK_JOURNALS[0];
+      );
       
-      const matchedArt = mockMatch.articles.find((a) => a.id.toString() === id.toString()) || mockMatch.articles[0];
+      if (mockMatch) {
+        const matchedArt = mockMatch.articles.find((a) => a.id.toString() === id.toString()) || mockMatch.articles[0];
 
-      const fallbackArt: TenantArticle = {
-        id: matchedArt.id,
-        title: matchedArt.title,
-        titleEn: matchedArt.title,
-        titleTr: matchedArt.title,
-        author: matchedArt.author,
-        authors: [
-          { name: matchedArt.author, affiliation: 'Institution Name', orcid: '0000-0000-0000-0000' }
-        ],
-        doi: matchedArt.doi,
-        abstract: matchedArt.abstract,
-        abstractEn: matchedArt.abstract,
-        abstractTr: matchedArt.abstract,
-        pages: matchedArt.pages,
-        published: 'July 15, 2026',
-        issue: 'Vol. 5 No. 1 (2026)',
-        keywordsEn: ['Research', 'Science'],
-        keywordsTr: ['Araştırma', 'Bilim']
-      };
-
-      set({ activeArticle: fallbackArt, isLoading: false });
+        const fallbackArt: TenantArticle = {
+          id: matchedArt.id,
+          title: matchedArt.title,
+          titleEn: matchedArt.title,
+          titleTr: matchedArt.title,
+          author: matchedArt.author,
+          authors: [
+            { name: matchedArt.author, affiliation: 'Institution Name', orcid: '0000-0000-0000-0000' }
+          ],
+          doi: matchedArt.doi,
+          abstract: matchedArt.abstract,
+          abstractEn: matchedArt.abstract,
+          abstractTr: matchedArt.abstract,
+          pages: matchedArt.pages,
+          published: 'July 15, 2026',
+          issue: 'Vol. 5 No. 1 (2026)',
+          keywordsEn: ['Research', 'Science'],
+          keywordsTr: ['Araştırma', 'Bilim']
+        };
+        set({ activeArticle: fallbackArt, isLoading: false });
+      } else {
+        const fallbackArt: TenantArticle = {
+          id: id,
+          title: 'Örnek Makale Başlığı',
+          titleEn: 'Sample Article Title',
+          titleTr: 'Örnek Makale Başlığı',
+          author: 'Yazar Adı',
+          authors: [
+            { name: 'Yazar Adı', affiliation: 'Poltem Akademi', orcid: '0000-0000-0000-0000' }
+          ],
+          doi: `10.2667/poltem.2026.${id}`,
+          abstract: 'Bu makale detayı test ve önizleme amacıyla sunulmuştur.',
+          abstractEn: 'This article detail is provided for testing and preview purposes.',
+          abstractTr: 'Bu makale detayı test ve önizleme amacıyla sunulmuştur.',
+          pages: '1-10',
+          published: 'Temmuz 2026',
+          issue: 'Cilt 1 Sayı 1 (2026)',
+          keywordsEn: ['Research', 'Preview'],
+          keywordsTr: ['Araştırma', 'Önizleme']
+        };
+        set({ activeArticle: fallbackArt, isLoading: false });
+      }
     }
   },
 

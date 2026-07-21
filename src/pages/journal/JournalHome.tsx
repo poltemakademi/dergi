@@ -132,8 +132,17 @@ export default function JournalHome() {
             </div>
 
             {/* Glowing Index Status Card */}
-            <div className="shrink-0 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-5 md:p-6 rounded-2xl md:rounded-[2rem] text-center space-y-2 md:space-y-3 w-full md:w-56 shadow-2xl relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-500">
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all duration-500" />
+            <div
+              className="shrink-0 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-5 md:p-6 rounded-2xl md:rounded-[2rem] text-center space-y-2 md:space-y-3 w-full md:w-56 shadow-2xl relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-500 select-none"
+            >
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={metadata.cover}
+                  alt="Journal Cover"
+                  className="w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity duration-500"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-slate-900/30 z-0" />
               <span className="text-[9px] md:text-[10px] font-black text-indigo-300 uppercase tracking-widest block relative z-10">Index Status</span>
               <div className="text-xl md:text-2xl font-black text-white relative z-10 group-hover:text-indigo-200 transition-colors">{metadata.index}</div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-400 relative z-10">

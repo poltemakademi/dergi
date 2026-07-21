@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/authMiddleware';
-<<<<<<< HEAD
 import {
   getAuthorSubmissions,
   submitManuscript,
@@ -8,9 +7,6 @@ import {
   withdrawSubmission,
   uploadRevision
 } from '../controllers/authorController';
-=======
-import { getAuthorSubmissions, submitManuscript, getSubmissionById } from '../controllers/authorController';
->>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
 
 const router = Router();
 
@@ -20,17 +16,10 @@ router.use(requireAuth);
 // GET /api/author/submissions — list all author's submissions
 router.get('/submissions', getAuthorSubmissions);
 
-<<<<<<< HEAD
 // GET /api/author/submissions/:id — get single submission with status history (used by Track.tsx)
 router.get('/submissions/:id', getSubmissionById);
 
 // POST /api/author/submit — submit a new manuscript
-=======
-// GET /api/author/submissions/:id
-router.get('/submissions/:id', getSubmissionById);
-
-// POST /api/author/submit
->>>>>>> 5b65d661476a3ecfd1daeae2f17e455521fd73b1
 router.post('/submit', submitManuscript);
 
 // POST /api/author/withdraw/:id — withdraw a submission (used by Track.tsx)
