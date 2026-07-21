@@ -458,3 +458,67 @@ export const evaluateArticle = async (req: AuthRequest, res: Response): Promise<
     res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 };
+
+export const getInvitations = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: invitations, error } = await supabase
+      .from('review_assignments')
+      .select('*, submissions(*)')
+      .eq('reviewer_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      res.status(500).json({ error: 'Failed to fetch invitations', details: error.message });
+      return;
+    }
+
+    const sanitizedData = invitations?.map((a: any) => {
+      if (a.submissions && a.submissions.submission_authors) {
+        delete a.submissions.submission_authors;
+      }
+      return a;
+    }) || [];
+
+    res.status(200).json({ data: sanitizedData });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error', details: err.message });
+  }
+};
+
+export const getReviewHistory = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { data: history, error } = await supabase
+      .from('review_assignments')
+      .select('*, submissions(*)')
+      .eq('reviewer_id', userId)
+      .in('status', ['completed', 'rejected', 'evaluated']);
+
+    if (error) {
+      res.status(500).json({ error: 'Failed to fetch review history', details: error.message });
+      return;
+    }
+
+    const sanitizedData = history?.map((a: any) => {
+      if (a.submissions && a.submissions.submission_authors) {
+        delete a.submissions.submission_authors;
+      }
+      return a;
+    }) || [];
+
+    res.status(200).json({ data: sanitizedData });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Internal server error', details: err.message });
+  }
+};

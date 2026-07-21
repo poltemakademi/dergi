@@ -7,16 +7,25 @@ import { useApiQuery } from '../../hooks/useApiQuery';
 import { CardSkeleton } from '../../components/skeletons/CardSkeleton';
 
 export default function RoleSelector() {
-  const { setActiveRole, setActiveTenant, user } = useAuthStore();
-  const { t } = useLocaleStore();
+  const { setActiveRole, setActiveTenant } = useAuthStore();
+  const { t, locale } = useLocaleStore();
   const navigate = useNavigate();
 
-  const { data: workspaces, isLoading, error, refetch } = useApiQuery<any[]>({ url: '/api/user/workspaces' });
+  const { data: responseData, isLoading, error, refetch } = useApiQuery<any>({ url: '/api/user/workspaces' });
+  const workspaces = responseData?.data ? responseData.data : (Array.isArray(responseData) ? responseData : null);
 
   const handleSelect = (workspace: any) => {
     setActiveRole(workspace.role);
     setActiveTenant({ id: workspace.id, name: workspace.tenantName, slug: workspace.tenantSlug });
-    navigate(`/dashboard/${workspace.role === 'author' ? 'yazar' : workspace.role}/${workspace.role === 'editor' ? 'overview' : workspace.role === 'reviewer' ? 'assigned' : 'submissions'}`);
+    
+    let path = '/dashboard/activity'; // Fallback
+    if (workspace.role === 'author') path = '/dashboard/yazar/submissions';
+    else if (workspace.role === 'editor') path = '/dashboard/editor/overview';
+    else if (workspace.role === 'reviewer') path = '/dashboard/reviewer/assigned';
+    else if (workspace.role === 'layout_editor') path = '/dashboard/layout/queue';
+    else if (workspace.role === 'super_admin') path = '/dashboard/admin/system';
+    
+    navigate(path);
   };
 
   const getRoleIcon = (role: string) => {
@@ -47,7 +56,7 @@ export default function RoleSelector() {
         transition={{ duration: 0.4 }}
         className="mb-12"
       >
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">{t('roleSelect.welcome')}, {user?.name?.split(' ')[0]}</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">{locale === 'tr' ? 'Çalışma Alanları' : 'Workspaces'}</h1>
         <p className="text-slate-500 font-medium max-w-2xl">
           {t('roleSelect.subtitle')}
         </p>
@@ -95,8 +104,11 @@ export default function RoleSelector() {
             </div>
             
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-slate-900 capitalize mb-1">{getRoleTranslation(ws.role)}</h3>
-              <p className="text-sm text-slate-500 font-medium line-clamp-1">{ws.tenantName}</p>
+              <h3 className="text-lg font-bold text-slate-900 capitalize mb-1.5 line-clamp-2">{ws.tenantName}</h3>
+              <div className="flex items-center gap-1.5 text-sm text-indigo-600 font-bold bg-indigo-50/50 w-fit px-2 py-0.5 rounded border border-indigo-100">
+                {getRoleIcon(ws.role)}
+                {getRoleTranslation(ws.role)}
+              </div>
             </div>
 
             <div className="flex items-center justify-between w-full pt-4 border-t border-slate-100">

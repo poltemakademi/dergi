@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Shield, Send, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Shield, Send, AlertTriangle, UploadCloud, CheckCircle2, Paperclip } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
@@ -7,6 +7,7 @@ import { applyBlindingFilter } from '../../../utils/blindingFilter';
 import type { DeepOmitBlinded } from '../../../utils/blindingFilter';
 import { toast } from 'sonner';
 import { apiClient } from '../../../services/api/client';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 interface Article {
   id: string;
@@ -21,21 +22,28 @@ interface EvaluationPayload {
   scores: {
     originality: number;
     rigor: number;
+    literature: number;
+    clarity: number;
   };
   notesForAuthor: string;
   confidentialNotes: string;
   recommendation: string;
+  hasConflictOfInterest: boolean;
 }
 
 export default function Evaluate() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { locale } = useLocaleStore();
 
   // Form State
-  const [scores, setScores] = useState({ originality: 0, rigor: 0 });
+  const [scores, setScores] = useState({ originality: 0, rigor: 0, literature: 0, clarity: 0 });
   const [notesForAuthor, setNotesForAuthor] = useState('');
   const [confidentialNotes, setConfidentialNotes] = useState('');
   const [recommendation, setRecommendation] = useState('');
+  const [coiChecked, setCoiChecked] = useState(false);
+  const [annotatedFile, setAnnotatedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // PDF Viewer State
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -117,6 +125,7 @@ export default function Evaluate() {
         notesForAuthor,
         confidentialNotes,
         recommendation,
+        hasConflictOfInterest: coiChecked
       });
     } catch {
       // Handled by mutation hook's showErrorToast
@@ -124,8 +133,13 @@ export default function Evaluate() {
   };
 
   const handleSubmit = async () => {
-    if (scores.originality === 0 || scores.rigor === 0 || !recommendation) {
-      toast.error('Please complete all scores and recommendation');
+    if (scores.originality === 0 || scores.rigor === 0 || scores.literature === 0 || scores.clarity === 0 || !recommendation) {
+      toast.error(locale === 'tr' ? 'Lütfen tüm puanlamaları ve kararı doldurun.' : 'Please complete all scores and recommendation');
+      return;
+    }
+    
+    if (!coiChecked) {
+      toast.error(locale === 'tr' ? 'Lütfen Çıkar Çatışması beyanını onaylayın.' : 'Please declare no conflict of interest.');
       return;
     }
 
@@ -135,11 +149,40 @@ export default function Evaluate() {
         notesForAuthor,
         confidentialNotes,
         recommendation,
+        hasConflictOfInterest: coiChecked
       });
     } catch {
       // Handled by mutation hook's onError handler
     }
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAnnotatedFile(e.target.files[0]);
+    }
+  };
+
+  const renderScoreSection = (key: keyof typeof scores, title: string) => (
+    <div className="space-y-4">
+      <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+      <div className="flex gap-2">
+        {[1, 2, 3, 4, 5].map((score) => (
+          <button
+            key={score}
+            type="button"
+            onClick={() => setScores({ ...scores, [key]: score })}
+            className={`w-10 h-10 rounded-full border hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600 font-bold transition-colors ${
+              scores[key] === score
+                ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white shadow-md'
+                : 'border-slate-200 text-slate-600 bg-white'
+            }`}
+          >
+            {score}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   if (isArticleLoading) {
     return <div className="p-8 flex justify-center text-slate-500">Loading evaluation deck...</div>;
@@ -199,44 +242,12 @@ export default function Evaluate() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-800">1. Originality & Significance</h3>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((score) => (
-                <button
-                  key={score}
-                  type="button"
-                  onClick={() => setScores({ ...scores, originality: score })}
-                  className={`w-10 h-10 rounded-full border hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600 font-bold transition-colors ${
-                    scores.originality === score
-                      ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white'
-                      : 'border-slate-200 text-slate-600'
-                  }`}
-                >
-                  {score}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-800">2. Methodology Rigor</h3>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((score) => (
-                <button
-                  key={score}
-                  type="button"
-                  onClick={() => setScores({ ...scores, rigor: score })}
-                  className={`w-10 h-10 rounded-full border hover:border-rose-500 hover:bg-rose-50 hover:text-rose-600 font-bold transition-colors ${
-                    scores.rigor === score
-                      ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white'
-                      : 'border-slate-200 text-slate-600'
-                  }`}
-                >
-                  {score}
-                </button>
-              ))}
-            </div>
+          
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-6">
+            {renderScoreSection('originality', '1. Originality & Novelty')}
+            {renderScoreSection('rigor', '2. Methodology & Rigor')}
+            {renderScoreSection('literature', '3. Literature Review')}
+            {renderScoreSection('clarity', '4. Clarity & Presentation')}
           </div>
 
           <div className="space-y-3">
@@ -261,6 +272,22 @@ export default function Evaluate() {
             />
           </div>
 
+          {/* Optional Annotated File Upload */}
+          <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Paperclip className="w-4 h-4 text-slate-500" /> Annotated File (Optional)
+            </h3>
+            <p className="text-xs text-slate-500 mb-2">Upload a marked-up PDF with specific inline comments.</p>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-bold transition-all w-full flex items-center justify-center gap-2"
+            >
+              {annotatedFile ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <UploadCloud className="w-4 h-4" />}
+              {annotatedFile ? annotatedFile.name : 'Choose File...'}
+            </button>
+          </div>
+
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-800">Final Recommendation</h3>
             <select
@@ -273,6 +300,22 @@ export default function Evaluate() {
               <option value="revision">Revision Required</option>
               <option value="reject">Reject</option>
             </select>
+          </div>
+          
+          <div className="pt-4 border-t border-slate-100">
+             <label className="flex items-start gap-3 cursor-pointer group">
+               <div className="relative flex items-start pt-0.5">
+                 <input 
+                   type="checkbox" 
+                   checked={coiChecked}
+                   onChange={(e) => setCoiChecked(e.target.checked)}
+                   className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer"
+                 />
+               </div>
+               <span className="text-xs text-slate-600 font-medium leading-relaxed group-hover:text-slate-800 transition-colors">
+                 I declare that I have no conflicts of interest regarding the evaluation of this manuscript, and I commit to maintaining the confidentiality of this double-blind peer review process.
+               </span>
+             </label>
           </div>
         </div>
 
@@ -288,8 +331,8 @@ export default function Evaluate() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || isSavingDraft}
-            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex-1 flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
+            disabled={isSubmitting || isSavingDraft || !coiChecked}
+            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex-1 flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" /> {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </button>
