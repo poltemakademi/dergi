@@ -43,7 +43,7 @@ export default function Evaluate() {
   const [pdfError, setPdfError] = useState<string | null>(null);
 
   // 1. Fetch Article Metadata
-  const { data: article, isLoading: isArticleLoading, error: articleError } = useApiQuery<
+  const { isLoading: isArticleLoading, error: articleError } = useApiQuery<
     Article,
     DeepOmitBlinded<Article>
   >({

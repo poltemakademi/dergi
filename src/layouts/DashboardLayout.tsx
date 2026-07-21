@@ -56,7 +56,7 @@ export default function DashboardLayout() {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
           onClick={closeSidebar}
         />
       )}
@@ -66,7 +66,7 @@ export default function DashboardLayout() {
         initial="hidden"
         animate="visible"
         variants={sidebarVariants}
-        className={`fixed inset-y-0 left-0 w-72 bg-white flex flex-col z-30 border-r border-slate-200/80 shadow-[4px_0_24px_rgba(0,0,0,0.01)] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 w-72 bg-white flex flex-col z-50 border-r border-slate-200/80 shadow-2xl lg:shadow-[4px_0_24px_rgba(0,0,0,0.01)] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <Link to="/" onClick={closeSidebar} className="flex items-center gap-3 hover:bg-slate-50 transition-colors group">
@@ -267,16 +267,17 @@ export default function DashboardLayout() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Minimal Header */}
-        <header className="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 shadow-[0_4px_24px_rgba(0,0,0,0.01)]">
-          <div className="flex items-center gap-4">
+        <header className="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-3 sm:px-8 shrink-0 z-10 shadow-[0_4px_24px_rgba(0,0,0,0.01)]">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors"
+              className="lg:hidden p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-colors"
+              aria-label="Open sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <h1 className="text-lg font-bold text-slate-900 capitalize hidden sm:block">
+            <h1 className="text-sm sm:text-lg font-bold text-slate-900 capitalize truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
               {location.pathname.split('/').pop()?.replace('-', ' ')}
             </h1>
             
@@ -297,7 +298,7 @@ export default function DashboardLayout() {
             )}
           </div>
           
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-6">
             <div className="relative group hidden sm:block">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
               <input 
@@ -311,7 +312,7 @@ export default function DashboardLayout() {
             {/* Language Switcher */}
             <button 
               onClick={() => setLocale(locale === 'en' ? 'tr' : 'en')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
             >
               <Globe className="w-3.5 h-3.5" />
               {locale === 'en' ? 'EN' : 'TR'}
@@ -328,13 +329,13 @@ export default function DashboardLayout() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-gradient-to-r from-amber-50 to-rose-50 border-b border-amber-200/50"
+              className="bg-gradient-to-r from-amber-50 to-rose-50 border-b border-amber-200/50 shrink-0"
             >
               <div className="px-4 sm:px-8 py-3 flex items-start sm:items-center gap-3">
                 <div className="p-1.5 bg-amber-100 rounded-md shrink-0">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
                 </div>
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-xs sm:text-sm font-medium text-amber-800">
                   {locale === 'tr' 
                     ? "Lütfen devam etmek için aktif rolünüzün gerektirdiği zorunlu alanları doldurun." 
                     : "Please complete required fields for your active role to unlock navigation."}
@@ -345,7 +346,7 @@ export default function DashboardLayout() {
         </AnimatePresence>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={!isProfileValid ? 'profile-lock' : location.pathname}

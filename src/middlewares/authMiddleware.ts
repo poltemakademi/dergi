@@ -1,10 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email?: string;
+    name?: string;
     roles?: {
       journal_id: string;
       role: string;
@@ -21,9 +22,6 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
     }
 
     const token = authHeader.split(' ')[1];
-    
-    console.log('[AuthMiddleware] Received Token:', token);
-    console.log('[AuthMiddleware] NODE_ENV:', process.env.NODE_ENV);
 
     // FOR DEVELOPMENT ONLY: Allow RoleSimulator mock token
     if (token.startsWith('demo-') && process.env.NODE_ENV !== 'production') {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../services/api/client';
 import type { AxiosRequestConfig } from 'axios';
 
@@ -26,20 +26,31 @@ export function useApiQuery<TData = any, TResult = TData>({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Store params and transform in refs so inline object/function references don't trigger re-render loops
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+
+  const transformRef = useRef(transform);
+  transformRef.current = transform;
+
+  // Serialize params for stable dependency checking
+  const paramsKey = JSON.stringify(params);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiClient.get<TData>(url, { params });
+      const response = await apiClient.get<TData>(url, { params: paramsRef.current });
       
-      const result = transform ? transform(response.data) : (response.data as unknown as TResult);
+      const currentTransform = transformRef.current;
+      const result = currentTransform ? currentTransform(response.data) : (response.data as unknown as TResult);
       setData(result);
     } catch (err: any) {
       setError(err instanceof Error ? err : new Error(err?.message || 'An error occurred'));
     } finally {
       setIsLoading(false);
     }
-  }, [url, params, transform]);
+  }, [url, paramsKey]);
 
   useEffect(() => {
     if (enabled) {

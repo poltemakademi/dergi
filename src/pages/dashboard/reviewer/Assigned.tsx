@@ -14,7 +14,7 @@ interface AssignedManuscript {
 }
 
 export default function Assigned() {
-  const { t, locale } = useLocaleStore();
+  const { locale } = useLocaleStore();
 
   const { data: assignedQueue, isLoading, error, refetch } = useApiQuery<
     AssignedManuscript[],

@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -11,6 +12,7 @@ import reviewerRoutes from './routes/reviewerRoutes';
 import userRoutes from './routes/userRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import adminRoutes from './routes/adminRoutes';
+import messageRoutes from './routes/messageRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -28,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health Check Route
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Backend is running smoothly.' });
 });
 
@@ -39,10 +41,11 @@ app.use('/api/reviewer', reviewerRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messageRoutes);
 // Note: Issue routes (like /api/editor/issues/create) are already mounted inside editorRoutes.
 
 // Handle 404 - Route Not Found
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, res: Response, _next: NextFunction) => {
   res.status(404).json({
     status: 'error',
     message: `Route ${req.method} ${req.originalUrl} not found.`
@@ -51,7 +54,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // 3. Global Error Handling
 // This must be the last middleware in the stack
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('🔥 [Global Error Handler]:', err);
 
   const statusCode = err.status || err.statusCode || 500;

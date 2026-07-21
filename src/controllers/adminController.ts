@@ -1,8 +1,8 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middlewares/authMiddleware';
+import type { AuthRequest } from '../middlewares/authMiddleware';
 
-export const getJournals = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getJournals = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { data, error } = await supabase
       .from('journals')
@@ -52,7 +52,7 @@ export const createJournal = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-export const getUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getUsers = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { data, error } = await supabase
       .from('profiles')

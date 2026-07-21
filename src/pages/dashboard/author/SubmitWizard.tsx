@@ -67,11 +67,6 @@ export default function SubmitWizard() {
       return;
     }
 
-    const metadataPayload = {
-      ...metadata,
-      authors
-    };
-
     const payload = {
       title: metadata.titleEn || metadata.titleTr,
       journal_id: '48d85d88-cf07-4745-893c-60037d52fa0e', // Real journal ID
