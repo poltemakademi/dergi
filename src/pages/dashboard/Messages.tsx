@@ -56,34 +56,34 @@ export default function Messages() {
   });
 
   const { mutate: deleteMessage } = useApiMutation<{ id: string }, any>(
-    (payload) => `/api/messages/${payload.id}`, 
-    { 
-      method: 'DELETE', 
-      onSuccess: () => { 
-        setSelectedMessage(null); 
+    (payload) => `/api/messages/${payload.id}`,
+    {
+      method: 'DELETE',
+      onSuccess: () => {
+        setSelectedMessage(null);
         setIsDeleteConfirmOpen(false);
-        refetch(); 
-      }, 
-      showSuccessToast: locale === 'tr' ? 'Mesaj silindi' : 'Message deleted' 
+        refetch();
+      },
+      showSuccessToast: locale === 'tr' ? 'Mesaj silindi' : 'Message deleted'
     }
   );
 
   const { mutate: starMessage } = useApiMutation<{ id: string }, any>(
-    (payload) => `/api/messages/${payload.id}/star`, 
+    (payload) => `/api/messages/${payload.id}/star`,
     { method: 'PATCH', onSuccess: () => refetch(), showSuccessToast: false }
   );
-  
+
   const { mutate: markAsRead } = useApiMutation<{ id: string }, any>(
-    (payload) => `/api/messages/${payload.id}/read`, 
-    { 
-      method: 'PATCH', 
+    (payload) => `/api/messages/${payload.id}/read`,
+    {
+      method: 'PATCH',
       onSuccess: () => {
         refetch();
         // Notify DashboardLayout to update sidebar badge
         window.dispatchEvent(new Event('messages-updated'));
-      }, 
-      showSuccessToast: false, 
-      showErrorToast: false 
+      },
+      showSuccessToast: false,
+      showErrorToast: false
     }
   );
 
@@ -152,7 +152,7 @@ export default function Messages() {
       const msgId = selectedMessage.id;
       try {
         deleteMessage({ id: msgId });
-      } catch {}
+      } catch { }
       setIsDeleteConfirmOpen(false);
       setSelectedMessage(null);
       toast.success(locale === 'tr' ? 'Mesaj silindi.' : 'Message deleted.');
@@ -167,8 +167,8 @@ export default function Messages() {
       const willBeStarred = !selectedMessage.starred;
       setSelectedMessage((prev: any) => prev ? { ...prev, starred: willBeStarred } : null);
       toast.success(
-        willBeStarred 
-          ? (locale === 'tr' ? 'Mesaj yıldızlandı ⭐' : 'Message starred ⭐') 
+        willBeStarred
+          ? (locale === 'tr' ? 'Mesaj yıldızlandı ⭐' : 'Message starred ⭐')
           : (locale === 'tr' ? 'Yıldız kaldırıldı' : 'Star removed')
       );
     }
@@ -179,7 +179,7 @@ export default function Messages() {
   const handleSendInlineReply = () => {
     if (!inlineReplyText.trim() || !selectedMessage) return;
     const replyContent = inlineReplyText.trim();
-    
+
     // Update local state immediately for instant feedback
     const newReply = {
       id: `reply-${Date.now()}`,
@@ -211,15 +211,15 @@ export default function Messages() {
 
   return (
     <div className="h-[calc(100vh-7.5rem)] sm:h-[calc(100vh-9.5rem)] bg-white rounded-2xl border border-slate-200/90 shadow-xl flex overflow-hidden relative">
-      
+
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteConfirmOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-slate-200"
             >
@@ -236,17 +236,17 @@ export default function Messages() {
 
       {/* Left Column: Folders + Search + Message List (Width: ~350px) */}
       <div className={`flex flex-col border-r border-slate-200/80 bg-slate-50/50 shrink-0 h-full ${selectedMessage ? 'hidden md:flex md:w-80 lg:w-96' : 'w-full flex-1'}`}>
-        
+
         {/* Header: Title + Prominent "+ New Message" Button + Clear Folder Tabs */}
         <div className="p-4 border-b border-slate-200/80 bg-white space-y-3 shrink-0">
-          
+
           {/* Row 1: Title + Prominent "+ New Message" Button */}
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-indigo-600" />
               {locale === 'tr' ? 'Mesajlar' : 'Messages'}
             </h2>
-            <button 
+            <button
               onClick={() => setIsComposeOpen(true)}
               className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             >
@@ -257,36 +257,33 @@ export default function Messages() {
 
           {/* Row 2: Clear Full-Width Folder Tabs (Inbox | Sent | Starred) */}
           <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/60">
-            <button 
+            <button
               onClick={() => setFolder('inbox')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                folder === 'inbox' 
-                  ? 'bg-white text-indigo-600 shadow-xs font-black' 
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${folder === 'inbox'
+                  ? 'bg-white text-indigo-600 shadow-xs font-black'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               <InboxIcon className="w-3.5 h-3.5" />
               <span>{locale === 'tr' ? 'Gelen Kutusu' : 'Inbox'}</span>
               <span className="text-[10px] bg-indigo-50 text-indigo-700 font-extrabold px-1.5 py-0.2 rounded-full border border-indigo-100">3</span>
             </button>
-            <button 
+            <button
               onClick={() => setFolder('sent')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                folder === 'sent' 
-                  ? 'bg-white text-indigo-600 shadow-xs font-black' 
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${folder === 'sent'
+                  ? 'bg-white text-indigo-600 shadow-xs font-black'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               <Send className="w-3.5 h-3.5" />
               <span>{locale === 'tr' ? 'Gönderilenler' : 'Sent'}</span>
             </button>
-            <button 
+            <button
               onClick={() => setFolder('starred')}
-              className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                folder === 'starred' 
-                  ? 'bg-white text-amber-600 shadow-xs font-black' 
+              className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${folder === 'starred'
+                  ? 'bg-white text-amber-600 shadow-xs font-black'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
               title={locale === 'tr' ? 'Yıldızlı Mesajlar' : 'Starred'}
             >
               <Star className={`w-3.5 h-3.5 ${folder === 'starred' ? 'fill-amber-500 text-amber-500' : ''}`} />
@@ -296,12 +293,12 @@ export default function Messages() {
           {/* Row 3: Search Bar */}
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('msg.search')} 
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400" 
+              placeholder={t('msg.search')}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -321,8 +318,8 @@ export default function Messages() {
             </div>
           ) : (
             displayMessages.map((msg: any) => (
-              <div 
-                key={msg.id} 
+              <div
+                key={msg.id}
                 onClick={() => handleSelectMessage(msg)}
                 className={`p-3.5 hover:bg-slate-50 cursor-pointer flex gap-3 transition-all ${msg.unread ? 'bg-indigo-50/20' : ''} ${selectedMessage?.id === msg.id ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
               >
@@ -352,13 +349,13 @@ export default function Messages() {
       <div className={`flex-1 flex flex-col bg-slate-50/40 h-full ${!selectedMessage ? 'hidden md:flex' : 'flex w-full'}`}>
         {selectedMessage ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            
+
             {/* Reading View Top Header */}
             <div className="p-5 sm:p-6 border-b border-slate-200/80 bg-white shrink-0 shadow-2xs space-y-4">
-              
+
               {/* Back & Actions */}
               <div className="flex items-center justify-between gap-3">
-                <button 
+                <button
                   onClick={() => setSelectedMessage(null)}
                   className="md:hidden inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
                 >
@@ -367,27 +364,26 @@ export default function Messages() {
                 </button>
 
                 <div className="flex items-center gap-2 ml-auto">
-                  <button 
-                    onClick={() => setIsReplyingInline(prev => !prev)} 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl transition-all cursor-pointer" 
+                  <button
+                    onClick={() => setIsReplyingInline(prev => !prev)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl transition-all cursor-pointer"
                   >
                     <Reply className="w-3.5 h-3.5" />
                     <span>{locale === 'tr' ? 'Yanıtla' : 'Reply'}</span>
                   </button>
-                  <button 
-                    onClick={(e) => handleStar(e, selectedMessage.id)} 
-                    className={`p-2 rounded-xl transition-all border cursor-pointer active:scale-90 ${
-                      selectedMessage.starred 
-                        ? 'bg-amber-50 border-amber-200 text-amber-500 shadow-2xs' 
+                  <button
+                    onClick={(e) => handleStar(e, selectedMessage.id)}
+                    className={`p-2 rounded-xl transition-all border cursor-pointer active:scale-90 ${selectedMessage.starred
+                        ? 'bg-amber-50 border-amber-200 text-amber-500 shadow-2xs'
                         : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 border-slate-200/60'
-                    }`} 
+                      }`}
                     title={selectedMessage.starred ? (locale === 'tr' ? 'Yıldızı Kaldır' : 'Remove Star') : (locale === 'tr' ? 'Yıldızla' : 'Star Message')}
                   >
                     <Star className={`w-4 h-4 transition-transform ${selectedMessage.starred ? 'fill-amber-500 text-amber-500 scale-110' : ''}`} />
                   </button>
-                  <button 
-                    onClick={handleDeleteClick} 
-                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-slate-200/60 cursor-pointer" 
+                  <button
+                    onClick={handleDeleteClick}
+                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-slate-200/60 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -398,7 +394,7 @@ export default function Messages() {
               <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-snug break-words">
                 {selectedMessage.subject}
               </h1>
-              
+
               {/* Sender Info Bar */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center gap-3">
@@ -419,7 +415,7 @@ export default function Messages() {
 
             {/* Reading View Body Scroll Canvas */}
             <div className="p-5 sm:p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
-              
+
               {/* Notice Banner */}
               {(selectedMessage.content?.includes('revizyon') || selectedMessage.content?.includes('hakem') || selectedMessage.content?.includes('revision')) && (
                 <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 text-amber-900 shadow-2xs">
@@ -429,8 +425,8 @@ export default function Messages() {
                       {locale === 'tr' ? 'Eylem Gerektiren Bildirim: ' : 'Action Required Notice: '}
                     </span>
                     <span>
-                      {locale === 'tr' 
-                        ? 'Bu mesaj hakem değerlendirme süreci ve revizyon talimatları içermektedir.' 
+                      {locale === 'tr'
+                        ? 'Bu mesaj hakem değerlendirme süreci ve revizyon talimatları içermektedir.'
                         : 'This message contains review process and revision guidelines.'}
                     </span>
                   </div>
@@ -450,8 +446,8 @@ export default function Messages() {
                     {locale === 'tr' ? 'Yanıt Geçmişi' : 'Replies Thread'} ({selectedMessage.replies.length})
                   </h4>
                   {selectedMessage.replies.map((reply: any) => (
-                    <motion.div 
-                      key={reply.id} 
+                    <motion.div
+                      key={reply.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="bg-indigo-50/40 p-5 sm:p-6 rounded-2xl border border-indigo-100/90 shadow-2xs space-y-3"
@@ -480,7 +476,7 @@ export default function Messages() {
 
               {/* Ultra-Professional Reply Dock */}
               {isReplyingInline ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 15, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -495,8 +491,8 @@ export default function Messages() {
                         {selectedMessage.sender}
                       </span>
                     </div>
-                    <button 
-                      onClick={() => setIsReplyingInline(false)} 
+                    <button
+                      onClick={() => setIsReplyingInline(false)}
                       className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
                       title={locale === 'tr' ? 'Kapat' : 'Close'}
                     >
@@ -527,7 +523,7 @@ export default function Messages() {
 
                   {/* Reply Textarea */}
                   <div className="p-5 pt-3">
-                    <textarea 
+                    <textarea
                       rows={5}
                       value={inlineReplyText}
                       onChange={(e) => setInlineReplyText(e.target.value)}
@@ -544,14 +540,14 @@ export default function Messages() {
                       </button>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button 
+                      <button
                         type="button"
-                        onClick={() => setIsReplyingInline(false)} 
+                        onClick={() => setIsReplyingInline(false)}
                         className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer"
                       >
                         {locale === 'tr' ? 'Vazgeç' : 'Cancel'}
                       </button>
-                      <button 
+                      <button
                         type="button"
                         onClick={handleSendInlineReply}
                         disabled={isSending || !inlineReplyText.trim()}
@@ -565,7 +561,7 @@ export default function Messages() {
                 </motion.div>
               ) : (
                 <div className="flex items-center justify-start pt-2">
-                  <button 
+                  <button
                     onClick={() => setIsReplyingInline(true)}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all cursor-pointer active:scale-95"
                   >
@@ -592,7 +588,7 @@ export default function Messages() {
       <AnimatePresence>
         {isComposeOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-md">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -607,7 +603,7 @@ export default function Messages() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
                 {/* To Recipient Field */}
                 <div className="space-y-1.5">
@@ -615,9 +611,9 @@ export default function Messages() {
                     {locale === 'tr' ? 'Alıcı (Kime):' : 'To (Recipient):'}
                   </label>
                   <div className="relative">
-                    <select 
-                      value={composeTo} 
-                      onChange={(e) => setComposeTo(e.target.value)} 
+                    <select
+                      value={composeTo}
+                      onChange={(e) => setComposeTo(e.target.value)}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm transition-all cursor-pointer shadow-2xs appearance-none pr-10"
                     >
                       <option value="" disabled>{locale === 'tr' ? 'Alıcı seçiniz...' : 'Select recipient...'}</option>
@@ -627,7 +623,7 @@ export default function Messages() {
                         </option>
                       ))}
                       {composeTo && (!recipients || !recipients.find((r: any) => r.email === composeTo || r.id === composeTo)) && (
-                         <option value={composeTo}>{composeTo}</option>
+                        <option value={composeTo}>{composeTo}</option>
                       )}
                     </select>
                     <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -641,12 +637,12 @@ export default function Messages() {
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     {locale === 'tr' ? 'Konu:' : 'Subject:'}
                   </label>
-                  <input 
-                    type="text" 
-                    value={composeSubject} 
-                    onChange={(e) => setComposeSubject(e.target.value)} 
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400" 
-                    placeholder={locale === 'tr' ? 'Mesajınızın konusunu yazın...' : 'Enter message subject...'} 
+                  <input
+                    type="text"
+                    value={composeSubject}
+                    onChange={(e) => setComposeSubject(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm transition-all shadow-2xs placeholder:font-normal placeholder:text-slate-400"
+                    placeholder={locale === 'tr' ? 'Mesajınızın konusunu yazın...' : 'Enter message subject...'}
                   />
                 </div>
 
@@ -655,11 +651,11 @@ export default function Messages() {
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     {locale === 'tr' ? 'Mesaj Metni:' : 'Message Content:'}
                   </label>
-                  <textarea 
+                  <textarea
                     rows={6}
                     value={composeContent}
                     onChange={(e) => setComposeContent(e.target.value)}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm text-slate-800 resize-none transition-all placeholder:text-slate-400 font-sans leading-relaxed shadow-2xs" 
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm text-slate-800 resize-none transition-all placeholder:text-slate-400 font-sans leading-relaxed shadow-2xs"
                     placeholder={locale === 'tr' ? 'Mesajınızı detaylı olarak buraya yazın...' : 'Write your message here in detail...'}
                   />
                 </div>
@@ -669,8 +665,8 @@ export default function Messages() {
                 <button onClick={() => setIsComposeOpen(false)} className="px-4 py-2 text-xs sm:text-sm text-slate-600 font-semibold hover:bg-slate-200/60 rounded-xl transition-colors">
                   {locale === 'tr' ? 'İptal' : 'Cancel'}
                 </button>
-                <button 
-                  onClick={handleSendMessage} 
+                <button
+                  onClick={handleSendMessage}
                   disabled={isSending}
                   className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-indigo-200 flex items-center gap-2 active:scale-95"
                 >

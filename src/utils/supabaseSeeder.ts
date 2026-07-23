@@ -3,15 +3,23 @@ import { MOCK_JOURNALS } from '../lib/mockData';
 
 // Map mock IDs to fixed, valid UUIDs for schema compliance
 const JOURNAL_UUIDS: { [key: string]: string } = {
+  PA: 'f0a1b2c3-d4e5-6f7a-8b9c-0d1e2f3a4b5c',
   JS: 'a3b0c1d2-e3f4-5a6b-7c8d-9e0f1a2b3c4d',
-  IM: 'b4c1d2e3-f4a5-6b7c-8d9e-0f1a2b3c4d5e',
-  LL: 'c5d2e3f4-a5b6-7c8d-9e0f-1a2b3c4d5e6f'
+  AM: 'b4c1d2e3-f4a5-6b7c-8d9e-0f1a2b3c4d5e',
+  ET: 'c5d2e3f4-a5b6-7c8d-9e0f-1a2b3c4d5e6f',
+  QC: 'd6e3f4a5-b6c7-8d9e-0f1a-2b3c4d5e6f7a',
+  ES: 'e7f4a5b6-c7d8-9e0f-1a2b-3c4d5e6f7a8b',
+  AI: 'f8a5b6c7-d8e9-0f1a-2b3c-4d5e6f7a8b9c'
 };
 
 const AUTHOR_UUIDS: { [key: string]: string } = {
+  PA: 'e0000000-0000-0000-0000-000000000000',
   JS: 'e1111111-1111-1111-1111-111111111111',
-  IM: 'e2222222-2222-2222-2222-222222222222',
-  LL: 'e3333333-3333-3333-3333-333333333333'
+  AM: 'e2222222-2222-2222-2222-222222222222',
+  ET: 'e3333333-3333-3333-3333-333333333333',
+  QC: 'e4444444-4444-4444-4444-444444444444',
+  ES: 'e5555555-5555-5555-5555-555555555555',
+  AI: 'e6666666-6666-6666-6666-666666666666'
 };
 
 export async function seedSupabaseDatabase() {

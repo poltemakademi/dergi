@@ -289,9 +289,9 @@ export default function EarlyAccess() {
                 </div>
               ))
             ) : filteredArticles.length > 0 ? (
-              filteredArticles.map((article) => (
+              filteredArticles.map((article, idx) => (
                 <div 
-                  key={article.id}
+                  key={`${article.id}-${article.journalSlug || idx}`}
                   className="group relative border-b border-slate-200/70 py-8 flex flex-col lg:flex-row lg:items-start justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300 -mx-4 px-4 sm:mx-0 sm:px-2 rounded-xl"
                 >
                   

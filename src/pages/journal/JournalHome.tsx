@@ -211,7 +211,6 @@ export default function JournalHome() {
                       <button
                         key={i}
                         onClick={() => {
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
                           if (link.action === 'latest') navigate('./current');
                           else if (link.action === 'archive') navigate('./archives');
                           else if (link.action === 'submit') navigate('/dashboard/yazar/submit-wizard');
@@ -245,7 +244,7 @@ export default function JournalHome() {
 
                   <div className="space-y-6 divide-y divide-slate-100">
                     {articles.map((article, index) => (
-                      <div key={article.id} className={`pt-6 text-left space-y-4 ${index === 0 ? '!pt-0' : ''}`}>
+                      <div key={`${article.id}-${index}`} className={`pt-6 text-left space-y-4 ${index === 0 ? '!pt-0' : ''}`}>
 
                         {/* Article Header info */}
                         <div className="flex flex-wrap items-center gap-3">
@@ -260,7 +259,9 @@ export default function JournalHome() {
                         {/* Title & Author */}
                         <div className="space-y-2">
                           <h3
-                            onClick={() => navigate(`./article/${article.id}`)}
+                            onClick={() => {
+                              navigate(`./article/${article.id}`);
+                            }}
                             className="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-700 transition-colors cursor-pointer"
                           >
                             {article.title}
@@ -303,7 +304,9 @@ export default function JournalHome() {
                         {/* Actions */}
                         <div className="flex items-center gap-3 pt-2">
                           <button
-                            onClick={() => navigate(`./article/${article.id}`)}
+                            onClick={() => {
+                              navigate(`./article/${article.id}`);
+                            }}
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />

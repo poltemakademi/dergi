@@ -106,15 +106,15 @@ export const getArticleForReview = async (req: AuthRequest, res: Response): Prom
       res.status(200).json({
         data: {
           id,
-          title: id === 'INV-101' 
+          title: id === 'INV-101'
             ? 'Yapay Zeka ve Veri Madenciliği ile Eğitimde Başarı Analizi'
             : id === 'INV-102'
-            ? 'Yenilenebilir Enerji Sistemlerinde Akıllı Şebeke Optimizasyonu'
-            : id === 'INV-103'
-            ? 'Siber Güvenlikte Blokzincir Tabanlı Güvenli Kimlik Doğrulama'
-            : id === 'SUB-2026-089' 
-            ? 'Yapay Zeka Tabanlı Otonom İHA Rota Optimizasyonu'
-            : 'Yükseköğretimde Büyük Dil Modellerinin Etik ve Yönetişim Çerçeveleri',
+              ? 'Yenilenebilir Enerji Sistemlerinde Akıllı Şebeke Optimizasyonu'
+              : id === 'INV-103'
+                ? 'Siber Güvenlikte Blokzincir Tabanlı Güvenli Kimlik Doğrulama'
+                : id === 'SUB-2026-089'
+                  ? 'Yapay Zeka Tabanlı Otonom İHA Rota Optimizasyonu'
+                  : 'Yükseköğretimde Büyük Dil Modellerinin Etik ve Yönetişim Çerçeveleri',
           abstract: 'Bu çalışma, gelişmiş yapay zeka ve derin öğrenme algoritmalarının gerçek zamanlı veri kümesi üzerindeki performansını ve rasyonel karar alma süreçlerini incelemektedir...',
           keywords: 'Yapay Zeka, Veri Madenciliği, Optimizasyon, Siber Güvenlik',
           pdf_url: '/demo-manuscript.pdf'
@@ -141,7 +141,7 @@ export const getArticleForReview = async (req: AuthRequest, res: Response): Prom
     // we must actively intercept and strip author data.
     const { data: submission, error: subError } = await supabase
       .from('submissions')
-      .select('*, submission_authors(*)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -155,7 +155,7 @@ export const getArticleForReview = async (req: AuthRequest, res: Response): Prom
     if (submission.submission_authors) {
       delete submission.submission_authors;
     }
-    
+
     // Also remove author_id just to be safe
     if (submission.author_id) {
       delete submission.author_id;
@@ -194,9 +194,9 @@ export const evaluateArticle = async (req: AuthRequest, res: Response): Promise<
     }
 
     if (id.startsWith('SUB-') || id.startsWith('INV-')) {
-      res.status(201).json({ 
-        message: 'Review submitted successfully', 
-        data: { id: `REV-${Date.now()}`, submission_id: id, status: 'completed' } 
+      res.status(201).json({
+        message: 'Review submitted successfully',
+        data: { id: `REV-${Date.now()}`, submission_id: id, status: 'completed' }
       });
       return;
     }
@@ -499,7 +499,7 @@ export const respondToInvitation = async (req: AuthRequest, res: Response): Prom
     }
 
     const { invitationId, accept } = req.body;
-    
+
     // Track responded mock invitation IDs so they disappear from future fetches
     if (invitationId && (invitationId.startsWith('INV-'))) {
       respondedMockInvitationIds.add(invitationId);
@@ -513,8 +513,8 @@ export const respondToInvitation = async (req: AuthRequest, res: Response): Prom
         .eq('reviewer_id', userId);
     }
 
-    res.status(200).json({ 
-      message: accept ? 'Invitation accepted successfully' : 'Invitation declined' 
+    res.status(200).json({
+      message: accept ? 'Invitation accepted successfully' : 'Invitation declined'
     });
   } catch (err: any) {
     res.status(500).json({ error: 'Internal server error', details: err.message });

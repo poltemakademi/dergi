@@ -107,7 +107,7 @@ export default function CurrentIssue() {
           ) : (
             <div className="space-y-6 divide-y divide-slate-100">
               {articles.map((article, index) => (
-                <div key={article.id} className={`pt-6 text-left space-y-4 ${index === 0 ? '!pt-0' : ''}`}>
+                <div key={`${article.id}-${index}`} className={`pt-6 text-left space-y-4 ${index === 0 ? '!pt-0' : ''}`}>
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-[10px] font-black text-indigo-600 tracking-widest font-mono uppercase">
                       DOI: {article.doi || '10.xxxx/xxxx'}
@@ -119,7 +119,10 @@ export default function CurrentIssue() {
 
                   <div className="space-y-2">
                     <h3
-                      onClick={() => navigate(`../article/${article.id}`)}
+                      onClick={() => {
+                        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                        navigate(`../article/${article.id}`);
+                      }}
                       className="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-700 transition-colors cursor-pointer"
                     >
                       {article.title || article.titleEn || article.titleTr}
