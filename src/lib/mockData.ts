@@ -29,6 +29,7 @@ export interface MockAdvisoryMember {
 
 export interface MockJournal {
   id: string;
+  abbreviation?: string;
   slug: string;
   name: string;
   tr: string;
@@ -72,7 +73,73 @@ export interface MockJournal {
 
 export const MOCK_JOURNALS: MockJournal[] = [
   {
+    id: 'PA',
+    abbreviation: 'PA',
+    slug: 'poltem-akademi-dergisi',
+    name: 'Poltem Akademi Dergisi',
+    tr: 'Poltem Akademi Dergisi',
+    issn: '2687-4321',
+    index: 'Crossref Indexed',
+    indexColor: 'text-slate-700 bg-slate-50 border-slate-200',
+    cover: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop',
+    impactFactor: '3.2',
+    reviewTime: '4 Weeks Avg',
+    acceptRate: '22%',
+    articlesCount: '154',
+    description: {
+      EN: 'Peer-reviewed academic research in public safety, security management, criminology, and law enforcement.',
+      TR: 'Kamu güvenliği, güvenlik yönetimi, kriminoloji ve kolluk kuvvetleri araştırmalarında hakemli akademik yayın.'
+    },
+    about: {
+      EN: 'Poltem Akademi Dergisi is an open-access journal publishing high-quality empirical studies, theoretical analyses, and policy evaluations in security sciences, policing methods, crisis management, and legal frameworks.',
+      TR: 'Poltem Akademi Dergisi; güvenlik bilimleri, polislik yöntemleri, kriz yönetimi ve hukuki çerçeveler alanlarında yüksek kaliteli ampirik çalışmaları, teorik analizleri ve politika değerlendirmelerini yayınlayan açık erişimli bir dergidir.'
+    },
+    aimsScope: {
+      EN: 'Topics include: Cyber security tactics, crime prevention strategies, police ethics, forensic sciences, and public administration safety policies.',
+      TR: 'Konular: Siber güvenlik taktikleri, suç önleme stratejileri, polis etiği, adli bilimler ve kamu yönetimi güvenlik politikaları.'
+    },
+    writingPrinciples: {
+      EN: 'Submissions accepted in Turkish and English. Manuscripts must follow APA 7 guidelines and contain an abstract of 150-250 words.',
+      TR: 'Makaleler Türkçe ve İngilizce olarak kabul edilir. Metinler APA 7 kurallarına uygun olmalı ve 150-250 kelimelik bir özet içermelidir.'
+    },
+    publisher: {
+      EN: 'Published by Poltem Academy Press.',
+      TR: 'Poltem Akademi Yayınları tarafından yayınlanmaktadır.'
+    },
+    contact: {
+      EN: 'Editorial Office: dergi@poltemakademi.org\nPhone: +90 312 300 00 00',
+      TR: 'Editörlük Ofisi: dergi@poltemakademi.org\nTelefon: +90 312 300 00 00'
+    },
+    editorialBoard: [
+      { role: 'Editor-in-Chief', name: 'Prof. Dr. Ahmet Yılmaz', title: 'Security Sciences Department, Poltem Academy' },
+      { role: 'Associate Editor', name: 'Doç. Dr. Selin Kaya', title: 'Criminology & Public Law Chair' }
+    ],
+    advisoryBoard: [
+      { name: 'Prof. Dr. Mehmet Demir', institution: 'Ankara University Faculty of Law' },
+      { name: 'Dr. Robert Miller', institution: 'European Police Academy Research Center' }
+    ],
+    articles: [
+      {
+        id: 701,
+        title: 'Modern Cyber Crime Investigation Techniques and Legal Regulations in Public Security',
+        author: 'Prof. Dr. Ahmet Yılmaz, Doç. Dr. Selin Kaya',
+        doi: '10.2687/poltem.2026.0101',
+        abstract: 'This article evaluates modern digital forensics and cyber crime response workflows within the scope of public security and data privacy laws.',
+        pages: '1-18'
+      }
+    ],
+    announcements: [
+      {
+        type: 'CFP',
+        date: 'August 2026',
+        title: 'Call for Papers: Special Issue on AI in Public Safety',
+        content: 'Poltem Akademi Dergisi invites submissions exploring ethical AI implementation, predictive policing algorithms, and automated surveillance governance.'
+      }
+    ]
+  },
+  {
     id: 'JS',
+    abbreviation: 'JS',
     slug: 'js',
     name: 'Journal of Space Exploration',
     tr: 'Uzay Keşifleri Dergisi',
@@ -118,7 +185,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 101,
         title: 'A Neural Framework for Quantum Grid Computing Architecture in Deep Space Networks',
         author: 'Sarah Jenkins, Michael Chen',
         doi: '10.2845/qg.2026.0412',
@@ -126,7 +193,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
         pages: '12-34'
       },
       {
-        id: 2,
+        id: 102,
         title: 'Thermal Shield Optimization Methods for Low-Orbit Solar Explorers',
         author: 'Dr. Elena Rostova',
         doi: '10.2845/qg.2026.0413',
@@ -145,6 +212,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
   },
   {
     id: 'AM',
+    abbreviation: 'AM',
     slug: 'am',
     name: 'Annals of Modern Medicine',
     tr: 'Modern Tıp Yıllıkları',
@@ -189,7 +257,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 201,
         title: 'CRISPR-Cas9 Gene Therapeutics in Refractory Myeloid Leukemia: A Phase-I Clinical Outcome',
         author: 'Prof. Dr. Elizabeth Vance, Dr. Yusuf Yılmaz',
         doi: '10.1992/amm.2026.1092',
@@ -208,6 +276,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
   },
   {
     id: 'ET',
+    abbreviation: 'ET',
     slug: 'et',
     name: 'Engineering & Tech Review',
     tr: 'Mühendislik ve Teknoloji İncelemeleri',
@@ -251,7 +320,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 301,
         title: 'Deep Reinforcement Learning for Dynamic Traffic Optimization in IoT-Enabled Smart Cities',
         author: 'Prof. Kenan Demir',
         doi: '10.3012/etr.2026.0841',
@@ -263,6 +332,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
   },
   {
     id: 'QC',
+    abbreviation: 'QC',
     slug: 'qc',
     name: 'Quantum Computing Letters',
     tr: 'Kuantum Hesaplama Mektupları',
@@ -306,7 +376,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 401,
         title: 'Error Correction Threshold Optimization in Topological Superconducting Qubits',
         author: 'Prof. Dr. Richard Feynman Jr.',
         doi: '10.4451/qcl.2026.0101',
@@ -318,6 +388,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
   },
   {
     id: 'ES',
+    abbreviation: 'ES',
     slug: 'es',
     name: 'Earth & Environmental Science',
     tr: 'Dünya ve Çevre Bilimleri',
@@ -361,7 +432,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 501,
         title: 'Spatio-Temporal Mapping of Carbon Sequestration in Boreal Forests Utilizing Sentinel-2 Imagery',
         author: 'Prof. Gaia Greenwood',
         doi: '10.5512/ees.2026.0245',
@@ -373,6 +444,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
   },
   {
     id: 'AI',
+    abbreviation: 'AI',
     slug: 'ai',
     name: 'Artificial Intelligence Horizon',
     tr: 'Yapay Zeka Ufku',
@@ -416,7 +488,7 @@ export const MOCK_JOURNALS: MockJournal[] = [
     ],
     articles: [
       {
-        id: 1,
+        id: 601,
         title: 'Scalable Alignment in Large Language Models via Multi-Agent Reward Shifting',
         author: 'Prof. Alan Turing Jr.',
         doi: '10.9912/aih.2026.0410',

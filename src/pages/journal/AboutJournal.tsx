@@ -1662,9 +1662,9 @@ export default function AboutJournal() {
 
                       {/* Articles List */}
                       <div className="space-y-4">
-                        {getSortedArticles().map((article) => (
+                        {getSortedArticles().map((article, idx) => (
                           <article
-                            key={article.id}
+                            key={`${article.id}-${idx}`}
                             className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md hover:border-emerald-200/60 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left"
                           >
                             <div className="flex-1 space-y-2.5">

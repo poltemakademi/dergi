@@ -102,47 +102,33 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchMetadata: async (slug: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Detect if the "slug" is actually a UUID (journal ID from the URL)
       const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isUUID = UUID_REGEX.test(slug);
 
       let fetched: any = null;
 
       if (isUUID) {
-        // Fetch directly by journal ID
-        const { data: byId, error: idErr } = await supabase
+        const { data: byId } = await supabase
           .from('journals')
           .select('*')
           .eq('id', slug)
           .maybeSingle();
 
-        if (!idErr && byId) {
+        if (byId) {
           fetched = byId;
         }
       } else {
-        // Try to find by slug field if it exists
-        const { data: bySlug, error: slugErr } = await supabase
-          .from('journals')
-          .select('*')
-          .eq('slug', slug)
-          .maybeSingle();
-
-        if (!slugErr && bySlug) {
-          fetched = bySlug;
-        } else {
-          // Fallback: scan all journals by name
-          const { data: allJournals } = await supabase.from('journals').select('*');
-          if (allJournals) {
-            fetched = allJournals.find(
-              (j: any) =>
-                (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-                (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-            );
-          }
+        const { data: allJournals } = await supabase.from('journals').select('*');
+        if (allJournals) {
+          fetched = allJournals.find(
+            (j: any) =>
+              (j.id && j.id.toLowerCase() === slug.toLowerCase()) ||
+              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+          );
         }
       }
 
-      // Try to find a matching mock journal by ID, slug, or name (case-insensitive)
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
           mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
@@ -163,7 +149,7 @@ export const useTenantStore = create<TenantState>((set) => ({
         reviewTime: fetched?.reviewTime || mockMatch?.reviewTime || '4 Weeks Avg',
         acceptRate: fetched?.acceptRate || mockMatch?.acceptRate || '20%',
         articlesCount: fetched?.articlesCount || mockMatch?.articlesCount || '0',
-        primaryColor: fetched?.primaryColor || fetched?.brand_color || '#4f46e5', // Default Indigo-600
+        primaryColor: fetched?.primaryColor || fetched?.brand_color || '#4f46e5',
         secondaryColor: fetched?.secondaryColor || '#6366f1',
         description: fetched?.description || mockMatch?.description || { EN: fetched?.name || '', TR: fetched?.name || '' },
         about: fetched?.about || mockMatch?.about || { 
@@ -228,18 +214,14 @@ export const useTenantStore = create<TenantState>((set) => ({
       if (isUUID) {
         journalId = slug;
       } else {
-        const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
-        if (journal) {
-          journalId = journal.id;
-        } else {
-          const { data: all } = await supabase.from('journals').select('id, name, slug');
-          const found = all?.find(
-            (j: any) =>
-              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-          );
-          journalId = found?.id;
-        }
+        const { data: all } = await supabase.from('journals').select('*');
+        const found = all?.find(
+          (j: any) =>
+            (j.id && j.id.toLowerCase() === slug.toLowerCase()) ||
+            (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+            (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+        );
+        journalId = found?.id || null;
       }
 
       if (!journalId) throw new Error('Journal not found');
@@ -255,9 +237,9 @@ export const useTenantStore = create<TenantState>((set) => ({
       const latestIssue = issues && issues[0];
 
       if (latestIssue) {
-        const { data: issueArticles, error: artErr } = await supabase
+        const { data: issueArticles } = await supabase
           .from('issue_articles')
-          .select('*, submissions(*, submission_authors(*))')
+          .select('*')
           .eq('issue_id', latestIssue.id);
 
         const mockMatch = MOCK_JOURNALS.find(
@@ -266,34 +248,53 @@ export const useTenantStore = create<TenantState>((set) => ({
             mj.id.toLowerCase() === journalId?.toLowerCase()
         );
 
-        const articles = !artErr && issueArticles ? issueArticles.map((ia: any) => {
-          const art = ia.submissions;
-          const matchedMockArt = mockMatch?.articles.find(
-            (ma: any) => ma.title.toLowerCase() === (art?.title || '').toLowerCase()
-          );
+        let mappedArticles: any[] = [];
+        if (issueArticles && issueArticles.length > 0) {
+          const subIds = issueArticles.map((ia: any) => ia.submission_id).filter(id => UUID_REGEX.test(id));
+          let subsMap: Record<string, any> = {};
+          let authorsMap: Record<string, any[]> = {};
 
-          return {
-            id: art?.id || ia.submission_id,
-            title: art?.title || matchedMockArt?.title || 'Untitled Article',
-            titleEn: art?.title || matchedMockArt?.title || 'Untitled Article',
-            titleTr: art?.title || matchedMockArt?.title || 'İsimsiz Makale',
-            author: art?.submission_authors?.[0]?.display_name || matchedMockArt?.author || 'Unknown Author',
-            authors: art?.submission_authors?.map((a: any) => ({
-              name: a.display_name,
-              affiliation: a.institution,
-              orcid: a.orcid_id,
-            })) || [{ name: matchedMockArt?.author || 'Unknown Author', affiliation: 'Academic Institution' }],
-            doi: art?.doi || matchedMockArt?.doi || `10.2667/ijar.2026.${Math.floor(Math.random() * 1000) + 1042}`,
-            pages: art?.pages || matchedMockArt?.pages || '1-10',
-            abstract: art?.abstract || matchedMockArt?.abstract || '',
-            abstractEn: art?.abstract_en || matchedMockArt?.abstract || '',
-            abstractTr: art?.abstract_tr || matchedMockArt?.abstract || '',
-            keywords: art?.keywords || matchedMockArt?.keywords || ['Research', 'Science'],
-            pdf_url: art?.pdf_url || matchedMockArt?.pdf_url || '#',
-            status: art?.status || 'PUBLISHED',
-            created_at: art?.created_at,
-          };
-        }) : [];
+          if (subIds.length > 0) {
+            const { data: subs } = await supabase.from('submissions').select('*').in('id', subIds);
+            (subs || []).forEach((s: any) => { subsMap[s.id] = s; });
+
+            const { data: authors } = await supabase.from('submission_authors').select('*').in('submission_id', subIds);
+            (authors || []).forEach((a: any) => {
+              if (!authorsMap[a.submission_id]) authorsMap[a.submission_id] = [];
+              authorsMap[a.submission_id].push(a);
+            });
+          }
+
+          mappedArticles = issueArticles.map((ia: any) => {
+            const art = subsMap[ia.submission_id];
+            const subAuthors = authorsMap[ia.submission_id] || [];
+            const matchedMockArt = mockMatch?.articles.find(
+              (ma: any) => ma.title.toLowerCase() === (art?.title || '').toLowerCase()
+            );
+
+            return {
+              id: art?.id || ia.submission_id,
+              title: art?.title || matchedMockArt?.title || 'Untitled Article',
+              titleEn: art?.title || matchedMockArt?.title || 'Untitled Article',
+              titleTr: art?.title || matchedMockArt?.title || 'İsimsiz Makale',
+              author: subAuthors[0]?.display_name || matchedMockArt?.author || 'Unknown Author',
+              authors: subAuthors.map((a: any) => ({
+                name: a.display_name,
+                affiliation: a.institution,
+                orcid: a.orcid_id,
+              })) || [{ name: matchedMockArt?.author || 'Unknown Author', affiliation: 'Academic Institution' }],
+              doi: art?.doi || matchedMockArt?.doi || `10.2667/ijar.2026.${Math.floor(Math.random() * 1000) + 1042}`,
+              pages: art?.pages || matchedMockArt?.pages || '1-10',
+              abstract: art?.abstract || matchedMockArt?.abstract || '',
+              abstractEn: art?.abstract_en || matchedMockArt?.abstract || '',
+              abstractTr: art?.abstract_tr || matchedMockArt?.abstract || '',
+              keywords: art?.keywords || matchedMockArt?.keywords || ['Research', 'Science'],
+              pdf_url: art?.pdf_url || matchedMockArt?.pdf_url || '#',
+              status: art?.status || 'PUBLISHED',
+              created_at: art?.created_at,
+            };
+          });
+        }
 
         set({
           currentIssue: {
@@ -304,7 +305,7 @@ export const useTenantStore = create<TenantState>((set) => ({
             issue_volume: latestIssue.issue_volume,
             issue_number: latestIssue.issue_number,
             published_at: latestIssue.published_at,
-            articles,
+            articles: mappedArticles,
           },
           isLoading: false
         });
@@ -313,7 +314,6 @@ export const useTenantStore = create<TenantState>((set) => ({
       }
     } catch (err: any) {
       console.warn('Failed to fetch latest issue, using mock fallback:', err.message || err);
-      // Map mock match articles as fallback
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
           mj.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
@@ -347,7 +347,6 @@ export const useTenantStore = create<TenantState>((set) => ({
         };
         set({ currentIssue: fallbackIssue, isLoading: false });
       } else {
-        // Fallback for custom DB journal when fetch fails or database issue is missing
         const fallbackIssue: TenantIssue = {
           id: 'latest-issue-mock',
           journal_id: slug,
@@ -391,26 +390,21 @@ export const useTenantStore = create<TenantState>((set) => ({
       if (isUUID) {
         journalId = slug;
       } else {
-        const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
-        if (journal) {
-          journalId = journal.id;
-        } else {
-          const { data: all } = await supabase.from('journals').select('id, name, slug');
-          const found = all?.find(
-            (j: any) =>
-              (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-              (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-          );
-          journalId = found?.id;
-        }
+        const { data: all } = await supabase.from('journals').select('*');
+        const found = all?.find(
+          (j: any) =>
+            (j.id && j.id.toLowerCase() === slug.toLowerCase()) ||
+            (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+            (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+        );
+        journalId = found?.id || null;
       }
 
       if (!journalId) throw new Error('Journal not found');
 
-      // Fetch issues along with count/details of linked issue articles to display counts in the archives UI
       const { data: issues, error: issueErr } = await supabase
         .from('issues')
-        .select('*, issue_articles(id)')
+        .select('*')
         .eq('journal_id', journalId)
         .order('published_at', { ascending: false });
 
@@ -418,7 +412,7 @@ export const useTenantStore = create<TenantState>((set) => ({
       
       const mappedIssues = (issues || []).map((issue: any) => ({
         ...issue,
-        articles: issue.issue_articles || []
+        articles: []
       }));
 
       set({ archives: mappedIssues, isLoading: false });
@@ -431,14 +425,27 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchArticleDetail: async (slug: string, id: string) => {
     set({ isLoading: true, error: null });
     try {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = UUID_REGEX.test(id);
+
+      if (!isUUID) {
+        throw new Error('ID is not a valid UUID, skipping DB fetch');
+      }
+
       const { data: art, error: artErr } = await supabase
         .from('submissions')
-        .select('*, submission_authors(*)')
+        .select('*')
         .eq('id', id)
         .maybeSingle();
 
       if (artErr) throw artErr;
       if (!art) throw new Error('Article not found');
+
+      const { data: authorsData } = await supabase
+        .from('submission_authors')
+        .select('*')
+        .eq('submission_id', art.id)
+        .order('sort_order', { ascending: true });
 
       const mockMatch = MOCK_JOURNALS.find(
         (mj) => mj.slug.toLowerCase() === slug.toLowerCase() ||
@@ -449,17 +456,21 @@ export const useTenantStore = create<TenantState>((set) => ({
         (ma: any) => ma.title.toLowerCase() === (art?.title || '').toLowerCase() || ma.id.toString() === id.toString()
       );
 
+      const authorsList = (authorsData && authorsData.length > 0)
+        ? authorsData.map((a: any) => ({
+            name: a.display_name,
+            affiliation: a.institution,
+            orcid: a.orcid_id,
+          }))
+        : [{ name: matchedMockArt?.author || 'Unknown Author', affiliation: 'Academic Institution' }];
+
       const articleDetail: TenantArticle = {
         id: art.id,
         title: art.title,
         titleEn: art.title,
         titleTr: art.title,
-        author: art.submission_authors?.[0]?.display_name || matchedMockArt?.author || 'Unknown Author',
-        authors: art.submission_authors?.map((a: any) => ({
-          name: a.display_name,
-          affiliation: a.institution,
-          orcid: a.orcid_id,
-        })) || [{ name: matchedMockArt?.author || 'Unknown Author', affiliation: 'Academic Institution' }],
+        author: authorsList[0]?.name || matchedMockArt?.author || 'Unknown Author',
+        authors: authorsList,
         status: art.status,
         created_at: art.created_at,
         abstract: art.abstract || matchedMockArt?.abstract || '',
@@ -534,19 +545,15 @@ export const useTenantStore = create<TenantState>((set) => ({
   fetchPageContent: async (slug: string, alias: string) => {
     set({ isLoading: true, error: null });
     try {
-      let journalId = null;
-      const { data: journal } = await supabase.from('journals').select('id, name, slug').eq('slug', slug).maybeSingle();
-      if (journal) {
-        journalId = journal.id;
-      } else {
-        const { data: all } = await supabase.from('journals').select('id, name, slug');
-        const found = all?.find(
-          (j: any) =>
-            (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
-            (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
-        );
-        journalId = found?.id;
-      }
+      let journalId: string | null = null;
+      const { data: all } = await supabase.from('journals').select('*');
+      const found = all?.find(
+        (j: any) =>
+          (j.id && j.id.toLowerCase() === slug.toLowerCase()) ||
+          (j.slug && j.slug.toLowerCase() === slug.toLowerCase()) ||
+          (j.name && j.name.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase())
+      );
+      journalId = found?.id || null;
 
       if (!journalId) throw new Error('Journal not found');
 

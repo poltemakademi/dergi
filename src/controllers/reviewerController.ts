@@ -67,7 +67,7 @@ export const getArticleForReview = async (req: AuthRequest, res: Response): Prom
     // we must actively intercept and strip author data.
     const { data: submission, error: subError } = await supabase
       .from('submissions')
-      .select('*, submission_authors(*)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -376,7 +376,7 @@ export const getArticleForReview = async (req: AuthRequest, res: Response): Prom
     // we must actively intercept and strip author data.
     const { data: submission, error: subError } = await supabase
       .from('submissions')
-      .select('*, submission_authors(*)')
+      .select('*')
       .eq('id', id)
       .single();
 

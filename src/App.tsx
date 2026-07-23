@@ -67,6 +67,7 @@ import JournalManagement from './pages/dashboard/admin/JournalManagement';
 import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore } from './store/useAuthStore';
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   const { initAuth } = useAuthStore();
@@ -79,6 +80,7 @@ export default function App() {
     <>
       <Toaster position="bottom-center" richColors />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* --- 1. Global Platform Routes (No-Auth) --- */}
           <Route element={<PublicLayout />}>

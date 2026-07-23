@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2,
   Shield,
@@ -12,10 +12,14 @@ import {
   BookOpen,
   CheckCircle2,
   Search,
-  X
+  X,
+  FileText,
+  ChevronRight,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useJournalStore } from '../../store/useJournalStore';
+import { useJournalStore, getJournalAbbreviation } from '../../store/useJournalStore';
 import { seedSupabaseDatabase } from '../../utils/supabaseSeeder';
 
 export default function Home() {
@@ -24,6 +28,9 @@ export default function Home() {
   const { journals, fetchJournals, isLoading } = useJournalStore();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initDbAndFetch = async () => {
@@ -33,11 +40,65 @@ export default function Home() {
     initDbAndFetch();
   }, [fetchJournals]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const handleSearch = (queryText: string) => {
-    if (queryText.trim()) {
-      navigate(`/search?q=${encodeURIComponent(queryText)}`);
+    if (!queryText.trim()) {
+      setSearchError(true);
+      return;
     }
+    setSearchError(false);
+    setIsSearchFocused(false);
+    window.scrollTo({ top: 90, behavior: 'smooth' });
+    navigate(`/directory?q=${encodeURIComponent(queryText.trim())}`);
   };
+
+  const queryLower = searchQuery.trim().toLowerCase();
+  const showLiveSearch = isSearchFocused && queryLower.length > 0;
+
+  const matchingJournals = queryLower
+    ? journals.filter((j) =>
+      (j.name || '').toLowerCase().includes(queryLower) ||
+      (j.tr || '').toLowerCase().includes(queryLower) ||
+      (j.issn || '').toLowerCase().includes(queryLower) ||
+      (typeof j.description === 'object' ? (j.description.EN || j.description.TR || '') : (j.description || '')).toLowerCase().includes(queryLower)
+    ).slice(0, 3)
+    : [];
+
+  const matchingArticles = queryLower
+    ? journals.flatMap((j) =>
+      (j.articles || []).map((a: any) => ({
+        ...a,
+        journalSlug: j.slug || j.id,
+        journalName: j.name || j.tr || ''
+      }))
+    ).filter((a) =>
+      (a.title || '').toLowerCase().includes(queryLower) ||
+      (a.author || '').toLowerCase().includes(queryLower) ||
+      (a.doi || '').toLowerCase().includes(queryLower) ||
+      ((a.keywords || []) as string[]).some((kw: string) => kw.toLowerCase().includes(queryLower)) ||
+      (a.abstract || '').toLowerCase().includes(queryLower)
+    ).slice(0, 3)
+    : [];
+
+  const totalMatches = matchingJournals.length + matchingArticles.length;
 
   return (
     <main className="pb-24 pt-24">
@@ -90,58 +151,200 @@ export default function Home() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mt-8 relative max-w-lg"
+              className="mt-8 max-w-lg group custom-input-cursor"
+              ref={searchContainerRef}
+              onClick={() => {
+                const input = searchContainerRef.current?.querySelector('input');
+                if (input) input.focus();
+              }}
             >
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch(searchQuery);
-                  }
-                }}
-                placeholder={t.hero.searchPlaceholder}
-                className="block w-full pl-11 pr-24 py-3.5 bg-white border border-slate-200 rounded-xl text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700"
-              />
-              <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                {searchQuery && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
+                  <Search className={`h-5 w-5 transition-all duration-200 ${isSearchFocused ? 'text-indigo-600 scale-110' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value.trim()) {
+                      setSearchError(false);
+                    }
+                    setIsSearchFocused(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch(searchQuery);
+                    }
+                  }}
+                  placeholder={t.hero.searchPlaceholder}
+                  className={`block w-full pl-11 pr-24 py-3.5 bg-white border rounded-xl text-sm shadow-sm placeholder-slate-400 focus:outline-none transition-all text-slate-800 caret-sky-500 custom-text-cursor relative z-10 ${searchError
+                      ? 'border-red-500 ring-2 ring-red-500/30 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-slate-200/90 focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 group-hover:border-indigo-400 group-hover:shadow-md'
+                    }`}
+                />
+                <div className="absolute inset-y-0 right-2 flex items-center gap-1.5 z-20">
+                  {searchQuery && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchQuery('');
+                        setSearchError(false);
+                        setIsSearchFocused(false);
+                      }}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors flex items-center justify-center cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors flex items-center justify-center cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSearch(searchQuery);
+                    }}
+                    className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-all shadow-sm hover:shadow cursor-pointer active:scale-95"
                   >
-                    <X className="w-4 h-4" />
+                    {t.hero.searchBtn}
                   </button>
-                )}
-                <button
-                  onClick={() => handleSearch(searchQuery)}
-                  className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-sm"
-                >
-                  {t.hero.searchBtn}
-                </button>
+                </div>
+
+                {/* Live Search Autocomplete Popup Modal */}
+                <AnimatePresence>
+                  {showLiveSearch && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200/90 rounded-xl shadow-lg z-50 overflow-hidden divide-y divide-slate-100 max-h-[300px] overflow-y-auto"
+                    >
+                      {/* Matching Journals Section */}
+                      {matchingJournals.length > 0 && (
+                        <div className="py-1">
+                          <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-indigo-500" />
+                            <span>{t.hero?.liveSearchJournals || 'Journals'}</span>
+                          </div>
+                          <div>
+                            {matchingJournals.map((journal) => (
+                              <Link
+                                key={journal.id || journal.slug}
+                                to={`/${journal.slug}`}
+                                onClick={() => {
+                                  setIsSearchFocused(false);
+                                }}
+                                className="px-3 py-2 flex items-center gap-2.5 hover:bg-indigo-50/60 transition-colors group cursor-pointer"
+                              >
+                                <img
+                                  src={journal.cover}
+                                  alt={journal.name}
+                                  className="w-6 h-8 rounded object-cover shadow-xs border border-slate-200/60 shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-semibold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">
+                                    {journal.name}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                                    <span>ISSN: {journal.issn}</span>
+                                    {journal.impactFactor && (
+                                      <span className="text-[9px] font-bold text-emerald-600">
+                                        • IF: {journal.impactFactor}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Matching Articles Section */}
+                      {matchingArticles.length > 0 && (
+                        <div className="py-1">
+                          <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-indigo-500" />
+                            <span>{t.hero?.liveSearchArticles || 'Articles & Research'}</span>
+                          </div>
+                          <div>
+                            {matchingArticles.map((article, idx) => (
+                              <Link
+                                key={`${article.journalSlug || 'art'}-${article.id}-${idx}`}
+                                to={`/${article.journalSlug}/article/${article.id}`}
+                                onClick={() => {
+                                  setIsSearchFocused(false);
+                                }}
+                                className="px-3 py-2 flex items-center gap-2.5 hover:bg-indigo-50/60 transition-colors group cursor-pointer"
+                              >
+                                <div className="p-1.5 bg-indigo-50 rounded text-indigo-600 shrink-0">
+                                  <FileText className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-semibold text-slate-800 group-hover:text-indigo-600 truncate transition-colors">
+                                    {article.title}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 truncate">
+                                    {article.author} • {article.journalName}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Empty State */}
+                      {totalMatches === 0 && (
+                        <div className="p-4 text-center">
+                          <Search className="w-6 h-6 text-slate-300 mx-auto mb-1" />
+                          <p className="text-xs font-semibold text-slate-700">{t.hero?.liveSearchNoResults || 'No matching results found'}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{(t.hero?.liveSearchNoResultsDesc || 'No journals or research found matching "{query}"').replace('{query}', searchQuery)}</p>
+                        </div>
+                      )}
+
+                      {/* View All Results Button Footer */}
+                      <button
+                        onClick={() => {
+                          window.scrollTo({ top: 90, behavior: 'smooth' });
+                          handleSearch(searchQuery);
+                        }}
+                        className="w-full px-3 py-2 bg-slate-50 hover:bg-indigo-50/80 text-indigo-600 font-semibold text-xs flex items-center justify-between transition-colors border-t border-slate-100 group cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-indigo-500" />
+                          {(t.hero?.liveSearchAllResults || 'View all results for "{query}"').replace('{query}', searchQuery)}
+                        </span>
+                        <div className="flex items-center gap-1 text-indigo-600 font-bold text-[11px]">
+                          <span>{t.hero?.liveSearchGoToResults || 'Go to Results'}</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+
+              {/* Warning Message below input when empty search is attempted */}
+              <AnimatePresence>
+                {searchError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 mt-2 px-1 text-xs font-semibold text-red-500 relative z-20"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                    <span>{t.hero?.searchEmptyWarning || 'Lütfen arama yapmadan önce bir arama terimi girin.'}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
-            {/* Micro stats under actions */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="pt-6 border-t border-slate-100 flex items-center gap-6"
-            >
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{t.hero.indexing}</span>
-                <span className="text-sm font-bold text-slate-800">{t.hero.indexingVal}</span>
-              </div>
-              <div className="w-px h-6 bg-slate-200" />
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{t.hero.doi}</span>
-                <span className="text-sm font-bold text-slate-800">{t.hero.doiVal}</span>
-              </div>
-            </motion.div>
+
           </div>
 
           {/* Right Column: High-Fidelity Browser Window Mock */}
@@ -276,7 +479,7 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">{t.marquee.title}</h2>
             <p className="text-xl text-slate-500 font-medium">{t.marquee.desc}</p>
           </div>
-          <Link to="/directory" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })} className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
+          <Link to="/directory" className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm group">
             {t.marquee.btn} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -321,7 +524,7 @@ export default function Home() {
                   {marqueeJournals.map((journal, i) => (
                     <Link
                       key={`${journal.id}-${i}`}
-                      to={`/${journal.id.toLowerCase()}`}
+                      to={`/${journal.slug || journal.id.toLowerCase()}`}
                       className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
                     >
                       {/* Journal Cover Area */}
@@ -334,7 +537,7 @@ export default function Home() {
 
                         <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
                           <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
-                            {journal.id}
+                            {journal.abbreviation || getJournalAbbreviation(journal)}
                           </div>
                           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
                             <CheckCircle2 className="w-4 h-4" />
@@ -369,7 +572,7 @@ export default function Home() {
                   {marqueeJournals.map((journal, i) => (
                     <Link
                       key={`${journal.id}-dup-${i}`}
-                      to={`/${journal.id.toLowerCase()}`}
+                      to={`/${journal.slug || journal.id.toLowerCase()}`}
                       className="w-[340px] shrink-0 bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.2)] hover:border-indigo-300 transition-all duration-500 hover:-translate-y-3 cursor-pointer group/card relative flex flex-col overflow-hidden text-left"
                     >
                       <div className="h-48 relative overflow-hidden">
@@ -379,8 +582,8 @@ export default function Home() {
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
 
                         <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between z-10">
-                          <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-50 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
-                            {journal.id}
+                          <div className="w-14 h-14 bg-white/20 backdrop-blur-md text-white font-black text-xl rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-500 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500">
+                            {journal.abbreviation || getJournalAbbreviation(journal)}
                           </div>
                           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-90 origin-bottom-right group-hover/card:scale-100 transition-transform duration-500`}>
                             <CheckCircle2 className="w-4 h-4" />

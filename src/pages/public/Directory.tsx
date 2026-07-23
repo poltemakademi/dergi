@@ -20,7 +20,7 @@ import {
   Building
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useJournalStore } from '../../store/useJournalStore';
+import { useJournalStore, getJournalAbbreviation } from '../../store/useJournalStore';
 
 /* ─── Static filter options with reference counts ──────────────────────────── */
 
@@ -637,7 +637,7 @@ export default function Directory() {
           <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-3">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group w-fit"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-bold text-slate-600 hover:text-indigo-600 bg-white hover:bg-indigo-50/30 border border-slate-200 hover:border-indigo-300/80 rounded-xl shadow-sm hover:shadow transition-all duration-200 group w-fit"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               {t.directory.back}
@@ -833,7 +833,10 @@ export default function Directory() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => {
+                      setActiveTab(tab.id as any);
+                      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                    }}
                     className={`flex items-center gap-2.5 px-4 py-3 border-b-2 font-extrabold text-sm transition-all whitespace-nowrap cursor-pointer ${isActive
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-400 hover:text-slate-700'
@@ -946,7 +949,7 @@ export default function Directory() {
 
                             <div className="absolute bottom-3 md:bottom-4 left-3 md:left-6 right-3 md:right-6 flex items-end justify-between z-10 gap-1">
                               <div className="w-8 h-8 md:w-14 md:h-14 bg-white/20 backdrop-blur-md text-white font-black text-xs md:text-xl rounded-lg md:rounded-[1rem] flex items-center justify-center border border-white/30 shadow-lg group-hover/card:bg-indigo-50 group-hover/card:border-indigo-400 group-hover/card:scale-110 transition-all duration-500 shrink-0">
-                                {journal.id}
+                                {journal.abbreviation || getJournalAbbreviation(journal)}
                               </div>
                               <div className={`flex items-center gap-1 md:gap-1.5 px-1.5 md:px-3 py-1 md:py-1.5 rounded-lg md:rounded-xl border ${journal.indexColor} bg-white shadow-sm scale-[0.85] md:scale-90 origin-bottom-right group-hover/card:scale-[0.95] md:group-hover/card:scale-100 transition-transform duration-500 min-w-0`}>
                                 <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4 shrink-0" />

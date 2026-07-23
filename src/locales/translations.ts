@@ -26,10 +26,17 @@ export const translations = {
       explore: "Explore Journals",
       searchPlaceholder: "Search articles, authors, or DOI...",
       searchBtn: "Search",
+      searchEmptyWarning: "Please enter a search term before searching.",
       indexing: "Indexing",
       indexingVal: "Scopus & WoS",
       doi: "DOI Registry",
       doiVal: "Crossref Native",
+      liveSearchJournals: "Journals",
+      liveSearchArticles: "Articles & Research",
+      liveSearchNoResults: "No matching results found",
+      liveSearchNoResultsDesc: "No journals or research found matching \"{query}\"",
+      liveSearchAllResults: "View all results for \"{query}\"",
+      liveSearchGoToResults: "Go to Results",
     },
     mockArticle: {
       tag: "Published Open-Access",
@@ -131,21 +138,21 @@ export const translations = {
       assistantSub: "Lecturer / Editorial Coordinator",
       articles: [
         {
-          title: "Linguistic Interpretation of the Holy Qur'an and Response to Grammatical Misconceptions",
-          author: "Ahmad Al-Diab",
-          abstract: "This research deals with the study of the linguistic interpretation of the Holy Qur'an and discusses the grammatical misconceptions raised about some of the noble verses, presenting linguistic and grammatical responses based on the sources of ancient Arabic language and grammar to prove the miraculous nature of the Qur'an.",
+          title: "Modern Principles of Administrative Law and Regulatory Transparency",
+          author: "Prof. Dr. Sarah Jenkins",
+          abstract: "This research examines administrative law frameworks and discusses regulatory transparency standards, presenting legal principles for modern public administration.",
           pages: "12-34"
         },
         {
-          title: "Evaluating the Envisioned Human Model in the Holy Qur'an",
+          title: "Evaluating Public Safety Frameworks in Urban Environments",
           author: "Mustafa Özden",
-          abstract: "This study evaluates the human model and personality structure as depicted in the Holy Qur'an, reviewing the multiple levels of the human soul and the relationship between guidance and moral and social responsibility in light of the Qur'anic worldview.",
+          abstract: "This study evaluates public safety models and urban policy structures, reviewing crisis management protocols and civic security responsibilities.",
           pages: "35-58"
         },
         {
-          title: "Hadiths of Fitan in Iraq",
-          author: "Zaidan Arif Al-Zebari & Şule Yüksel Uysal",
-          abstract: "An analytical study of the hadiths narrated about the trials associated with Iraq in the books of the honorable Sunnah, tracing their chains of narrations, explaining their texts, and reviewing the historical and methodological views of scholars.",
+          title: "Comparative Analysis of Data Privacy Regulations in Digital Platforms",
+          author: "Dr. Zeynep Arslan & Dr. Şule Yüksel Uysal",
+          abstract: "An analytical study comparing international data privacy frameworks, examining compliance requirements, user protection, and algorithmic accountability.",
           pages: "59-82"
         }
       ]
@@ -236,10 +243,17 @@ export const translations = {
       explore: "Dergileri Keşfet",
       searchPlaceholder: "Makale, yazar veya DOI arayın...",
       searchBtn: "Ara",
+      searchEmptyWarning: "Lütfen arama yapmadan önce bir arama terimi girin.",
       indexing: "İndeksleme",
       indexingVal: "Scopus & WoS",
       doi: "DOI Kaydı",
       doiVal: "Yerel Crossref",
+      liveSearchJournals: "Dergiler",
+      liveSearchArticles: "Makaleler ve Araştırmalar",
+      liveSearchNoResults: "Eşleşen sonuç bulunamadı",
+      liveSearchNoResultsDesc: "\"{query}\" ile eşleşen dergi veya araştırma bulunamadı",
+      liveSearchAllResults: "\"{query}\" için tüm sonuçları göster",
+      liveSearchGoToResults: "Sonuçlara Git",
     },
     mockArticle: {
       tag: "Açık Erişimli Yayınlandı",
@@ -341,21 +355,21 @@ export const translations = {
       assistantSub: "Arş. Gör. Dr. / Editör Yardımcısı",
       articles: [
         {
-          title: "Kur'an-ı Kerim'in Dilbilimsel Tefsiri ve Nahiv Şüphelerine Cevaplar",
-          author: "Ahmet El-Diyab",
-          abstract: "Bu araştırma, Kur'an-ı Kerim'in dilbilimsel tefsiri konusunu ele almakta ve bazı ayetler hakkında ortaya atılan nahiv şüphelerini tartışarak, Kur'an metninin mucizevi yapısını kanıtlamak için klasik Arap dili kaynaklarına dayalı cevaplar sunmaktadır.",
+          title: "İdare Hukukunda Modern İlkeler ve Düzenleyici Şeffaflık",
+          author: "Prof. Dr. Sarah Jenkins",
+          abstract: "Bu araştırma, idare hukuku çerçevelerini incelemekte ve düzenleyici şeffaflık standartlarını tartışarak modern kamu yönetimi için hukuki ilkeler sunmaktadır.",
           pages: "12-34"
         },
         {
-          title: "Kur'an-ı Kerim'de Öngörülen İnsan Modelinin Değerlendirilmesi",
+          title: "Kentsel Alanlarda Kamu Güvenliği Çerçevelerinin Değerlendirilmesi",
           author: "Mustafa Özden",
-          abstract: "Bu çalışma, Kur'an-ı Kerim'de tasvir edilen insan modelini ve kişilik yapısını değerlendirmekte, Kur'an'ın kozmik vizyonu ışığında insan nefsinin çoklu seviyelerini ve hidayet ile ahlaki/sosyal sorumluluk arasındaki ilişkiyi incelemektedir.",
+          abstract: "Bu çalışma, kamu güvenliği modellerini ve kentsel politika yapılarını değerlendirmekte, kriz yönetimi protokollerini ve sivil güvenlik sorumluluklarını incelemektedir.",
           pages: "35-58"
         },
         {
-          title: "Irak ile İlgili Fitne Hadisleri Üzerine Bir Araştırma",
-          author: "Zaidan Arif Al-Zebari & Şule Yüksel Uysal",
-          abstract: "Sünnet kitaplarında Irak ile ilişkilendirilen fitneler hakkında rivayet edilen hadislerin analitik bir çalışması olup, senetlerini incelemekte, metinlerini açıklamakta ve alimlerin tarihi görüşlerini ele almaktadır.",
+          title: "Dijital Platformlarda Veri Gizliliği Düzenlemelerinin Karşılaştırmalı Analizi",
+          author: "Dr. Zeynep Arslan & Dr. Şule Yüksel Uysal",
+          abstract: "Uluslararası veri gizliliği çerçevelerini karşılaştıran, uyum gereksinimlerini, kullanıcı korumasını ve algoritmik hesap verebilirliği inceleyen analitik bir çalışma.",
           pages: "59-82"
         }
       ]

@@ -361,7 +361,7 @@ export default function Messages() {
               <InboxIcon className="w-8 h-8" />
             </div>
             <p className="font-bold text-slate-700 text-sm sm:text-base text-center mb-1">{locale === 'tr' ? 'Mesaj Seçilmedi' : 'No Message Selected'}</p>
-            <p className="text-xs sm:text-sm text-slate-400 text-center">{locale === 'tr' ? 'Okumak için sol taraقتaki listeden bir mesaj seçin.' : 'Select a message from the list to view.'}</p>
+            <p className="text-xs sm:text-sm text-slate-400 text-center">{locale === 'tr' ? 'Okumak için sol taraftaki listeden bir mesaj seçin.' : 'Select a message from the list to view.'}</p>
           </div>
         )}
       </div>

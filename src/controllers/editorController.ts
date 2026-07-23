@@ -23,7 +23,7 @@ export const getEditorArticles = async (req: AuthRequest, res: Response): Promis
 
     let query = supabase
       .from('submissions')
-      .select('*, submission_authors(*)', { count: 'exact' });
+      .select('*', { count: 'exact' });
 
     if (status && status !== 'all') {
       query = query.eq('status', status);
@@ -53,8 +53,28 @@ export const getEditorArticles = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
+    let resultData = data || [];
+    if (resultData.length > 0) {
+      const subIds = resultData.map((s: any) => s.id);
+      const { data: authors } = await supabase
+        .from('submission_authors')
+        .select('*')
+        .in('submission_id', subIds);
+
+      const authorsBySubId: Record<string, any[]> = {};
+      (authors || []).forEach((a: any) => {
+        if (!authorsBySubId[a.submission_id]) authorsBySubId[a.submission_id] = [];
+        authorsBySubId[a.submission_id].push(a);
+      });
+
+      resultData = resultData.map((s: any) => ({
+        ...s,
+        submission_authors: authorsBySubId[s.id] || []
+      }));
+    }
+
     res.status(200).json({
-      data: data || [],
+      data: resultData,
       total: count || 0,
       page: pageNum,
       totalPages: Math.ceil((count || 0) / limitNum)

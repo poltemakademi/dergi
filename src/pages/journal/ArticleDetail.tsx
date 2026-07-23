@@ -14,10 +14,7 @@ export default function ArticleDetail() {
   const { activeArticle, isLoading, fetchArticleDetail, trackDownload } = useTenantStore();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     if (tenant_slug && id) {
       fetchArticleDetail(tenant_slug, id);
     }
