@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useLocaleStore } from './useLocaleStore';
 
 interface LanguageState {
   lang: 'EN' | 'TR';
@@ -20,21 +21,26 @@ const getInitialLang = (): 'EN' | 'TR' => {
 export const useLanguageStore = create<LanguageState>((set) => ({
   lang: getInitialLang(),
   setLang: (lang) => {
-    const upperLang = lang.toUpperCase() as 'EN' | 'TR';
+    const upperLang = (String(lang).toUpperCase() === 'EN') ? 'EN' : 'TR';
     localStorage.setItem('app_lang', upperLang);
     set({ lang: upperLang });
-    // Keep compatibility with legacy page event listeners during transition
-    window.dispatchEvent(new Event('lang-change'));
+    
+    try {
+      useLocaleStore.getState().setLocale(upperLang.toLowerCase() as 'en' | 'tr');
+    } catch {}
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('lang-change'));
+    }
   },
 }));
 
 if (typeof window !== 'undefined') {
   window.addEventListener('lang-change', () => {
     const stored = localStorage.getItem('app_lang');
-    const appLang = (stored ? stored.toUpperCase() : 'TR') as 'EN' | 'TR';
-    const validatedLang = (appLang === 'EN' || appLang === 'TR') ? appLang : 'TR';
-    if (useLanguageStore.getState().lang !== validatedLang) {
-      useLanguageStore.setState({ lang: validatedLang });
+    const appLang = (stored && stored.toUpperCase() === 'EN') ? 'EN' : 'TR';
+    if (useLanguageStore.getState().lang !== appLang) {
+      useLanguageStore.setState({ lang: appLang });
     }
   });
 }

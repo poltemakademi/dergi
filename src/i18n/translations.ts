@@ -36,6 +36,15 @@ export const translations = {
     'role.reviewer': 'Reviewer',
     'role.layout_editor': 'Layout Editor',
     'role.super_admin': 'System Admin',
+
+    // Super Admin Navigation & Pages
+    'nav.superAdmin': 'System Administration',
+    'nav.systemOverview': 'System Overview',
+    'nav.userManagement': 'User Management',
+    'nav.journalManagement': 'Journal Management',
+    'admin.systemOverviewTitle': 'System Overview & Health',
+    'admin.userManagementTitle': 'User & Role Management',
+    'admin.journalManagementTitle': 'Journal Ecosystem Management',
     
     // Dashboard Global
     'dashboard.loading': 'Loading data...',
@@ -134,6 +143,15 @@ export const translations = {
     'role.reviewer': 'Hakem',
     'role.layout_editor': 'Mizanpaj Editörü',
     'role.super_admin': 'Sistem Yöneticisi',
+
+    // Super Admin Navigation & Pages
+    'nav.superAdmin': 'Sistem Yönetimi',
+    'nav.systemOverview': 'Sistem Geneli',
+    'nav.userManagement': 'Kullanıcı Yönetimi',
+    'nav.journalManagement': 'Dergi Yönetimi',
+    'admin.systemOverviewTitle': 'Sistem Genel Bakış & Sağlık',
+    'admin.userManagementTitle': 'Kullanıcı ve Rol Yönetimi',
+    'admin.journalManagementTitle': 'Dergi Ekosistem Yönetimi',
     
     // Dashboard Global
     'dashboard.loading': 'Veriler yükleniyor...',

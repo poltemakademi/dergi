@@ -14,6 +14,14 @@ export interface MessageItem {
   folder: 'inbox' | 'sent' | 'starred';
   recipientId?: string;
   senderId?: string;
+  replyToId?: string;
+  replies?: Array<{
+    id: string;
+    sender: string;
+    email: string;
+    content: string;
+    date: string;
+  }>;
 }
 
 // In-memory mock store initialized with realistic journal platform messages
@@ -28,7 +36,8 @@ let inMemoryMessages: MessageItem[] = [
     date: '10:45',
     unread: true,
     starred: true,
-    folder: 'inbox'
+    folder: 'inbox',
+    replies: []
   },
   {
     id: 'msg-102',
@@ -40,7 +49,8 @@ let inMemoryMessages: MessageItem[] = [
     date: 'Dün, 16:30',
     unread: false,
     starred: false,
-    folder: 'inbox'
+    folder: 'inbox',
+    replies: []
   },
   {
     id: 'msg-103',
@@ -52,7 +62,8 @@ let inMemoryMessages: MessageItem[] = [
     date: '18 Tem',
     unread: false,
     starred: true,
-    folder: 'inbox'
+    folder: 'inbox',
+    replies: []
   },
   {
     id: 'msg-104',
@@ -64,7 +75,8 @@ let inMemoryMessages: MessageItem[] = [
     date: '15 Tem',
     unread: false,
     starred: false,
-    folder: 'sent'
+    folder: 'sent',
+    replies: []
   }
 ];
 
@@ -95,15 +107,28 @@ export const getMessages = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const getRecipients = async (_req: AuthRequest, res: Response): Promise<void> => {
+export const getRecipients = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const recipients = [
-      { id: 'rec-1', name: 'Prof. Dr. Ahmet Yılmaz', role: 'Baş Editör', email: 'editor@poltemakademi.com' },
-      { id: 'rec-2', name: 'Doç. Dr. Ayşe Kaya', role: 'Alan Editörü', email: 'ayse.kaya@poltemakademi.com' },
-      { id: 'rec-3', name: 'Dr. Mehmet Demir', role: 'Hakem / Değerlendirici', email: 'mehmet.demir@poltemakademi.com' },
-      { id: 'rec-4', name: 'Teknik Destek ve Yayın Kurulu', role: 'Teknik Destek', email: 'support@poltemakademi.com' }
+    const userRole = (req.user as any)?.role || (req.user as any)?.roles?.[0]?.role || 'reviewer';
+
+    // Official Editorial Contacts available for Authors and Reviewers
+    const officialContacts = [
+      { id: 'rec-1', name: 'Dergi Baş Editörlüğü', role: 'Baş Editör', email: 'editor@poltemakademi.com' },
+      { id: 'rec-2', name: 'Alan / Bölüm Editörlüğü Desk', role: 'Bölüm Editörü', email: 'ayse.kaya@poltemakademi.com' },
+      { id: 'rec-4', name: 'Yayın Kurulu ve Teknik Destek', role: 'Teknik Destek', email: 'support@poltemakademi.com' }
     ];
-    res.status(200).json(recipients);
+
+    // Editors and Admins can also access the reviewer coordination desk
+    if (userRole === 'editor' || userRole === 'admin') {
+      officialContacts.push({
+        id: 'rec-3',
+        name: 'Hakem Kurulu Koordinasyon Masası',
+        role: 'Hakem Koordinasyon',
+        email: 'reviewer.desk@poltemakademi.com'
+      });
+    }
+
+    res.status(200).json(officialContacts);
   } catch (err: any) {
     res.status(500).json({ error: 'Internal server error', details: err.message });
   }
@@ -111,16 +136,41 @@ export const getRecipients = async (_req: AuthRequest, res: Response): Promise<v
 
 export const sendMessage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { to, subject, content, sender } = req.body;
+    const { to, subject, content, sender, replyToId } = req.body;
 
     if (!to || !subject || !content) {
       res.status(400).json({ error: 'Missing required message fields' });
       return;
     }
 
+    const replyObject = {
+      id: `reply-${Date.now()}`,
+      sender: sender || req.user?.name || 'Ben (Siz)',
+      email: req.user?.email || 'user@poltemakademi.com',
+      content,
+      date: 'Şimdi'
+    };
+
+    // If replyToId is provided, append to parent message's replies thread
+    if (replyToId) {
+      const parent = inMemoryMessages.find((m) => m.id === replyToId);
+      if (parent) {
+        if (!parent.replies) parent.replies = [];
+        parent.replies.push(replyObject);
+      }
+    } else {
+      // Check if there is a parent message with matching subject or email
+      const cleanSubject = subject.replace(/^Re:\s*/i, '').trim();
+      const parent = inMemoryMessages.find((m) => m.subject.includes(cleanSubject));
+      if (parent) {
+        if (!parent.replies) parent.replies = [];
+        parent.replies.push(replyObject);
+      }
+    }
+
     const newMessage: MessageItem = {
       id: `msg-${Date.now()}`,
-      sender: sender || req.user?.name || 'Kullanıcı',
+      sender: sender || req.user?.name || 'Ben (Siz)',
       email: to,
       subject,
       content,
@@ -128,12 +178,13 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
       date: 'Şimdi',
       unread: false,
       starred: false,
-      folder: 'sent'
+      folder: 'sent',
+      replies: []
     };
 
     inMemoryMessages.unshift(newMessage);
 
-    res.status(201).json({ message: 'Message sent successfully', data: newMessage });
+    res.status(201).json({ message: 'Message sent successfully', data: newMessage, reply: replyObject });
   } catch (err: any) {
     res.status(500).json({ error: 'Internal server error', details: err.message });
   }

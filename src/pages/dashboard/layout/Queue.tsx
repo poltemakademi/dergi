@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
+import { parseTitle } from '../../../utils/parseTitle';
 
 interface QueueItem {
   id: string;
@@ -109,9 +110,9 @@ export default function Queue() {
                       <td className="p-4 max-w-xs">
                         <p
                           className="font-bold text-slate-800 line-clamp-1"
-                          title={item.title}
+                          title={parseTitle(item.title).title}
                         >
-                          {item.title}
+                          {parseTitle(item.title).title}
                         </p>
                       </td>
                       <td className="p-4">

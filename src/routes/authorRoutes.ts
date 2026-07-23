@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/authMiddleware';
+import { upload } from '../utils/localUpload';
 import {
   getAuthorSubmissions,
   submitManuscript,
@@ -20,7 +21,10 @@ router.get('/submissions', getAuthorSubmissions);
 router.get('/submissions/:id', getSubmissionById);
 
 // POST /api/author/submit — submit a new manuscript
-router.post('/submit', submitManuscript);
+router.post('/submit', upload.fields([
+  { name: 'blindedFile', maxCount: 1 },
+  { name: 'fullTextFile', maxCount: 1 }
+]), submitManuscript);
 
 // POST /api/author/withdraw/:id — withdraw a submission (used by Track.tsx)
 router.post('/withdraw/:id', withdrawSubmission);

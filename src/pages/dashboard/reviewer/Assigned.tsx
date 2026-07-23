@@ -1,10 +1,12 @@
-import { Calendar, ChevronRight, AlertTriangle, CheckSquare } from 'lucide-react';
+import { useMemo } from 'react';
+import { Calendar, ChevronRight, AlertTriangle, CheckSquare, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { CardSkeleton } from '../../../components/skeletons/CardSkeleton';
 import { applyBlindingFilter } from '../../../utils/blindingFilter';
 import type { DeepOmitBlinded } from '../../../utils/blindingFilter';
+import { parseTitle } from '../../../utils/parseTitle';
 
 interface AssignedManuscript {
   id: string;
@@ -39,11 +41,24 @@ export default function Assigned() {
     }
   };
 
-  const queue = Array.isArray(assignedQueue) 
-    ? assignedQueue 
-    : Array.isArray((assignedQueue as any)?.data) 
-      ? (assignedQueue as any).data 
-      : [];
+  const queue = useMemo(() => {
+    const apiList = Array.isArray(assignedQueue) 
+      ? assignedQueue 
+      : Array.isArray((assignedQueue as any)?.data) 
+        ? (assignedQueue as any).data 
+        : [];
+
+    let localAccepted: AssignedManuscript[] = [];
+    let hiddenIds: string[] = [];
+    try {
+      localAccepted = JSON.parse(localStorage.getItem('accepted_reviews') || '[]');
+      hiddenIds = JSON.parse(localStorage.getItem('completed_reviews_hidden') || '[]');
+    } catch {}
+
+    const combined = [...localAccepted, ...apiList];
+    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+    return unique.filter(item => !hiddenIds.includes(item.id));
+  }, [assignedQueue]);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -103,10 +118,10 @@ export default function Assigned() {
                   {item.id}
                 </span>
                 <h3 className="text-lg font-bold text-slate-800 group-hover:text-rose-600 transition-colors">
-                  {item.title}
+                  {parseTitle(item.title).title}
                 </h3>
 
-                <div className="flex items-center gap-4 mt-3">
+                <div className="flex flex-wrap items-center gap-3 mt-3">
                   <div
                     className="flex items-center text-sm font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md"
                     role="status"
@@ -126,6 +141,11 @@ export default function Assigned() {
                     <CheckSquare className="w-4 h-4 mr-1.5" />
                     {item.status ||
                       (locale === 'tr' ? 'Değerlendirme Bekliyor' : 'Pending Evaluation')}
+                  </div>
+                  {/* Double-Blind badge */}
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    <Shield className="w-3.5 h-3.5" />
+                    {locale === 'tr' ? 'Yazar Gizli' : 'Author Hidden'}
                   </div>
                 </div>
               </div>

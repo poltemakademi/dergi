@@ -119,14 +119,31 @@ export const getUserWorkspaces = async (req: AuthRequest, res: Response): Promis
     workspaces.push({
       id: 'global-author',
       role: 'author',
-      tenantName: 'Tüm Dergiler',
+      tenantName: 'Yazar Portalı',
       tenantSlug: 'all',
       lastActive: 'Bugün',
       stat: 'Yazar Paneli'
     });
 
-    // Give Demo User Super Admin access so they can test the admin panel
-    if (userId === '9077a2da-0d48-4505-9989-b68ec3a5dba7') {
+    // Always add a global Reviewer workspace so users can review & test reviewer features
+    workspaces.push({
+      id: 'global-reviewer',
+      role: 'reviewer',
+      tenantName: 'Hakem Portalı',
+      tenantSlug: 'all',
+      lastActive: 'Aktif',
+      stat: 'Hakem Paneli'
+    });
+
+    // Only include System Admin workspace if the user explicitly possesses the super_admin role
+    const userRoles = (req.user as any)?.roles || [];
+    const userEmail = (req.user as any)?.email || '';
+    const hasSuperAdminRole = 
+      userRoles.includes('super_admin') ||
+      userEmail === 'super_admin@demo.com' ||
+      (memberships && memberships.some((m: any) => m.journal_role === 'super_admin'));
+
+    if (hasSuperAdminRole) {
       workspaces.push({
         id: 'system-admin',
         role: 'super_admin',

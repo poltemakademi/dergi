@@ -4,6 +4,8 @@ import { Upload, FileDown, CheckCircle, Eye, Check, AlertCircle, AlertTriangle }
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
 import { toast } from 'sonner';
+import { parseTitle } from '../../../utils/parseTitle';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 interface ArticleMetadata {
   id: string;
@@ -21,6 +23,7 @@ interface MutationError {
 }
 
 export default function Proofs() {
+  const { locale } = useLocaleStore();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,16 +183,20 @@ export default function Proofs() {
           <AlertCircle className="w-6 h-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="font-bold text-slate-800">Manuscript Not Found</h3>
+          <h3 className="font-bold text-slate-800">
+            {locale === 'tr' ? 'Makale Bulunamadı' : 'Manuscript Not Found'}
+          </h3>
           <p className="text-sm text-slate-500">
-            The requested manuscript could not be found or has already been moved to production.
+            {locale === 'tr'
+              ? 'İstenen makale bulunamadı veya yayına aktarıldı.'
+              : 'The requested manuscript could not be found or has already been moved to production.'}
           </p>
         </div>
         <Link
           to="/dashboard/layout/queue"
           className="inline-flex w-full items-center justify-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-bold transition-all shadow-md"
         >
-          Back to Queue
+          {locale === 'tr' ? 'Kuyruğa Geri Dön' : 'Back to Queue'}
         </Link>
       </div>
     );
@@ -208,7 +215,7 @@ export default function Proofs() {
             <span className="font-mono text-sm font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded mb-3 inline-block">
               {article.id}
             </span>
-            <h3 className="text-xl font-bold text-slate-800">{article.title}</h3>
+            <h3 className="text-xl font-bold text-slate-800">{parseTitle(article.title).title}</h3>
             <p className="text-sm text-slate-500 mt-1">Author: {article.author}</p>
           </div>
           <button

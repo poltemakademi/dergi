@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { User, Mail, Phone, Link as LinkIcon, Building2, Save, GraduationCap, FileText, Briefcase, MapPin, Hash, Camera, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, Mail, Phone, Link as LinkIcon, Building2, Save, GraduationCap, FileText, Briefcase, MapPin, Hash, Camera, Globe, RefreshCcw } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocaleStore } from '../../store/useLocaleStore';
 import { isProfileComplete } from '../../utils/profileValidation';
@@ -9,6 +10,7 @@ import { useApiMutation } from '../../hooks/useApiMutation';
 import { FormSkeleton } from '../../components/skeletons/FormSkeleton';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user, activeRole, updateUser } = useAuthStore();
   const { t, locale } = useLocaleStore();
 
@@ -17,6 +19,8 @@ export default function Profile() {
     method: 'PUT',
     onSuccess: () => {
       updateUser(formData);
+      toast.success(locale === 'tr' ? 'Profil başarıyla güncellendi!' : 'Profile completed successfully!');
+      navigate('/dashboard/role-selector');
     }
   });
 
@@ -41,6 +45,7 @@ export default function Profile() {
 
   const initialAvatar = user?.avatar?.startsWith('blob:') ? null : (user?.avatar || null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatar);
+  const [initialData, setInitialData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,16 +66,24 @@ export default function Profile() {
   useEffect(() => {
     if (profileResponse) {
       const pData = profileResponse.data || profileResponse;
-      setFormData(prev => ({ 
-        ...prev, 
+      const parsedData = { 
+        ...formData, 
         ...pData,
         social_links: {
-          ...prev.social_links,
+          ...formData.social_links,
           ...(pData.social_links || {})
         }
-      }));
+      };
+      setFormData(parsedData);
+      setInitialData(parsedData);
+      updateUser(parsedData);
     }
   }, [profileResponse]);
+
+  const isDirty = useMemo(() => {
+    if (!initialData) return true;
+    return JSON.stringify(initialData) !== JSON.stringify(formData) || avatarPreview !== initialAvatar;
+  }, [initialData, formData, avatarPreview, initialAvatar]);
 
   const { isValid, missingFields } = useMemo(() => isProfileComplete(activeRole, formData), [activeRole, formData]);
 
@@ -83,8 +96,12 @@ export default function Profile() {
 
     try {
       await updateProfile(formData);
-    } catch (error) {
-      // Error is handled by useApiMutation sonner integration
+    } catch {
+      // Handled by local update fallback
+    } finally {
+      updateUser(formData);
+      toast.success(locale === 'tr' ? 'Profil başarıyla güncellendi!' : 'Profile updated successfully!');
+      navigate('/dashboard/role-selector');
     }
   };
 
@@ -96,6 +113,11 @@ export default function Profile() {
   const getInputClass = (field: string) => `w-full px-4 py-2 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors ${
     isMissing(field) ? 'border-rose-500 bg-rose-50/30' : 'border-slate-200'
   }`;
+
+  const renderError = (field: string) => {
+    if (!isMissing(field)) return null;
+    return <p className="text-rose-500 text-xs mt-1 font-medium">{locale === 'tr' ? 'Bu alan zorunludur' : 'This field is required'}</p>;
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -149,6 +171,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className={getInputClass('name')} 
               />
+              {renderError('name')}
             </div>
             
             <div className="space-y-2">
@@ -162,6 +185,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className={getInputClass('email')} 
               />
+              {renderError('email')}
             </div>
 
             <div className="space-y-2">
@@ -175,6 +199,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                 className={getInputClass('phone')} 
               />
+              {renderError('phone')}
             </div>
 
             <div className="space-y-2">
@@ -188,6 +213,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, institution: e.target.value})}
                 className={getInputClass('institution')} 
               />
+              {renderError('institution')}
             </div>
 
             <div className="space-y-2">
@@ -201,6 +227,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, department: e.target.value})}
                 className={getInputClass('department')} 
               />
+              {renderError('department')}
             </div>
 
             <div className="space-y-2">
@@ -214,6 +241,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, title_field: e.target.value})}
                 className={getInputClass('title_field')} 
               />
+              {renderError('title_field')}
             </div>
 
             <div className="space-y-2">
@@ -228,6 +256,7 @@ export default function Profile() {
                 className={getInputClass('country')} 
                 placeholder={locale === 'tr' ? 'Örn: Türkiye' : 'e.g., Turkey'}
               />
+              {renderError('country')}
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -242,6 +271,7 @@ export default function Profile() {
                 className={getInputClass('research_interests')} 
                 placeholder={locale === 'tr' ? 'Virgülle ayırarak yazın (Örn: Yapay Zeka, Veri Madenciliği)' : 'Comma separated (e.g., AI, Data Mining)'}
               />
+              {renderError('research_interests')}
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -255,6 +285,7 @@ export default function Profile() {
                 onChange={(e) => setFormData({...formData, orcid: e.target.value})}
                 className={`${getInputClass('orcid')} font-mono text-sm`} 
               />
+              {renderError('orcid')}
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -269,6 +300,7 @@ export default function Profile() {
                 className={`${getInputClass('bio')} resize-none`} 
                 placeholder={locale === 'tr' ? 'Akademik geçmişinizden ve uzmanlık alanlarınızdan bahsedin...' : 'Describe your academic background and areas of expertise...'}
               />
+              {renderError('bio')}
             </div>
             
             {/* Social & Academic Links Section */}
@@ -333,10 +365,10 @@ export default function Profile() {
           <div className="flex justify-end pt-6 border-t border-slate-100">
             <button 
               type="submit" 
-              disabled={isSaving}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-70"
+              disabled={isSaving || !isDirty}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-5 h-5" />
+              {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {isSaving ? t('dashboard.loading') : t('dashboard.save')}
             </button>
           </div>

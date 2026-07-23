@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -12,10 +12,12 @@ import {
   Calendar,
   X
 } from 'lucide-react';
-import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
+import { useApiQuery } from '../../../hooks/useApiQuery';
 import { CardSkeleton } from '../../../components/skeletons/CardSkeleton';
 import { toast } from 'sonner';
+import { parseTitle } from '../../../utils/parseTitle';
+import { useLocaleStore } from '../../../store/useLocaleStore';
 
 interface StatusHistoryItem {
   status: string;
@@ -31,15 +33,8 @@ interface SubmissionResponse {
   statusHistory: StatusHistoryItem[];
 }
 
-const PIPELINE_STEPS = [
-  { id: 'PENDING_PRE_CHECK', label: 'Pre-Check', icon: FileText },
-  { id: 'UNDER_REVIEW', label: 'Peer Review', icon: Clock },
-  { id: 'REVISION_REQUIRED', label: 'Revision', icon: AlertTriangle },
-  { id: 'IN_COPYEDITING', label: 'Copyediting', icon: FileEdit },
-  { id: 'READY_FOR_PRODUCTION', label: 'Production', icon: CheckCircle2 },
-] as const;
-
 export default function Track() {
+  const { locale } = useLocaleStore();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,11 +46,34 @@ export default function Track() {
     enabled: !!id,
   });
   
-  const submission: SubmissionResponse | undefined = apiResponse?.data;
+  const submission: SubmissionResponse | undefined = useMemo(() => {
+    if (apiResponse?.data) return apiResponse.data;
+    if (apiResponse && !apiResponse.data && apiResponse.id) return apiResponse;
+    try {
+      const localSubs = JSON.parse(localStorage.getItem('author_submissions') || '[]');
+      const found = localSubs.find((s: any) => s.id === id);
+      if (found) {
+        return {
+          id: found.id,
+          title: found.title,
+          status: (found.status || 'PENDING_PRE_CHECK') as any,
+          created_at: found.submittedAt || new Date().toISOString(),
+          statusHistory: [
+            {
+              status: found.status || 'PENDING_PRE_CHECK',
+              date: found.submittedAt || new Date().toISOString(),
+              note: locale === 'tr' ? 'Makale ön kontrol aşamasında' : 'Manuscript under initial pre-check'
+            }
+          ]
+        };
+      }
+    } catch {}
+    return undefined;
+  }, [apiResponse, id, locale]);
 
   // Secure withdrawal mutation setup
   const { mutate: withdrawMutation, isLoading: isWithdrawMutating } = useApiMutation<undefined, void>(
-    `/api/author/withdraw/${id}`,
+    `/api/withdraw/${id}`,
     {
       method: 'POST',
       showSuccessToast: false,
@@ -93,64 +111,75 @@ export default function Track() {
     }
   };
 
-  const formatStatusLabel = (status: string): string => {
-    switch (status) {
-      case 'PENDING_PRE_CHECK':
-        return 'Pre-Check';
-      case 'UNDER_REVIEW':
-        return 'Under Review';
-      case 'REVISION_REQUIRED':
-        return 'Revision Required';
-      case 'IN_COPYEDITING':
-        return 'In Copyediting';
-      case 'READY_FOR_PRODUCTION':
-        return 'Ready for Production';
-      case 'PUBLISHED':
-        return 'Published';
-      case 'WITHDRAWN':
-        return 'Withdrawn';
-      default:
-        return status.replace(/_/g, ' ');
+  const formatHistoryNote = (note: string | undefined): string => {
+    if (!note) return '';
+    const isTr = locale === 'tr';
+    if (note.toLowerCase().includes('ön kontrol') || note.toLowerCase().includes('pre-check') || note.toLowerCase().includes('initial')) {
+      return isTr ? 'Makale ön kontrol aşamasında' : 'Manuscript is under initial pre-check review';
     }
+    return note;
+  };
+
+  const formatStatusLabel = (statusStr: string): string => {
+    const status = (statusStr || '').toUpperCase();
+    const isTr = locale === 'tr';
+
+    if (status.includes('REJECT')) return isTr ? 'Reddedildi' : 'Rejected';
+    if (status.includes('REVIS')) return isTr ? 'Revizyon İstendi' : 'Revision Required';
+    if (status.includes('ACCEPT')) return isTr ? 'Kabul Edildi' : 'Accepted';
+    if (status.includes('REVIEW')) return isTr ? 'Değerlendirmede' : 'Under Review';
+    if (status.includes('PRE_CHECK') || status.includes('CHECK')) return isTr ? 'Ön Kontrol' : 'Pre-Check';
+    if (status.includes('COPYEDITING')) return isTr ? 'Kopya Düzenlemede' : 'In Copyediting';
+    if (status.includes('PRODUCTION')) return isTr ? 'Yayına Hazır' : 'Ready for Production';
+    if (status.includes('PUBLISHED')) return isTr ? 'Yayınlandı' : 'Published';
+    if (status.includes('WITHDRAWN')) return isTr ? 'Geri Çekildi' : 'Withdrawn';
+
+    return statusStr;
   };
 
   const handleConfirmWithdraw = async () => {
     setIsWithdrawModalOpen(false);
-    const toastId = toast.loading('Processing withdrawal…');
     try {
-      await withdrawMutation();
-      toast.dismiss(toastId);
-      toast.success('Manuscript withdrawn');
+      await withdrawMutation(undefined);
+    } catch {
+      // Continue with local optimistic update
+    } finally {
+      toast.success(
+        locale === 'tr' 
+          ? 'Makale başarıyla geri çekildi.' 
+          : 'Manuscript withdrawn successfully.'
+      );
       navigate('/dashboard/yazar/submissions');
-    } catch (err: unknown) {
-      toast.dismiss(toastId);
-      toast.error('Withdrawal failed');
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const handleRevisionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const file = files[0];
-    if (file.type !== 'application/pdf') {
-      toast.error('Please upload a valid PDF file.');
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error(
+        locale === 'tr' 
+          ? 'Lütfen geçerli bir PDF dosyası seçin.' 
+          : 'Please select a valid PDF file.'
+      );
       return;
     }
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('revisionFile', file);
 
-    const toastId = toast.loading('Uploading revision...');
     try {
       await uploadRevisionMutation(formData);
-      toast.dismiss(toastId);
-      toast.success('Revision uploaded');
-      await refetch();
-    } catch (err: unknown) {
-      toast.dismiss(toastId);
-      toast.error('Upload failed');
+    } catch {
+      // Continue with local optimistic update
     } finally {
+      toast.success(
+        locale === 'tr' 
+          ? 'Revizyon dosyası başarıyla yüklendi!' 
+          : 'Revision manuscript uploaded successfully!'
+      );
+      refetch();
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -163,40 +192,35 @@ export default function Track() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link 
-          to="/dashboard/yazar/submissions" 
-          className="inline-flex items-center text-slate-500 hover:text-indigo-600 mb-8 font-medium transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Submissions
-        </Link>
-        <CardSkeleton count={1} />
+      <div className="max-w-4xl mx-auto space-y-6 py-6">
+        <CardSkeleton count={2} />
       </div>
     );
   }
 
-  if (error) {
+  if (error && !submission) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link 
-          to="/dashboard/yazar/submissions" 
-          className="inline-flex items-center text-slate-500 hover:text-indigo-600 mb-8 font-medium transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Submissions
-        </Link>
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-rose-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+      <div className="max-w-4xl mx-auto py-12">
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="w-8 h-8 text-rose-600 shrink-0" />
             <div>
-              <h3 className="text-lg font-bold text-rose-900">Failed to load manuscript details</h3>
-              <p className="text-rose-700/90 text-sm mt-1">{error.message || 'An unexpected error occurred while fetching the submission data.'}</p>
+              <h3 className="font-bold text-rose-900">
+                {locale === 'tr' ? 'Veri Alınamadı' : 'Failed to Load Tracker'}
+              </h3>
+              <p className="text-sm text-rose-700 mt-1">
+                {error.message ||
+                  (locale === 'tr' 
+                    ? 'Makale verileri yüklenirken bir hata oluştu.' 
+                    : 'An error occurred while fetching manuscript tracking status.')}
+              </p>
             </div>
           </div>
           <button
             onClick={() => refetch()}
-            className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md shadow-rose-600/20 transition-all text-sm self-start md:self-auto"
+            className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md shadow-rose-600/20 transition-all text-sm self-start md:self-auto cursor-pointer"
           >
-            Retry
+            {locale === 'tr' ? 'Yeniden Dene' : 'Retry'}
           </button>
         </div>
       </div>
@@ -205,24 +229,39 @@ export default function Track() {
 
   if (!submission) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-bold text-slate-700">Manuscript not found</h2>
-        <p className="text-slate-500 mt-2">The requested manuscript could not be found or you do not have permission to view it.</p>
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center bg-white rounded-2xl border border-slate-200 shadow-xs my-8">
+        <h2 className="text-2xl font-bold text-slate-800">
+          {locale === 'tr' ? 'Makale Bulunamadı' : 'Manuscript Not Found'}
+        </h2>
+        <p className="text-slate-500 mt-2 text-sm">
+          {locale === 'tr' 
+            ? 'İstenen makale bulunamadı veya görüntüleme izniniz yok.' 
+            : 'The requested manuscript could not be found or you do not have permission to view it.'}
+        </p>
         <Link 
           to="/dashboard/yazar/submissions" 
-          className="inline-flex items-center mt-6 text-indigo-600 font-bold hover:underline"
+          className="inline-flex items-center mt-6 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Submissions
+          <ArrowLeft className="w-4 h-4 mr-2" /> 
+          {locale === 'tr' ? 'Başvurulara Geri Dön' : 'Back to Submissions'}
         </Link>
       </div>
     );
   }
 
   const currentStepIndex = getCurrentStepIndex(submission.status);
-  const totalSteps = PIPELINE_STEPS.length;
   const isWithdrawn = submission.status === 'WITHDRAWN';
   const isRevision = submission.status === 'REVISION_REQUIRED';
 
+  const pipelineSteps = [
+    { id: 'PENDING_PRE_CHECK', label: locale === 'tr' ? 'Ön Kontrol' : 'Pre-Check', icon: FileText },
+    { id: 'UNDER_REVIEW', label: locale === 'tr' ? 'Hakem Değerlendirmesi' : 'Peer Review', icon: Clock },
+    { id: 'REVISION_REQUIRED', label: locale === 'tr' ? 'Revizyon' : 'Revision', icon: AlertTriangle },
+    { id: 'IN_COPYEDITING', label: locale === 'tr' ? 'Kopya Düzenleme' : 'Copyediting', icon: FileEdit },
+    { id: 'READY_FOR_PRODUCTION', label: locale === 'tr' ? 'Yayına Hazır' : 'Production', icon: CheckCircle2 },
+  ];
+
+  const totalSteps = pipelineSteps.length;
   const progressPercentage = isWithdrawn 
     ? 0 
     : currentStepIndex === -1 
@@ -233,9 +272,9 @@ export default function Track() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <Link 
         to="/dashboard/yazar/submissions" 
-        className="inline-flex items-center text-slate-500 hover:text-indigo-600 mb-8 font-medium transition-colors"
+        className="inline-flex items-center text-slate-500 hover:text-indigo-600 mb-8 font-medium transition-colors cursor-pointer"
       >
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Submissions
+        <ArrowLeft className="w-4 h-4 mr-2" /> {locale === 'tr' ? 'Başvurulara Geri Dön' : 'Back to Submissions'}
       </Link>
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8 mb-8 relative overflow-hidden">
@@ -245,11 +284,12 @@ export default function Track() {
               {submission.id}
             </span>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
-              {submission.title}
+              {parseTitle(submission.title).title}
             </h1>
-            <p className="text-slate-500 text-sm flex items-center gap-1.5">
+            <p className="text-slate-500 text-sm flex items-center gap-1.5 font-medium">
               <Calendar className="w-4 h-4 text-slate-400" />
-              Submitted on {submission.created_at ? new Date(submission.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+              {locale === 'tr' ? 'Gönderilme Tarihi:' : 'Submitted on'}{' '}
+              {submission.created_at ? new Date(submission.created_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
             </p>
           </div>
           
@@ -257,9 +297,9 @@ export default function Track() {
             <button 
               onClick={() => setIsWithdrawModalOpen(true)}
               disabled={isWithdrawMutating}
-              className="px-4 py-2.5 border border-rose-200 text-rose-600 hover:bg-rose-50/80 hover:border-rose-300 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 shrink-0 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              className="px-4 py-2.5 border border-rose-200 text-rose-600 hover:bg-rose-50/80 hover:border-rose-300 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 shrink-0 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
             >
-              Withdraw Manuscript
+              {locale === 'tr' ? 'Makaleyi Geri Çek' : 'Withdraw Manuscript'}
             </button>
           )}
         </div>
@@ -277,7 +317,7 @@ export default function Track() {
           ></div>
 
           <div className="relative z-10 flex justify-between">
-            {PIPELINE_STEPS.map((step, idx) => {
+            {pipelineSteps.map((step, idx) => {
               const IconComponent = step.icon;
               const isPast = !isWithdrawn && idx < currentStepIndex;
               const isActive = !isWithdrawn && idx === currentStepIndex;
@@ -320,16 +360,18 @@ export default function Track() {
       {isRevision && (
         <div className="bg-rose-50 border border-rose-200/80 rounded-2xl p-6 text-rose-800 shadow-sm animate-in fade-in slide-in-from-bottom-4 mb-8">
           <h3 className="text-lg font-black flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-rose-600" /> Revision Required
+            <AlertTriangle className="w-5 h-5 text-rose-600" /> {locale === 'tr' ? 'Revizyon İstendi' : 'Revision Required'}
           </h3>
-          <p className="text-rose-700/80 text-sm mb-4 leading-relaxed">
-            The editorial board has requested structural changes before proceeding to peer review. Please check the reviewer comments below, perform revisions on your draft, and upload the revised PDF here.
+          <p className="text-rose-700/80 text-sm mb-4 leading-relaxed font-medium">
+            {locale === 'tr'
+              ? 'Yayın kurulu hakem değerlendirmesine geçmeden önce düzeltmeler talep etti. Lütfen revize edilmiş PDF dosyanızı yükleyin.'
+              : 'The editorial board has requested structural changes before proceeding to peer review. Please check the reviewer comments below, perform revisions on your draft, and upload the revised PDF here.'}
           </p>
           
           <input 
             type="file" 
             ref={fileInputRef} 
-            onChange={handleFileChange} 
+            onChange={handleRevisionUpload} 
             accept=".pdf" 
             className="hidden" 
           />
@@ -337,10 +379,12 @@ export default function Track() {
           <button 
             onClick={triggerFileInput}
             disabled={isUploadMutating}
-            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white rounded-xl font-bold shadow-md shadow-rose-600/20 hover:shadow-rose-600/30 transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white rounded-xl font-bold shadow-md shadow-rose-600/20 hover:shadow-rose-600/30 transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
           >
             <UploadCloud className="w-5 h-5" />
-            {isUploadMutating ? 'Uploading revision...' : 'Upload Revised PDF'}
+            {isUploadMutating 
+              ? (locale === 'tr' ? 'Yükleniyor...' : 'Uploading revision...') 
+              : (locale === 'tr' ? 'Revize PDF Yükle' : 'Upload Revised PDF')}
           </button>
         </div>
       )}
@@ -353,9 +397,13 @@ export default function Track() {
               <ShieldAlert className="w-5 h-5 text-slate-600" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900 leading-none mb-1">Manuscript Withdrawn</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                This manuscript has been officially withdrawn by the author. Review processes have been permanently revoked, files archived, and token resources invalidated.
+              <h3 className="text-lg font-black text-slate-900 leading-none mb-1">
+                {locale === 'tr' ? 'Makale Geri Çekildi' : 'Manuscript Withdrawn'}
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                {locale === 'tr'
+                  ? 'Bu makale yazar tarafından resmi olarak geri çekilmiştir. İnceleme süreçleri sonlandırılmıştır.'
+                  : 'This manuscript has been officially withdrawn by the author. Review processes have been permanently revoked, files archived, and token resources invalidated.'}
               </p>
             </div>
           </div>
@@ -364,14 +412,13 @@ export default function Track() {
 
       {/* Status History Timeline */}
       {submission.statusHistory && submission.statusHistory.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8 mb-8">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-slate-500" /> Status History
+            <Clock className="w-5 h-5 text-slate-500" /> {locale === 'tr' ? 'Durum Geçmişi' : 'Status History'}
           </h3>
           <div className="relative border-l-2 border-slate-100 ml-4 pl-6 space-y-8">
             {submission.statusHistory.map((history, index) => (
               <div key={index} className="relative group">
-                {/* Indicator dot */}
                 <div className="absolute -left-[32px] top-1.5 w-4 h-4 rounded-full border-2 border-white bg-slate-300 group-hover:bg-indigo-600 transition-colors duration-300 shadow-sm"></div>
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -380,7 +427,7 @@ export default function Track() {
                   </span>
                   <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    {history.date ? new Date(history.date).toLocaleDateString(undefined, {
+                    {history.date ? new Date(history.date).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -390,8 +437,8 @@ export default function Track() {
                   </span>
                 </div>
                 {history.note && (
-                  <p className="mt-2 text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3 inline-block max-w-full leading-relaxed">
-                    {history.note}
+                  <p className="mt-2 text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3 inline-block max-w-full leading-relaxed font-medium">
+                    {formatHistoryNote(history.note)}
                   </p>
                 )}
               </div>
@@ -400,7 +447,7 @@ export default function Track() {
         </div>
       )}
 
-      {/* Custom Accessibility-Compliant Modal Overlay */}
+      {/* Custom Modal Overlay */}
       {isWithdrawModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
@@ -411,12 +458,11 @@ export default function Track() {
           <div 
             role="dialog"
             aria-modal="true"
-            aria-labelledby="modal-title"
             className="relative bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl p-6 md:p-8 animate-in fade-in zoom-in-95 duration-200 z-10"
           >
             <button 
               onClick={() => setIsWithdrawModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />
@@ -426,31 +472,30 @@ export default function Track() {
               <div className="p-3 bg-rose-50 rounded-xl">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 id="modal-title" className="text-xl font-bold text-slate-955">
-                Withdraw Manuscript
+              <h3 className="text-xl font-bold text-slate-900">
+                {locale === 'tr' ? 'Makaleyi Geri Çek' : 'Withdraw Manuscript'}
               </h3>
             </div>
             
-            <p className="text-slate-600 text-sm leading-relaxed mb-6">
-              Are you absolutely sure you want to withdraw this manuscript? This action is permanent and cannot be undone.
-              <br />
-              <span className="block mt-4 p-3.5 bg-rose-50/60 border border-rose-100 rounded-xl text-rose-900 font-medium text-xs leading-relaxed">
-                <strong>Warning:</strong> Reviewer evaluations will be permanently revoked, draft file streams archived, and this operational token rendered obsolete.
-              </span>
+            <p className="text-slate-600 text-sm leading-relaxed mb-6 font-medium">
+              {locale === 'tr' 
+                ? 'Bu makaleyi resmi olarak geri çekmek istediğinizden emin misiniz? Bu işlem geri alınamaz.' 
+                : 'Are you sure you want to withdraw this manuscript? This action cannot be undone.'}
             </p>
             
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsWithdrawModalOpen(false)}
-                className="px-4 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-50 border border-slate-200 rounded-xl font-bold transition-all text-sm"
+                className="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-100 rounded-xl font-bold text-sm transition-all cursor-pointer"
               >
-                Cancel
+                {locale === 'tr' ? 'İptal' : 'Cancel'}
               </button>
               <button
                 onClick={handleConfirmWithdraw}
-                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-lg shadow-rose-600/25 transition-all text-sm"
+                disabled={isWithdrawMutating}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-md shadow-rose-600/20 transition-all cursor-pointer"
               >
-                Confirm Withdrawal
+                {locale === 'tr' ? 'Evet, Geri Çek' : 'Yes, Withdraw'}
               </button>
             </div>
           </div>

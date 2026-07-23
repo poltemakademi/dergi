@@ -180,13 +180,18 @@ export default function Auth() {
             {
               id: `demo-${demoRole}-123`,
               name: `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1).replace('_', ' ')}`,
-              email: email
+              email: email,
+              institution: 'DergiPark Üniversitesi',
+              department: 'Bilgisayar Mühendisliği',
+              title_field: 'Prof. Dr.',
+              country: 'Türkiye',
+              orcid: '0000-0002-1825-0097',
+              bio: 'Akademik araştırmacı ve hakem.'
             },
             [demoRole as any]
           );
           
-          toast.success(lang === 'TR' ? 'Demo girişi başarılı!' : 'Demo login successful!');
-          navigate(from, { replace: true });
+          navigate('/dashboard/role-selector', { replace: true });
           return;
         }
 
@@ -222,16 +227,19 @@ export default function Auth() {
             {
               id: user.id,
               name: profile?.name_surname || user.user_metadata?.full_name || 'Academic User',
-              email: user.email || email,
+              email: profile?.academic_email || user.email || email,
               phone: profile?.phone,
               institution: profile?.institution,
+              department: profile?.field,
+              title_field: profile?.title,
               orcid: profile?.orcid_id,
+              bio: profile?.academic_interest,
+              country: profile?.country,
             },
             roles
           );
 
-          toast.success(lang === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
-          navigate(from, { replace: true });
+          navigate('/dashboard/role-selector', { replace: true });
         }
       } else {
         const { data: authData, error: authError } = await supabase.auth.signUp({

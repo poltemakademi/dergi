@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/authMiddleware';
-import { getAssignedReviews, getArticleForReview, evaluateArticle, getInvitations, getReviewHistory } from '../controllers/reviewerController';
 import {
   getAssignedReviews,
   getArticleForReview,
   evaluateArticle,
   getPdfForReview,
-  saveDraftEvaluation
+  saveDraftEvaluation,
+  getInvitations,
+  getReviewHistory,
+  respondToInvitation
 } from '../controllers/reviewerController';
 
 const router = Router();
@@ -16,6 +18,9 @@ router.use(requireAuth);
 
 // GET /api/reviewer/invitations
 router.get('/invitations', getInvitations);
+
+// POST /api/reviewer/invitations/respond
+router.post('/invitations/respond', respondToInvitation);
 
 // GET /api/reviewer/assigned
 router.get('/assigned', getAssignedReviews);

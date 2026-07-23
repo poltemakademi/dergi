@@ -1,17 +1,33 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/authMiddleware';
-import { getJournals, createJournal, getUsers } from '../controllers/adminController';
+import { 
+  getSystemStats, 
+  getJournals, 
+  createJournal, 
+  updateJournal, 
+  deleteJournal, 
+  getUsers, 
+  updateUserRole, 
+  updateUserStatus 
+} from '../controllers/adminController';
 
 const router = Router();
 
 // Secure all admin routes
 router.use(requireAuth);
 
-// Admin Journals
+// System Overview & Stats
+router.get('/system/stats', getSystemStats);
+
+// Admin Journals Management
 router.get('/journals', getJournals);
 router.post('/journals', createJournal);
+router.put('/journals/:id', updateJournal);
+router.delete('/journals/:id', deleteJournal);
 
-// Admin Users
+// Admin Users & Roles Management
 router.get('/users', getUsers);
+router.put('/users/:id/roles', updateUserRole);
+router.put('/users/:id/status', updateUserStatus);
 
 export default router;

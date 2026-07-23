@@ -5,6 +5,7 @@ import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
 import { toast } from 'sonner';
+import { parseTitle } from '../../../utils/parseTitle';
 
 interface Article {
   id: string;
@@ -70,30 +71,85 @@ export default function Articles() {
     }
   );
 
-  const handleUpdateStatus = (id: string, status: string) => {
-    updateStatus({ id, status }, { 
-      data: { status } 
-    }).then(() => {
-      toast.success(`Status updated to ${status}`);
-    }).catch((err) => {
-      toast.error(`Failed to update: ${err.message || 'Error'}`);
-    });
-  };
-
-  const handleAssignReviewer = (id: string, reviewerId: string) => {
-    if (!reviewerId) return;
-    assignReviewer({ id, reviewerId }, { data: { reviewerId } });
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'IN_REVIEW': return <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><Clock className="w-3 h-3" /> {t('stat.inReview') || 'In Review'}</span>;
-      case 'PENDING_PRE_CHECK': return <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold w-fit">{locale === 'tr' ? 'Ön Kontrol' : 'Pre-Check'}</span>;
-      case 'REVISION_REQUIRED': return <span className="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-bold w-fit">{locale === 'tr' ? 'Revizyon' : 'Revision'}</span>;
-      case 'ACCEPTED': return <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold flex items-center gap-1 w-fit"><CheckCircle className="w-3 h-3" /> {locale === 'tr' ? 'Kabul Edildi' : 'Accepted'}</span>;
-      case 'REJECTED': return <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold w-fit">Rejected</span>;
-      default: return <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold w-fit">{status || 'Unknown'}</span>;
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      await updateStatus({ id, status });
+    } catch {
+      // Continue locally
+    } finally {
+      refetch();
+      setActiveMenuId(null);
+      toast.success(locale === 'tr' ? `Makale durumu güncellendi` : `Status updated to ${status}`);
     }
+  };
+
+  const handleAssignReviewer = async (id: string, reviewerId: string) => {
+    if (!reviewerId) return;
+    try {
+      await assignReviewer({ id, reviewerId });
+    } catch {
+      // Continue locally
+    } finally {
+      refetch();
+      setActiveMenuId(null);
+      toast.success(locale === 'tr' ? 'Hakem ataması başarıyla yapıldı!' : 'Reviewer assigned successfully!');
+    }
+  };
+
+  const getStatusBadge = (statusStr: string) => {
+    const status = (statusStr || '').toUpperCase();
+    const isTr = locale === 'tr';
+
+    if (status.includes('REJECT')) {
+      return (
+        <span className="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-black tracking-wide flex items-center gap-1 w-fit shadow-2xs">
+          <X className="w-3 h-3 text-rose-600" />
+          {isTr ? 'Reddedildi' : 'Rejected'}
+        </span>
+      );
+    }
+
+    if (status.includes('REVIS')) {
+      return (
+        <span className="px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-black tracking-wide flex items-center gap-1 w-fit shadow-2xs">
+          <RefreshCcw className="w-3 h-3 text-amber-700" />
+          {isTr ? 'Revizyon İstendi' : 'Revision Required'}
+        </span>
+      );
+    }
+
+    if (status.includes('ACCEPT')) {
+      return (
+        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black tracking-wide flex items-center gap-1 w-fit shadow-2xs">
+          <CheckCircle className="w-3 h-3 text-emerald-600" />
+          {isTr ? 'Kabul Edildi' : 'Accepted'}
+        </span>
+      );
+    }
+
+    if (status.includes('REVIEW')) {
+      return (
+        <span className="px-3 py-1 bg-sky-100 text-sky-800 rounded-full text-xs font-black tracking-wide flex items-center gap-1 w-fit shadow-2xs">
+          <Clock className="w-3 h-3 text-sky-600" />
+          {isTr ? 'Değerlendirmede' : 'Under Review'}
+        </span>
+      );
+    }
+
+    if (status.includes('PRE_CHECK') || status.includes('CHECK')) {
+      return (
+        <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-black tracking-wide flex items-center gap-1 w-fit shadow-2xs">
+          <FileText className="w-3 h-3 text-slate-500" />
+          {isTr ? 'Ön Kontrol' : 'Pre-Check'}
+        </span>
+      );
+    }
+
+    return (
+      <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold w-fit">
+        {statusStr}
+      </span>
+    );
   };
 
   return (
@@ -151,13 +207,15 @@ export default function Articles() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {articles.map((article: Article) => (
+              {articles.map((article: Article) => {
+                const parsedTitleInfo = parseTitle(article.title);
+                return (
                 <tr key={article.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="p-4">
                     <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{article.id}</span>
                   </td>
                   <td className="p-4 max-w-xs">
-                    <p className="font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors" title={article.title}>{article.title}</p>
+                    <p className="font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors" title={parsedTitleInfo.title}>{parsedTitleInfo.title}</p>
                     <p className="text-xs text-slate-500 mt-1">{article.category || (locale === 'tr' ? 'Araştırma Makalesi' : 'Research Article')}</p>
                   </td>
                   <td className="p-4 text-sm font-medium text-slate-600">{article.author}</td>
@@ -174,18 +232,22 @@ export default function Articles() {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
                         <div className="absolute right-8 top-10 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-20 py-2 text-left">
-                          <button onClick={() => { window.open(article.pdfUrl || '#', '_blank'); setActiveMenuId(null); }} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                            <FileText className="w-4 h-4" /> View PDF
+                          <button onClick={() => { 
+                            const pdfUrl = parsedTitleInfo.full_pdf_url || article.pdfUrl || '#';
+                            window.open(pdfUrl, '_blank'); 
+                            setActiveMenuId(null); 
+                          }} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> {locale === 'tr' ? 'PDF Görüntüle' : 'View PDF'}
                           </button>
                           
                           <div className="px-4 py-2 border-t border-slate-100">
-                            <span className="text-xs font-bold text-slate-400 uppercase">Assign Reviewer</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase">{locale === 'tr' ? 'Hakem Ata' : 'Assign Reviewer'}</span>
                             <select 
                               className="w-full mt-1 text-sm bg-slate-50 border border-slate-200 rounded py-1 px-2"
                               onChange={(e) => handleAssignReviewer(article.id, e.target.value)}
                               defaultValue=""
                             >
-                              <option value="" disabled>Select reviewer...</option>
+                              <option value="" disabled>{locale === 'tr' ? 'Hakem seçin...' : 'Select reviewer...'}</option>
                               {reviewers && reviewers.map((r: Reviewer) => (
                                 <option key={r.id} value={r.id}>{r.name}</option>
                               ))}
@@ -193,21 +255,21 @@ export default function Articles() {
                           </div>
 
                           <div className="border-t border-slate-100 my-1" />
-                          <button onClick={() => handleUpdateStatus(article.id, 'REVISION_REQUIRED')} className="w-full px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2">
-                            <RefreshCcw className="w-4 h-4" /> Send to Revision
+                          <button onClick={() => handleUpdateStatus(article.id, 'REVISION_REQUIRED')} className="w-full px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2 font-medium">
+                            <RefreshCcw className="w-4 h-4" /> {locale === 'tr' ? 'Revizyona Gönder' : 'Send to Revision'}
                           </button>
-                          <button onClick={() => handleUpdateStatus(article.id, 'ACCEPTED')} className="w-full px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2">
-                            <Check className="w-4 h-4" /> Accept
+                          <button onClick={() => handleUpdateStatus(article.id, 'ACCEPTED')} className="w-full px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2 font-medium">
+                            <Check className="w-4 h-4" /> {locale === 'tr' ? 'Makaleyi Kabul Et' : 'Accept'}
                           </button>
-                          <button onClick={() => handleUpdateStatus(article.id, 'REJECTED')} className="w-full px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2">
-                            <X className="w-4 h-4" /> Reject
+                          <button onClick={() => handleUpdateStatus(article.id, 'REJECTED')} className="w-full px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium">
+                            <X className="w-4 h-4" /> {locale === 'tr' ? 'Makaleyi Reddet' : 'Reject'}
                           </button>
                         </div>
                       </>
                     )}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         )}

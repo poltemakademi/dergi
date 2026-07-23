@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useLocaleStore } from '../store/useLocaleStore';
 import { isProfileComplete } from '../utils/profileValidation';
+import { useApiQuery } from '../hooks/useApiQuery';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
@@ -13,13 +14,62 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import Profile from '../pages/dashboard/Profile'; // Intercept component
 
 export default function DashboardLayout() {
-  const { isAuthenticated, activeRole, user, activeTenant, roles, logout, setActiveTenant } = useAuthStore();
+  const { isAuthenticated, activeRole, user, activeTenant, logout, setActiveTenant } = useAuthStore();
   const { locale, setLocale, t } = useLocaleStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed] = useState(true); // Default to slim
   const [isHovered, setIsHovered] = useState(false);
+
+  // Fetch real dynamic counts for sidebar badges
+  const { data: invitationsData, refetch: refetchInvitations } = useApiQuery<any[]>({
+    url: '/api/reviewer/invitations',
+    enabled: isAuthenticated && activeRole === 'reviewer',
+  });
+
+  const { data: assignedData } = useApiQuery<any[]>({
+    url: '/api/reviewer/assigned',
+    enabled: isAuthenticated && activeRole === 'reviewer',
+  });
+
+  const { data: messagesData, refetch: refetchMessages } = useApiQuery<any[]>({
+    url: '/api/messages',
+    enabled: isAuthenticated,
+  });
+
+  // Listen for invitation accept/decline → update sidebar badge instantly
+  useEffect(() => {
+    const handleInvUpdate = () => refetchInvitations();
+    window.addEventListener('invitations-updated', handleInvUpdate);
+    return () => window.removeEventListener('invitations-updated', handleInvUpdate);
+  }, [refetchInvitations]);
+
+  // Listen for message read/delete → update sidebar badge instantly
+  useEffect(() => {
+    const handleMsgUpdate = () => refetchMessages();
+    window.addEventListener('messages-updated', handleMsgUpdate);
+    return () => window.removeEventListener('messages-updated', handleMsgUpdate);
+  }, [refetchMessages]);
+
+  // Sidebar badge: invitations count from server minus locally hidden ones
+  const invitationsCount = useMemo(() => {
+    if (!invitationsData) return 0;
+    const list = Array.isArray(invitationsData) ? invitationsData : (invitationsData as any)?.data;
+    return Array.isArray(list) ? list.length : 0;
+  }, [invitationsData]);
+
+  const assignedCount = useMemo(() => {
+    if (!assignedData) return 0;
+    const list = Array.isArray(assignedData) ? assignedData : (assignedData as any)?.data;
+    return Array.isArray(list) ? list.length : 0;
+  }, [assignedData]);
+
+  const unreadMessagesCount = useMemo(() => {
+    if (!messagesData) return 0;
+    const list = Array.isArray(messagesData) ? messagesData : (messagesData as any)?.data;
+    return Array.isArray(list) ? list.filter((m: any) => m.unread).length : 0;
+  }, [messagesData]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -48,16 +98,6 @@ export default function DashboardLayout() {
 
   // Expanded if not collapsed, or if currently hovered in slim mode
   const showExpanded = !isCollapsed || isHovered;
-
-  const navLinkClass = (path: string) => `py-2.5 flex items-center transition-all duration-700 ease-in-out ${
-    !showExpanded ? 'px-0 justify-center rounded-xl' : 'px-3.5 justify-start gap-3 rounded-lg'
-  } ${
-    !isProfileValid && !path.includes('/profile') && !path.includes('/role-selector')
-      ? 'opacity-40 pointer-events-none'
-      : isActive(path) 
-        ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' 
-        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
-  }`;
 
   const sidebarVariants = {
     hidden: { opacity: 0, x: -20 },
@@ -93,27 +133,25 @@ export default function DashboardLayout() {
         variants={sidebarVariants}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`fixed inset-y-0 left-0 bg-white flex flex-col z-50 border-r border-slate-200/80 shadow-2xl lg:shadow-[4px_0_24px_rgba(0,0,0,0.01)] transition-all duration-700 ease-in-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 bg-white flex flex-col z-50 border-r border-slate-200/80 shadow-2xl lg:shadow-[4px_0_24px_rgba(0,0,0,0.01)] transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 overflow-hidden ${
           showExpanded ? 'w-60' : 'w-16'
         } ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {/* Sidebar Header */}
-        <div className={`p-4 border-b border-slate-100 flex items-center justify-between ${!showExpanded ? 'flex-col gap-2 p-3' : ''}`}>
-          <Link to="/" onClick={closeSidebar} className="flex items-center gap-2.5 hover:bg-slate-50 transition-colors group overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-white shadow-sm group-hover:scale-105 transition-transform shrink-0">
-              <BookOpen className="w-4 h-4 text-white" />
+        <div className="px-3 border-b border-slate-100 flex items-center h-16 shrink-0 overflow-hidden">
+          <Link to="/" onClick={closeSidebar} className="flex items-center gap-3 group overflow-hidden w-full">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-bold text-white shadow-sm group-hover:scale-105 transition-transform shrink-0">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
-            {showExpanded && (
-              <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors font-serif truncate">novaijournal</h2>
-                <span className="text-[9px] text-slate-500 font-medium tracking-wide mt-1 block truncate">{t('nav.enterprise')}</span>
-              </div>
-            )}
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden flex flex-col whitespace-nowrap min-w-0 ${showExpanded ? 'opacity-100 max-w-[150px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors font-serif truncate">novaijournal</h2>
+              <span className="text-[9px] text-slate-500 font-medium tracking-wide mt-1 block truncate">{t('nav.enterprise')}</span>
+            </div>
           </Link>
 
           {/* Mobile Drawer Close Button */}
           <button 
-            className="lg:hidden p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50"
+            className="lg:hidden p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-50 shrink-0"
             onClick={closeSidebar}
           >
             <X className="w-5 h-5" />
@@ -123,211 +161,251 @@ export default function DashboardLayout() {
         {/* Workspace Switcher - Forced Click */}
         <div 
           onClick={handleWorkspaceSwitch}
-          className={`block p-3 border-b border-slate-100 bg-slate-50/50 cursor-pointer hover:bg-slate-100 transition-colors active:bg-slate-200 group relative z-50 ${!showExpanded ? 'flex justify-center' : ''}`}
+          className="px-3 border-b border-slate-100 bg-slate-50/50 cursor-pointer hover:bg-slate-100 transition-colors active:bg-slate-200 group relative z-50 flex items-center gap-3 overflow-hidden h-16 shrink-0"
           title={locale === 'tr' ? 'Çalışma Alanı Değiştir' : 'Switch Workspace'}
         >
-          {showExpanded ? (
-            <div className="flex items-center justify-between w-full pointer-events-none">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                  <LayoutDashboard className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
-                </div>
-                <div className="flex flex-col min-w-0 text-left">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase leading-none mb-1.5">{t('nav.workspace')}</span>
-                  <span className={`text-sm font-bold truncate leading-none transition-colors ${!activeTenant ? 'text-indigo-600' : 'text-slate-900 group-hover:text-indigo-700'}`}>
-                    {activeTenant ? activeTenant.name : (locale === 'tr' ? 'Seçiniz...' : 'Select...')}
-                  </span>
-                </div>
-              </div>
-              <div className="shrink-0 text-slate-400 group-hover:text-indigo-600 transition-colors">
-                <ChevronDown className="w-4 h-4" />
-              </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 group-hover:border-indigo-300 group-hover:text-indigo-600 text-indigo-500 transition-all">
+            <LayoutDashboard className="w-5 h-5" />
+          </div>
+          <div className={`transition-all duration-300 ease-in-out flex-1 flex items-center justify-between overflow-hidden min-w-0 ${showExpanded ? 'opacity-100 max-w-[180px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>
+            <div className="flex flex-col min-w-0 text-left">
+              <span className="text-[10px] font-bold text-indigo-600 uppercase leading-none mb-1 block tracking-wider truncate">
+                {activeTenant && activeRole 
+                  ? `${t('nav.workspace')} • ${
+                      activeRole === 'reviewer' ? (locale === 'tr' ? 'Hakem' : 'Reviewer') :
+                      activeRole === 'author' ? (locale === 'tr' ? 'Yazar' : 'Author') :
+                      activeRole === 'editor' ? (locale === 'tr' ? 'Editör' : 'Editor') :
+                      activeRole === 'layout_editor' ? (locale === 'tr' ? 'Mizanpaj' : 'Layout') :
+                      activeRole === 'super_admin' ? (locale === 'tr' ? 'Yönetici' : 'Admin') : activeRole
+                    }` 
+                  : t('nav.workspace')}
+              </span>
+              <span className={`text-xs font-bold truncate leading-none transition-colors ${!activeTenant ? 'text-indigo-600' : 'text-slate-900 group-hover:text-indigo-700'}`}>
+                {activeTenant ? activeTenant.name : (locale === 'tr' ? 'Seçiniz...' : 'Select...')}
+              </span>
             </div>
-          ) : (
-            <div className="pointer-events-none w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center group-hover:border-indigo-300 group-hover:text-indigo-600 text-indigo-500 transition-all">
-              <LayoutDashboard className="w-4 h-4" />
-            </div>
-          )}
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0 ml-1" />
+          </div>
         </div>
         
         {/* Sidebar Navigation Items */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1.5 custom-scrollbar overflow-x-hidden">
           <motion.div variants={itemVariants}>
             <Link 
               to={!isProfileValid ? '#' : "/dashboard/messages"} 
               onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} 
-              className={navLinkClass('/dashboard/messages')}
+              className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${
+                !isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/messages') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+              }`}
               title={!showExpanded ? t('nav.communications') : undefined}
             >
-              <Inbox className={`w-4 h-4 shrink-0 ${isActive('/dashboard/messages') ? 'text-slate-900' : 'text-slate-400'}`} />
-              {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.communications')}</span>}
-              {showExpanded && <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">3</span>}
+              <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                <Inbox className={`w-5 h-5 ${isActive('/dashboard/messages') ? 'text-slate-900' : 'text-slate-400'}`} />
+              </div>
+              <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.communications')}</span>
+              {unreadMessagesCount > 0 && (
+                <span className={`transition-all duration-300 ease-in-out ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold ${showExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  {unreadMessagesCount}
+                </span>
+              )}
             </Link>
           </motion.div>
+
           <motion.div variants={itemVariants}>
             <Link 
               to="/dashboard/profile" 
               onClick={closeSidebar} 
-              className={navLinkClass('/dashboard/profile')}
+              className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 relative ${
+                isActive('/dashboard/profile') || !isProfileValid ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+              }`}
               title={!showExpanded ? t('nav.profile') : undefined}
             >
-              <Users className={`w-4 h-4 shrink-0 ${isActive('/dashboard/profile') || !isProfileValid ? 'text-slate-900' : 'text-slate-400'}`} />
-              {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.profile')}</span>}
-              {!isProfileValid && (
-                <div className={`${!showExpanded ? 'absolute top-1 right-1' : 'ml-auto'} w-2 h-2 rounded-full bg-rose-500 animate-pulse`} />
+              <div className="w-10 h-10 flex items-center justify-center shrink-0 relative">
+                <Users className={`w-5 h-5 ${isActive('/dashboard/profile') || !isProfileValid ? 'text-slate-900' : 'text-slate-400'}`} />
+                {!isProfileValid && !showExpanded && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                )}
+              </div>
+              <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.profile')}</span>
+              {!isProfileValid && showExpanded && (
+                <div className="ml-auto w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
               )}
             </Link>
           </motion.div>
 
           <AnimatePresence>
             {/* Editor Routes */}
-            {(activeRole === 'editor') && (
+            {(activeTenant && activeRole === 'editor' && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="editor-nav"
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }} 
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col gap-1.5"
               >
-                {showExpanded && (
-                  <div className="mt-4 mb-1 px-3 border-t border-slate-100 pt-3">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.executiveEditor')}</p>
+                <div className={`mt-3 mb-1 px-3 border-t border-slate-100 pt-3 transition-all duration-300 overflow-hidden ${showExpanded ? 'opacity-100 max-h-10' : 'opacity-0 max-h-0 py-0 border-t-0 pointer-events-none'}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{t('nav.executiveEditor')}</p>
+                </div>
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/overview"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/overview') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.analytics') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <BarChart3 className={`w-5 h-5 ${isActive('/dashboard/editor/overview') ? 'text-slate-900' : 'text-slate-400'}`} />
                   </div>
-                )}
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/overview"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/overview')} title={!showExpanded ? t('nav.analytics') : undefined}>
-                  <BarChart3 className={`w-4 h-4 shrink-0 ${isActive('/dashboard/editor/overview') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.analytics')}</span>}
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.analytics')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/articles"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/articles')} title={!showExpanded ? t('nav.manuscripts') : undefined}>
-                  <FileText className={`w-4 h-4 shrink-0 ${isActive('/dashboard/editor/articles') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.manuscripts')}</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/articles"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/articles') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.manuscripts') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <FileText className={`w-5 h-5 ${isActive('/dashboard/editor/articles') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.manuscripts')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/issues"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/issues')} title={!showExpanded ? t('nav.issueStudio') : undefined}>
-                  <BookOpen className={`w-4 h-4 shrink-0 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.issueStudio')}</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/issues"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/issues') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.issueStudio') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <BookOpen className={`w-5 h-5 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.issueStudio')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/settings"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/editor/settings')} title={!showExpanded ? t('nav.configuration') : undefined}>
-                  <Settings className={`w-4 h-4 shrink-0 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.configuration')}</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/editor/settings"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/settings') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.configuration') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Settings className={`w-5 h-5 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.configuration')}</span>
                 </Link>
               </motion.div>
             )}
 
             {/* Reviewer Routes */}
-            {(roles.includes('reviewer') || activeRole === 'reviewer') && (
+            {(activeTenant && activeRole === 'reviewer' && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="reviewer-nav"
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }} 
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col gap-1.5"
               >
-                {showExpanded && (
-                  <div className="mt-4 mb-1 px-3 border-t border-slate-100 pt-3">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.reviewer')}</p>
+                <div className={`mt-3 mb-1 px-3 border-t border-slate-100 pt-3 transition-all duration-300 overflow-hidden ${showExpanded ? 'opacity-100 max-h-10' : 'opacity-0 max-h-0 py-0 border-t-0 pointer-events-none'}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{t('nav.reviewer')}</p>
+                </div>
+                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/invitations"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/reviewer/invitations') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? (locale === 'tr' ? 'Davetler' : 'Invitations') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Mail className={`w-5 h-5 ${isActive('/dashboard/reviewer/invitations') ? 'text-slate-900' : 'text-slate-400'}`} />
                   </div>
-                )}
-                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/invitations"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/reviewer/invitations')} title={!showExpanded ? (locale === 'tr' ? 'Davetler' : 'Invitations') : undefined}>
-                  <Mail className={`w-4 h-4 shrink-0 ${isActive('/dashboard/reviewer/invitations') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{locale === 'tr' ? 'Davetler' : 'Invitations'}</span>}
-                  {showExpanded && <span className="ml-auto bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold">1</span>}
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{locale === 'tr' ? 'Davetler' : 'Invitations'}</span>
+                  {invitationsCount > 0 && (
+                    <span className={`transition-all duration-300 ease-in-out ml-auto bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold ${showExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                      {invitationsCount}
+                    </span>
+                  )}
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/assigned"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/reviewer/assigned')} title={!showExpanded ? t('nav.reviewQueue') : undefined}>
-                  <CheckSquare className={`w-4 h-4 shrink-0 ${isActive('/dashboard/reviewer/assigned') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.reviewQueue')}</span>}
-                  {showExpanded && <span className="ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">2</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/assigned"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/reviewer/assigned') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.reviewQueue') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <CheckSquare className={`w-5 h-5 ${isActive('/dashboard/reviewer/assigned') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.reviewQueue')}</span>
+                  {assignedCount > 0 && (
+                    <span className={`transition-all duration-300 ease-in-out ml-auto bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold ${showExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                      {assignedCount}
+                    </span>
+                  )}
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/history"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/reviewer/history')} title={!showExpanded ? (locale === 'tr' ? 'Geçmiş' : 'History') : undefined}>
-                  <History className={`w-4 h-4 shrink-0 ${isActive('/dashboard/reviewer/history') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{locale === 'tr' ? 'Geçmiş' : 'History'}</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/reviewer/history"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/reviewer/history') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? (locale === 'tr' ? 'Geçmiş' : 'History') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <History className={`w-5 h-5 ${isActive('/dashboard/reviewer/history') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{locale === 'tr' ? 'Geçmiş' : 'History'}</span>
                 </Link>
               </motion.div>
             )}
 
             {/* Author Routes */}
-            {(activeRole === 'author') && (
+            {(activeTenant && activeRole === 'author' && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="author-nav"
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }} 
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col gap-1.5"
               >
-                {showExpanded && (
-                  <div className="mt-4 mb-1 px-3 border-t border-slate-100 pt-3">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.author')}</p>
+                <div className={`mt-3 mb-1 px-3 border-t border-slate-100 pt-3 transition-all duration-300 overflow-hidden ${showExpanded ? 'opacity-100 max-h-10' : 'opacity-0 max-h-0 py-0 border-t-0 pointer-events-none'}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{t('nav.author')}</p>
+                </div>
+                <Link to={!isProfileValid ? '#' : "/dashboard/yazar/submissions"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/yazar/submissions') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.mySubmissions') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <FileText className={`w-5 h-5 ${isActive('/dashboard/yazar/submissions') ? 'text-slate-900' : 'text-slate-400'}`} />
                   </div>
-                )}
-                <Link to={!isProfileValid ? '#' : "/dashboard/yazar/submissions"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/yazar/submissions')} title={!showExpanded ? t('nav.mySubmissions') : undefined}>
-                  <FileText className={`w-4 h-4 shrink-0 ${isActive('/dashboard/yazar/submissions') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.mySubmissions')}</span>}
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.mySubmissions')}</span>
                 </Link>
-                <div className={!showExpanded ? 'mt-2 flex justify-center' : 'mt-3 px-2'}>
+                <div className="w-full flex items-center justify-center">
                   <Link 
                     to={!isProfileValid ? '#' : "/dashboard/yazar/submit-wizard"} 
                     onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} 
-                    className={`bg-slate-900 hover:bg-slate-800 rounded-lg text-white font-medium transition-colors shadow-sm flex items-center justify-center gap-2 ${
-                      !showExpanded ? 'w-9 h-9 p-0' : 'w-full py-2 px-3 text-xs'
+                    className={`bg-slate-900 hover:bg-slate-800 rounded-xl text-white font-medium transition-all duration-300 shadow-sm flex items-center justify-center gap-2 overflow-hidden h-10 ${
+                      !showExpanded ? 'w-10 p-0' : 'w-full py-2 px-3 text-xs'
                     } ${!isProfileValid ? 'opacity-40 pointer-events-none' : ''}`}
                     title={!showExpanded ? t('nav.newSubmission') : undefined}
                   >
-                    <PenTool className="w-3.5 h-3.5 shrink-0" />
-                    {showExpanded && <span className="truncate">{t('nav.newSubmission')}</span>}
+                    <PenTool className="w-4 h-4 shrink-0" />
+                    <span className={`transition-all duration-300 ease-in-out truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.newSubmission')}</span>
                   </Link>
                 </div>
               </motion.div>
             )}
 
             {/* Layout Routes */}
-            {(activeRole === 'layout_editor') && (
+            {(activeTenant && activeRole === 'layout_editor' && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="layout-nav"
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }} 
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col gap-1.5"
               >
-                {showExpanded && (
-                  <div className="mt-4 mb-1 px-3 border-t border-slate-100 pt-3">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t('nav.layoutEditor')}</p>
+                <div className={`mt-3 mb-1 px-3 border-t border-slate-100 pt-3 transition-all duration-300 overflow-hidden ${showExpanded ? 'opacity-100 max-h-10' : 'opacity-0 max-h-0 py-0 border-t-0 pointer-events-none'}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{t('nav.layoutEditor')}</p>
+                </div>
+                <Link to={!isProfileValid ? '#' : "/dashboard/layout/queue"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/layout/queue') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.productionLine') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Inbox className={`w-5 h-5 ${isActive('/dashboard/layout/queue') ? 'text-slate-900' : 'text-slate-400'}`} />
                   </div>
-                )}
-                <Link to={!isProfileValid ? '#' : "/dashboard/layout/queue"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/layout/queue')} title={!showExpanded ? t('nav.productionLine') : undefined}>
-                  <Inbox className={`w-4 h-4 shrink-0 ${isActive('/dashboard/layout/queue') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.productionLine')}</span>}
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.productionLine')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/layout/proofs"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/layout/proofs')} title={!showExpanded ? t('nav.galleyProofs') : undefined}>
-                  <BookOpen className={`w-4 h-4 shrink-0 ${isActive('/dashboard/layout/proofs') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">{t('nav.galleyProofs')}</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/layout/proofs"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/layout/proofs') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.galleyProofs') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <BookOpen className={`w-5 h-5 ${isActive('/dashboard/layout/proofs') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.galleyProofs')}</span>
                 </Link>
               </motion.div>
             )}
 
             {/* Super Admin Routes */}
-            {(activeRole === 'super_admin') && (
+            {(activeTenant && activeRole === 'super_admin' && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="admin-nav"
                 initial={{ opacity: 0, height: 0 }} 
                 animate={{ opacity: 1, height: 'auto' }} 
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col gap-1.5"
               >
-                {showExpanded && (
-                  <div className="mt-4 mb-1 px-3 border-t border-slate-100 pt-3">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Super Admin</p>
+                <div className={`mt-3 mb-1 px-3 border-t border-slate-100 pt-3 transition-all duration-300 overflow-hidden ${showExpanded ? 'opacity-100 max-h-10' : 'opacity-0 max-h-0 py-0 border-t-0 pointer-events-none'}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{t('nav.superAdmin')}</p>
+                </div>
+                <Link to={!isProfileValid ? '#' : "/dashboard/admin/system"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/admin/system') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.systemOverview') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Settings className={`w-5 h-5 ${isActive('/dashboard/admin/system') ? 'text-slate-900' : 'text-slate-400'}`} />
                   </div>
-                )}
-                <Link to={!isProfileValid ? '#' : "/dashboard/admin/system"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/admin/system')} title={!showExpanded ? 'System Overview' : undefined}>
-                  <Settings className={`w-4 h-4 shrink-0 ${isActive('/dashboard/admin/system') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">System Overview</span>}
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.systemOverview')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/admin/users"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/admin/users')} title={!showExpanded ? 'User Management' : undefined}>
-                  <Users className={`w-4 h-4 shrink-0 ${isActive('/dashboard/admin/users') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">User Management</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/admin/users"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/admin/users') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.userManagement') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Users className={`w-5 h-5 ${isActive('/dashboard/admin/users') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.userManagement')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/admin/journals"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={navLinkClass('/dashboard/admin/journals')} title={!showExpanded ? 'Journal Management' : undefined}>
-                  <BookOpen className={`w-4 h-4 shrink-0 ${isActive('/dashboard/admin/journals') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  {showExpanded && <span className="text-xs font-semibold truncate">Journal Management</span>}
+                <Link to={!isProfileValid ? '#' : "/dashboard/admin/journals"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/admin/journals') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.journalManagement') : undefined}>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <BookOpen className={`w-5 h-5 ${isActive('/dashboard/admin/journals') ? 'text-slate-900' : 'text-slate-400'}`} />
+                  </div>
+                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.journalManagement')}</span>
                 </Link>
               </motion.div>
             )}
@@ -335,24 +413,24 @@ export default function DashboardLayout() {
         </div>
         
         {/* User Mini Profile Footer */}
-        <div className="p-2 sm:p-3 border-t border-slate-100 bg-white">
-          <div className={`flex items-center ${!showExpanded ? 'justify-center flex-col gap-1.5' : 'gap-2 px-1'}`}>
-            <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
-              <Users className="w-3.5 h-3.5 text-slate-500" />
+        <div className="px-3 border-t border-slate-100 bg-white shrink-0 h-16 flex items-center">
+          <div className="flex items-center gap-3 overflow-hidden w-full">
+            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0 font-bold text-xs text-slate-700">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
-            {showExpanded && (
-              <div className="overflow-hidden flex-1">
-                <p className="text-xs font-semibold text-slate-900 truncate leading-tight">{user?.name}</p>
-                <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+            <div className={`transition-all duration-300 ease-in-out flex-1 flex items-center justify-between overflow-hidden min-w-0 ${showExpanded ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-slate-900 truncate leading-tight">{user?.name || 'Academic User'}</p>
+                <p className="text-[10px] text-slate-500 truncate">{user?.email || 'user@example.com'}</p>
               </div>
-            )}
-            <button 
-              onClick={() => { logout(); navigate('/auth'); }} 
-              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
-              title={locale === 'tr' ? 'Çıkış Yap' : 'Log Out'}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+              <button 
+                onClick={() => { logout(); navigate('/auth'); }} 
+                className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0 ml-1 cursor-pointer"
+                title={locale === 'tr' ? 'Çıkış Yap' : 'Log Out'}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </motion.aside>
@@ -438,7 +516,7 @@ export default function DashboardLayout() {
               className="h-full"
             >
               {/* Force intercept if profile is incomplete */}
-              {!isProfileValid && !location.pathname.includes('/profile') && !location.pathname.includes('/role-selector') ? (
+              {!isProfileValid && !location.pathname.includes('/profile') ? (
                 <Profile />
               ) : (
                 <Outlet />

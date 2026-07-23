@@ -12,42 +12,46 @@ interface LocaleState {
 export const useLocaleStore = create<LocaleState>()(
   persist(
     (set, get) => ({
-      locale: 'tr', // Default language matched to public default
-      setLocale: (locale) => {
-        set({ locale });
-        // Synchronize with public pages' legacy language system
-        localStorage.setItem('app_lang', locale.toUpperCase());
-        window.dispatchEvent(new Event('lang-change'));
+      locale: 'tr', // Primary default language is Turkish (TR)
+      setLocale: (targetLocale) => {
+        const cleanLocale: Locale = targetLocale === 'en' ? 'en' : 'tr';
+        set({ locale: cleanLocale });
+        
+        const upper = cleanLocale.toUpperCase();
+        localStorage.setItem('app_lang', upper);
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('lang-change'));
+        }
       },
       t: (key) => {
         const { locale } = get();
         const dict = translations[locale] || translations['tr'];
-        return dict[key] || translations['en'][key] || key;
+        return dict[key] || translations['en']?.[key] || key;
       },
     }),
     {
-      name: 'locale-storage', // name of item in the storage (must be unique)
+      name: 'locale-storage',
     }
   )
 );
 
-// Listen to 'lang-change' events to keep Zustand synced if public pages change it
 if (typeof window !== 'undefined') {
   window.addEventListener('lang-change', () => {
-    const appLang = localStorage.getItem('app_lang') as 'EN' | 'TR' || 'TR';
-    const targetLocale = appLang.toLowerCase() as Locale;
+    const stored = localStorage.getItem('app_lang');
+    const appLang = (stored ? stored.toUpperCase() : 'TR') as 'EN' | 'TR';
+    const targetLocale: Locale = appLang === 'EN' ? 'en' : 'tr';
+    
     if (useLocaleStore.getState().locale !== targetLocale) {
       useLocaleStore.setState({ locale: targetLocale });
     }
   });
 
-  // Sync initial state on load
-  const initialAppLang = localStorage.getItem('app_lang') as 'EN' | 'TR';
+  const initialAppLang = localStorage.getItem('app_lang');
   if (initialAppLang) {
-    useLocaleStore.setState({ locale: initialAppLang.toLowerCase() as Locale });
+    const clean: Locale = initialAppLang.toUpperCase() === 'EN' ? 'en' : 'tr';
+    useLocaleStore.setState({ locale: clean });
   } else {
-    // If not set in legacy, copy over from zustand to legacy
-    const state = useLocaleStore.getState();
-    localStorage.setItem('app_lang', state.locale.toUpperCase());
+    localStorage.setItem('app_lang', 'TR');
   }
 }

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
+import { parseTitle } from '../../../utils/parseTitle';
 
 export default function Issues() {
   const { t, locale } = useLocaleStore();
@@ -128,7 +129,7 @@ export default function Issues() {
                   <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{article.id}</span>
                   <FileText className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
                 </div>
-                <h4 className="font-bold text-slate-800 text-sm mb-1 leading-snug">{article.title}</h4>
+                <h4 className="font-bold text-slate-800 text-sm mb-1 leading-snug">{parseTitle(article.title).title}</h4>
                 <p className="text-xs text-slate-500">{article.category || (locale === 'tr' ? 'Araştırma Makalesi' : 'Research Article')}</p>
               </div>
             ))
@@ -249,7 +250,7 @@ export default function Issues() {
                       {index + 1}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm leading-snug">{article.title}</h4>
+                      <h4 className="font-bold text-slate-800 text-sm leading-snug">{parseTitle(article.title).title}</h4>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{article.id}</span>
                         <span className="text-xs text-slate-500">{article.author}</span>

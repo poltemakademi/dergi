@@ -8,7 +8,7 @@ interface RoleGuardProps {
 }
 
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { activeRole, isAuthenticated, isLoading } = useAuthStore();
+  const { activeRole, isAuthenticated, isLoading, roles } = useAuthStore();
   const location = useLocation();
 
   if (isLoading) {
@@ -23,7 +23,10 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (!activeRole || !allowedRoles.includes(activeRole)) {
+  const userRoles = roles || [];
+  const isSuperAdminAuthorized = activeRole === 'super_admin' ? userRoles.includes('super_admin') : true;
+
+  if (!activeRole || !allowedRoles.includes(activeRole) || !isSuperAdminAuthorized) {
     return <Navigate to="/dashboard/role-selector" replace />;
   }
 
