@@ -176,7 +176,7 @@ export default function Auth() {
           
           // Mock a token and user for demo purposes
           useAuthStore.getState().setAuth(
-            'demo-jwt-token-123',
+            `demo-${demoRole}-jwt-token-123`,
             {
               id: `demo-${demoRole}-123`,
               name: `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1).replace('_', ' ')}`,
@@ -191,7 +191,7 @@ export default function Auth() {
             [demoRole as any]
           );
           
-          navigate('/dashboard/role-selector', { replace: true });
+          navigate('/dashboard', { replace: true });
           return;
         }
 
@@ -239,7 +239,7 @@ export default function Auth() {
             roles
           );
 
-          navigate('/dashboard/role-selector', { replace: true });
+          navigate('/dashboard', { replace: true });
         }
       } else {
         const { data: authData, error: authError } = await supabase.auth.signUp({

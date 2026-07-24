@@ -23,12 +23,34 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
 
     const token = authHeader.split(' ')[1];
 
-    // FOR DEVELOPMENT ONLY: Allow RoleSimulator mock token
+    // FOR DEVELOPMENT ONLY: Allow RoleSimulator and demo tokens
     if (token.startsWith('demo-') && process.env.NODE_ENV !== 'production') {
+      let role = 'author';
+      let email = 'author@demo.com';
+      let id = '00000000-0000-0000-0000-000000000001';
+
+      if (token.includes('editor') && !token.includes('layout')) {
+        role = 'editor';
+        email = 'editor@demo.com';
+        id = '00000000-0000-0000-0000-000000000002';
+      } else if (token.includes('reviewer')) {
+        role = 'reviewer';
+        email = 'reviewer@demo.com';
+        id = '00000000-0000-0000-0000-000000000003';
+      } else if (token.includes('layout')) {
+        role = 'layout_editor';
+        email = 'layout@demo.com';
+        id = '00000000-0000-0000-0000-000000000004';
+      } else if (token.includes('super_admin') || token.includes('admin')) {
+        role = 'super_admin';
+        email = 'super_admin@demo.com';
+        id = '00000000-0000-0000-0000-000000000005';
+      }
+
       req.user = {
-        id: '9077a2da-0d48-4505-9989-b68ec3a5dba7',
-        email: 'demo@example.com',
-        roles: [{ journal_id: 'mock-journal', role: 'author' }]
+        id: id,
+        email: email,
+        roles: [{ journal_id: 'mock-journal', role: role }]
       };
       return next();
     }

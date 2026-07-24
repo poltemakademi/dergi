@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabaseClient';
 
-export type Role = 'super_admin' | 'editor' | 'layout_editor' | 'reviewer' | 'author';
-
+export type Role = 'super_admin' | 'editor' | 'section_editor' | 'layout_editor' | 'copyeditor' | 'reviewer' | 'author';
 export interface User {
   id: string;
   name: string;
@@ -75,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
               const members = memRes.data;
               const roles = (members && members.length > 0)
                 ? members.map((m: any) => m.journal_role)
-                : ['author', 'reviewer', 'super_admin'];
+                : ['author', 'reviewer', 'editor', 'section_editor', 'copyeditor', 'layout_editor', 'super_admin'];
 
               set({
                 token: session.access_token,
@@ -141,13 +140,16 @@ export const useAuthStore = create<AuthState>()(
       
       setActiveRole: (role) => set({ activeRole: role }),
       setActiveTenant: (tenant) => set({ activeTenant: tenant }),
-      setRoles: (roles) => set({
-        roles,
-        activeRole: roles[0] || 'author',
-        isAuthenticated: true,
-        token: 'demo-token',
-        user: { id: '9077a2da-0d48-4505-9989-b68ec3a5dba7', name: 'Demo User', email: 'demo@example.com', institution: '', orcid: '' } // Provide some defaults for mock demo
-      }),
+      setRoles: (roles) => {
+        const primaryRole = roles[0] || 'author';
+        set({
+          roles,
+          activeRole: primaryRole,
+          isAuthenticated: true,
+          token: `demo-${primaryRole}-token`,
+          user: { id: `demo-${primaryRole}-123`, name: 'Demo User', email: `${primaryRole}@demo.com`, institution: '', orcid: '' }
+        });
+      },
     }),
     {
       name: 'auth-storage',

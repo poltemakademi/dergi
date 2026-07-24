@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, MoreVertical, CheckCircle, Clock, AlertTriangle, FileText, Check, X, RefreshCcw } from 'lucide-react';
+import { Search, Filter, MoreVertical, CheckCircle, Clock, AlertTriangle, FileText, Check, X, RefreshCcw, ShieldAlert, MessageSquare, Download, Link as LinkIcon, Send } from 'lucide-react';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { useApiMutation } from '../../../hooks/useApiMutation';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
 import { toast } from 'sonner';
 import { parseTitle } from '../../../utils/parseTitle';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Article {
   id: string;
@@ -15,6 +16,7 @@ interface Article {
   status: string;
   date?: string;
   pdfUrl?: string;
+  similarity?: number;
 }
 
 interface Reviewer {
@@ -28,6 +30,9 @@ export default function Articles() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [discussionArticleId, setDiscussionArticleId] = useState<string | null>(null);
+  const [checkingPlagiarism, setCheckingPlagiarism] = useState<string | null>(null);
+  const [mockSimilarities, setMockSimilarities] = useState<Record<string, number>>({});
   const { t, locale } = useLocaleStore();
 
   useEffect(() => {
@@ -94,6 +99,21 @@ export default function Articles() {
       setActiveMenuId(null);
       toast.success(locale === 'tr' ? 'Hakem ataması başarıyla yapıldı!' : 'Reviewer assigned successfully!');
     }
+  };
+
+  const handleCheckPlagiarism = (id: string) => {
+    setCheckingPlagiarism(id);
+    setActiveMenuId(null);
+    setTimeout(() => {
+      setMockSimilarities(prev => ({ ...prev, [id]: Math.floor(Math.random() * 15) + 5 }));
+      setCheckingPlagiarism(null);
+      toast.success(locale === 'tr' ? 'İntihal raporu iThenticate üzerinden alındı' : 'Plagiarism report fetched from iThenticate');
+    }, 2000);
+  };
+
+  const handleExport = (type: string) => {
+    setActiveMenuId(null);
+    toast.success(`${type} ${locale === 'tr' ? 'dışa aktarıldı' : 'exported successfully'}`);
   };
 
   const getStatusBadge = (statusStr: string) => {
@@ -202,6 +222,7 @@ export default function Articles() {
                 <th className="p-4 font-bold border-b border-slate-100">{locale === 'tr' ? 'Başlık ve Kategori' : 'Title & Category'}</th>
                 <th className="p-4 font-bold border-b border-slate-100">{locale === 'tr' ? 'Yazar' : 'Author'}</th>
                 <th className="p-4 font-bold border-b border-slate-100">{locale === 'tr' ? 'Durum' : 'Status'}</th>
+                <th className="p-4 font-bold border-b border-slate-100">{locale === 'tr' ? 'Benzerlik' : 'Similarity'}</th>
                 <th className="p-4 font-bold border-b border-slate-100">{locale === 'tr' ? 'Gönderim' : 'Submitted'}</th>
                 <th className="p-4 font-bold border-b border-slate-100 text-right">{locale === 'tr' ? 'İşlemler' : 'Actions'}</th>
               </tr>
@@ -220,8 +241,26 @@ export default function Articles() {
                   </td>
                   <td className="p-4 text-sm font-medium text-slate-600">{article.author}</td>
                   <td className="p-4">{getStatusBadge(article.status)}</td>
+                  <td className="p-4">
+                    {checkingPlagiarism === article.id ? (
+                      <span className="text-xs text-slate-400 animate-pulse">{locale === 'tr' ? 'Taranıyor...' : 'Checking...'}</span>
+                    ) : mockSimilarities[article.id] !== undefined ? (
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${mockSimilarities[article.id] > 20 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        %{mockSimilarities[article.id]}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300">-</span>
+                    )}
+                  </td>
                   <td className="p-4 text-sm text-slate-500">{article.date || new Date().toLocaleDateString()}</td>
-                  <td className="p-4 text-right relative">
+                  <td className="p-4 text-right relative flex items-center justify-end gap-1">
+                    <button 
+                      onClick={() => setDiscussionArticleId(article.id)}
+                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title={locale === 'tr' ? 'Yazarla Mesajlaş' : 'Discuss with Author'}
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                    </button>
                     <button 
                       onClick={() => setActiveMenuId(activeMenuId === article.id ? null : article.id)}
                       className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -253,6 +292,22 @@ export default function Articles() {
                               ))}
                             </select>
                           </div>
+
+                          <div className="border-t border-slate-100 my-1" />
+                          <button onClick={() => handleCheckPlagiarism(article.id)} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-slate-400" /> {locale === 'tr' ? 'iThenticate Taraması' : 'iThenticate Check'}
+                          </button>
+                          
+                          <div className="border-t border-slate-100 my-1" />
+                          <button onClick={() => handleExport('DOAJ XML')} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <Download className="w-4 h-4 text-slate-400" /> DOAJ XML Export
+                          </button>
+                          <button onClick={() => handleExport('Crossref XML')} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <Download className="w-4 h-4 text-slate-400" /> Crossref XML Export
+                          </button>
+                          <button onClick={() => handleExport('DOI')} className="w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <LinkIcon className="w-4 h-4 text-slate-400" /> {locale === 'tr' ? 'DOI Oluştur' : 'Mint DOI'}
+                          </button>
 
                           <div className="border-t border-slate-100 my-1" />
                           <button onClick={() => handleUpdateStatus(article.id, 'REVISION_REQUIRED')} className="w-full px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2 font-medium">
@@ -294,6 +349,68 @@ export default function Articles() {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {discussionArticleId && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm"
+              onClick={() => setDiscussionArticleId(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col border-l border-slate-200"
+            >
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800">{locale === 'tr' ? 'Yazar ile Mesajlaşma' : 'Discussion with Author'}</h3>
+                    <p className="text-xs text-slate-500">ID: {discussionArticleId}</p>
+                  </div>
+                </div>
+                <button onClick={() => setDiscussionArticleId(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                <div className="flex flex-col gap-1 items-start">
+                  <span className="text-[10px] font-bold text-slate-400 px-1">Author</span>
+                  <div className="bg-white px-4 py-2 rounded-2xl rounded-tl-sm border border-slate-200 text-sm text-slate-700 shadow-sm">
+                    {locale === 'tr' ? 'Merhaba, revizyon dosyasını yükledim. Başka bir eksiğim var mı?' : 'Hello, I uploaded the revision file. Is there anything else missing?'}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 items-end">
+                  <span className="text-[10px] font-bold text-slate-400 px-1">You (Editor)</span>
+                  <div className="bg-indigo-600 px-4 py-2 rounded-2xl rounded-tr-sm text-sm text-white shadow-sm">
+                    {locale === 'tr' ? 'Teşekkürler, hakemlere tekrar yönlendireceğim.' : 'Thanks, I will forward it to the reviewers again.'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 bg-white flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder={locale === 'tr' ? 'Mesaj yazın...' : 'Type a message...'} 
+                  className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 transition-colors" 
+                />
+                <button className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-sm">
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

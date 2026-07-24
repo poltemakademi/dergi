@@ -21,6 +21,8 @@ export default function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed] = useState(true); // Default to slim
   const [isHovered, setIsHovered] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Fetch real dynamic counts for sidebar badges
   const { data: invitationsData, refetch: refetchInvitations } = useApiQuery<any[]>({
@@ -28,7 +30,7 @@ export default function DashboardLayout() {
     enabled: isAuthenticated && activeRole === 'reviewer',
   });
 
-  const { data: assignedData } = useApiQuery<any[]>({
+  const { data: assignedData, refetch: refetchAssigned } = useApiQuery<any[]>({
     url: '/api/reviewer/assigned',
     enabled: isAuthenticated && activeRole === 'reviewer',
   });
@@ -40,10 +42,17 @@ export default function DashboardLayout() {
 
   // Listen for invitation accept/decline → update sidebar badge instantly
   useEffect(() => {
-    const handleInvUpdate = () => refetchInvitations();
+    const handleInvUpdate = () => {
+      refetchInvitations();
+      refetchAssigned();
+    };
     window.addEventListener('invitations-updated', handleInvUpdate);
-    return () => window.removeEventListener('invitations-updated', handleInvUpdate);
-  }, [refetchInvitations]);
+    window.addEventListener('assigned-updated', handleInvUpdate);
+    return () => {
+      window.removeEventListener('invitations-updated', handleInvUpdate);
+      window.removeEventListener('assigned-updated', handleInvUpdate);
+    };
+  }, [refetchInvitations, refetchAssigned]);
 
   // Listen for message read/delete → update sidebar badge instantly
   useEffect(() => {
@@ -60,9 +69,21 @@ export default function DashboardLayout() {
   }, [invitationsData]);
 
   const assignedCount = useMemo(() => {
-    if (!assignedData) return 0;
-    const list = Array.isArray(assignedData) ? assignedData : (assignedData as any)?.data;
-    return Array.isArray(list) ? list.length : 0;
+    let apiList: any[] = [];
+    if (assignedData) {
+      apiList = Array.isArray(assignedData) ? assignedData : ((assignedData as any)?.data || []);
+    }
+
+    let localAccepted: any[] = [];
+    let hiddenIds: string[] = [];
+    try {
+      localAccepted = JSON.parse(localStorage.getItem('accepted_reviews') || '[]');
+      hiddenIds = JSON.parse(localStorage.getItem('completed_reviews_hidden') || '[]');
+    } catch {}
+
+    const combined = [...localAccepted, ...apiList];
+    const unique = Array.from(new Map(combined.map((item: any) => [item.id, item])).values());
+    return unique.filter((item: any) => !hiddenIds.includes(item.id)).length;
   }, [assignedData]);
 
   const unreadMessagesCount = useMemo(() => {
@@ -70,6 +91,45 @@ export default function DashboardLayout() {
     const list = Array.isArray(messagesData) ? messagesData : (messagesData as any)?.data;
     return Array.isArray(list) ? list.filter((m: any) => m.unread).length : 0;
   }, [messagesData]);
+
+  // Dynamic quick search filtering across pages and items
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    const results: Array<{ title: string; subtitle: string; path: string; icon: React.ReactNode }> = [];
+
+    // System pages
+    const pages = [
+      { title: locale === 'tr' ? 'Profil & Ayarlar' : 'Profile & Settings', subtitle: locale === 'tr' ? 'Kişisel bilgiler ve unvanlar' : 'Personal information', path: '/dashboard/profile', icon: <Users className="w-4 h-4 text-indigo-600" /> },
+      { title: locale === 'tr' ? 'Gönderilen Makaleler' : 'My Submissions', subtitle: locale === 'tr' ? 'Yazar makale takip listesi' : 'Manuscript tracking', path: '/dashboard/yazar/submissions', icon: <FileText className="w-4 h-4 text-emerald-600" /> },
+      { title: locale === 'tr' ? 'Yeni Makale Gönderimi' : 'New Submission', subtitle: locale === 'tr' ? '3 adımlı makale başvuru sihirbazı' : 'Submission wizard', path: '/dashboard/yazar/submit-wizard', icon: <PenTool className="w-4 h-4 text-amber-600" /> },
+      { title: locale === 'tr' ? 'Hakemlik Davetleri' : 'Review Invitations', subtitle: locale === 'tr' ? 'Bekleyen hakemlik davetleri' : 'Pending review requests', path: '/dashboard/reviewer/invitations', icon: <Mail className="w-4 h-4 text-indigo-600" /> },
+      { title: locale === 'tr' ? 'Atanan İncelemeler' : 'Assigned Reviews', subtitle: locale === 'tr' ? 'Aktif hakem değerlendirmeleri' : 'Active reviewer queue', path: '/dashboard/reviewer/assigned', icon: <CheckSquare className="w-4 h-4 text-blue-600" /> },
+      { title: locale === 'tr' ? 'Mesaj Kutusu' : 'Inbox Messages', subtitle: locale === 'tr' ? 'Sistem içi mesajlar ve bildirimler' : 'Internal communications', path: '/dashboard/messages', icon: <Inbox className="w-4 h-4 text-slate-600" /> },
+    ];
+
+    pages.forEach(p => {
+      if (p.title.toLowerCase().includes(q) || p.subtitle.toLowerCase().includes(q)) {
+        results.push(p);
+      }
+    });
+
+    // Reviewer invitations
+    if (invitationsData && Array.isArray(invitationsData)) {
+      invitationsData.forEach((inv: any) => {
+        if (inv.title?.toLowerCase().includes(q) || inv.journal?.toLowerCase().includes(q)) {
+          results.push({
+            title: inv.title || 'Hakemlik Daveti',
+            subtitle: `${inv.journal || 'Dergi'} • ${inv.dueDate || 'Davet'}`,
+            path: '/dashboard/reviewer/invitations',
+            icon: <Mail className="w-4 h-4 text-indigo-600" />
+          });
+        }
+      });
+    }
+
+    return results;
+  }, [searchQuery, locale, invitationsData]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -175,7 +235,9 @@ export default function DashboardLayout() {
                       activeRole === 'reviewer' ? (locale === 'tr' ? 'Hakem' : 'Reviewer') :
                       activeRole === 'author' ? (locale === 'tr' ? 'Yazar' : 'Author') :
                       activeRole === 'editor' ? (locale === 'tr' ? 'Editör' : 'Editor') :
+                      activeRole === 'section_editor' ? (locale === 'tr' ? 'Alan Editörü' : 'Section Editor') :
                       activeRole === 'layout_editor' ? (locale === 'tr' ? 'Mizanpaj' : 'Layout') :
+                      activeRole === 'copyeditor' ? (locale === 'tr' ? 'Dil Editörü' : 'Copyeditor') :
                       activeRole === 'super_admin' ? (locale === 'tr' ? 'Yönetici' : 'Admin') : activeRole
                     }` 
                   : t('nav.workspace')}
@@ -235,7 +297,7 @@ export default function DashboardLayout() {
 
           <AnimatePresence>
             {/* Editor Routes */}
-            {(activeTenant && activeRole === 'editor' && !location.pathname.includes('/role-selector')) && (
+            {(activeTenant && (activeRole === 'editor' || activeRole === 'section_editor') && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="editor-nav"
                 initial={{ opacity: 0, height: 0 }} 
@@ -258,18 +320,34 @@ export default function DashboardLayout() {
                   </div>
                   <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.manuscripts')}</span>
                 </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/issues"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/issues') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.issueStudio') : undefined}>
-                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                    <BookOpen className={`w-5 h-5 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  </div>
-                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.issueStudio')}</span>
-                </Link>
-                <Link to={!isProfileValid ? '#' : "/dashboard/editor/settings"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/settings') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.configuration') : undefined}>
-                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                    <Settings className={`w-5 h-5 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
-                  </div>
-                  <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.configuration')}</span>
-                </Link>
+                {activeRole === 'editor' && (
+                  <>
+                    <Link to={!isProfileValid ? '#' : "/dashboard/editor/issues"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/issues') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.issueStudio') : undefined}>
+                      <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                        <BookOpen className={`w-5 h-5 ${isActive('/dashboard/editor/issues') ? 'text-slate-900' : 'text-slate-400'}`} />
+                      </div>
+                      <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.issueStudio')}</span>
+                    </Link>
+                    <Link to={!isProfileValid ? '#' : "/dashboard/editor/settings"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/settings') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? t('nav.configuration') : undefined}>
+                      <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                        <Settings className={`w-5 h-5 ${isActive('/dashboard/editor/settings') ? 'text-slate-900' : 'text-slate-400'}`} />
+                      </div>
+                      <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{t('nav.configuration')}</span>
+                    </Link>
+                    <Link to={!isProfileValid ? '#' : "/dashboard/editor/forms"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/forms') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? (locale === 'tr' ? 'Formlar' : 'Forms') : undefined}>
+                      <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                        <CheckSquare className={`w-5 h-5 ${isActive('/dashboard/editor/forms') ? 'text-slate-900' : 'text-slate-400'}`} />
+                      </div>
+                      <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{locale === 'tr' ? 'Formlar' : 'Forms'}</span>
+                    </Link>
+                    <Link to={!isProfileValid ? '#' : "/dashboard/editor/emails"} onClick={!isProfileValid ? (e) => e.preventDefault() : closeSidebar} className={`flex items-center gap-3 rounded-xl transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden h-10 ${!isProfileValid ? 'opacity-40 pointer-events-none' : isActive('/dashboard/editor/emails') ? 'text-slate-900 font-semibold bg-slate-100/80 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'}`} title={!showExpanded ? (locale === 'tr' ? 'E-posta Şablonları' : 'Email Templates') : undefined}>
+                      <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                        <Mail className={`w-5 h-5 ${isActive('/dashboard/editor/emails') ? 'text-slate-900' : 'text-slate-400'}`} />
+                      </div>
+                      <span className={`transition-all duration-300 ease-in-out text-xs font-semibold truncate ${showExpanded ? 'opacity-100 max-w-[130px]' : 'opacity-0 max-w-0 pointer-events-none'}`}>{locale === 'tr' ? 'E-posta Şablonları' : 'Email Templates'}</span>
+                    </Link>
+                  </>
+                )}
               </motion.div>
             )}
 
@@ -351,7 +429,7 @@ export default function DashboardLayout() {
             )}
 
             {/* Layout Routes */}
-            {(activeTenant && activeRole === 'layout_editor' && !location.pathname.includes('/role-selector')) && (
+            {(activeTenant && (activeRole === 'layout_editor' || activeRole === 'copyeditor') && !location.pathname.includes('/role-selector')) && (
               <motion.div 
                 key="layout-nav"
                 initial={{ opacity: 0, height: 0 }} 
@@ -458,14 +536,72 @@ export default function DashboardLayout() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-6">
-            <div className="relative group hidden sm:block">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            {/* Interactive Quick Search */}
+            <div className="relative hidden sm:block">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 focus-within:text-slate-900 transition-colors pointer-events-none" />
               <input 
                 type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                 placeholder={t('header.search')} 
-                className="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all w-48 lg:w-64"
+                className="pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all w-48 lg:w-64"
                 disabled={!isProfileValid}
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Live Search Results Dropdown */}
+              <AnimatePresence>
+                {isSearchFocused && searchQuery.trim().length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                    className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-2 overflow-hidden"
+                  >
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
+                      <span>{locale === 'tr' ? 'Arama Sonuçları' : 'Search Results'}</span>
+                      <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{searchResults.length} {locale === 'tr' ? 'eşleşme' : 'matches'}</span>
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 py-1">
+                      {searchResults.length > 0 ? (
+                        searchResults.map((item, idx) => (
+                          <div 
+                            key={idx}
+                            onClick={() => {
+                              navigate(item.path);
+                              setSearchQuery('');
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-start gap-2.5"
+                          >
+                            <div className="p-1.5 bg-slate-100 text-slate-600 rounded-lg shrink-0 mt-0.5">
+                              {item.icon}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-slate-900 truncate">{item.title}</p>
+                              <p className="text-[11px] text-slate-500 truncate">{item.subtitle}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-xs text-slate-400 font-medium">
+                          {locale === 'tr' ? 'Sonuç bulunamadı...' : 'No matching results found...'}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             
             {/* Language Switcher */}
@@ -506,23 +642,12 @@ export default function DashboardLayout() {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={!isProfileValid ? 'profile-lock' : location.pathname}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="h-full"
-            >
-              {/* Force intercept if profile is incomplete */}
-              {!isProfileValid && !location.pathname.includes('/profile') ? (
-                <Profile />
-              ) : (
-                <Outlet />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {/* Force intercept if profile is incomplete */}
+          {!isProfileValid && !location.pathname.includes('/profile') ? (
+            <Profile />
+          ) : (
+            <Outlet />
+          )}
         </div>
       </main>
 

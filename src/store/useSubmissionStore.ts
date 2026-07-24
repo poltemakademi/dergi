@@ -35,9 +35,12 @@ interface SubmissionState {
 }
 
 const initialMetadata: Metadata = {
-  titleEn: '', titleTr: '',
-  abstractEn: '', abstractTr: '',
-  keywordsEn: '', keywordsTr: '',
+  titleEn: '',
+  titleTr: '',
+  abstractEn: '',
+  abstractTr: '',
+  keywordsEn: '',
+  keywordsTr: '',
 };
 
 export const useSubmissionStore = create<SubmissionState>((set) => ({
@@ -54,3 +57,5 @@ export const useSubmissionStore = create<SubmissionState>((set) => ({
   setFileUploaded: (status) => set({ fileUploaded: status }),
   reset: () => set({ currentStep: 1, metadata: initialMetadata, authors: [], fileUploaded: false }),
 }));
+
+

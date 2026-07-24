@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react';
-import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle, RefreshCcw, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { FileText, Clock, AlertCircle, ArrowRight, AlertTriangle, RefreshCcw, CheckCircle2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLocaleStore } from '../../../store/useLocaleStore';
 import { useApiQuery } from '../../../hooks/useApiQuery';
 import { TableSkeleton } from '../../../components/skeletons/TableSkeleton';
 import { parseTitle } from '../../../utils/parseTitle';
+import { toast } from 'sonner';
 
 export interface Submission {
   id: string;
@@ -16,9 +17,15 @@ export interface Submission {
 
 export default function Submissions() {
   const { t, locale } = useLocaleStore();
+  const [withdrawnIds, setWithdrawnIds] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    try {
+      const stored = JSON.parse(localStorage.getItem('withdrawn_submissions') || '[]');
+      setWithdrawnIds(stored);
+    } catch {}
   }, []);
 
   const { data: submissionsData, isLoading, error, refetch } = useApiQuery<any>({
@@ -51,8 +58,47 @@ export default function Submissions() {
 
     const combined = [...localSubmitted, ...apiList, ...defaultSubmissions];
     const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-    return unique;
-  }, [submissionsData]);
+
+    // CRITICAL: Filter out withdrawn submissions completely
+    return unique.filter((sub: any) => {
+      const isWithdrawnStatus = 
+        sub.status === 'WITHDRAWN' || 
+        sub.status === 'GERİ_ÇEKİLDİ' || 
+        sub.status === 'Geri Çekildi';
+      const isWithdrawnId = withdrawnIds.includes(sub.id);
+      return !isWithdrawnStatus && !isWithdrawnId;
+    });
+  }, [submissionsData, withdrawnIds]);
+
+  const handleWithdrawDirectly = (id: string, titleStr: string) => {
+    if (window.confirm(locale === 'tr' ? `"${parseTitle(titleStr).title}" başlıklı makaleyi geri çekmek ve listeden kaldırmak istediğinizden emin misiniz?` : 'Are you sure you want to withdraw and remove this manuscript?')) {
+      setDeletingId(id);
+      try {
+        const currentWithdrawn = JSON.parse(localStorage.getItem('withdrawn_submissions') || '[]');
+        const newWithdrawn = [...new Set([...currentWithdrawn, id])];
+        localStorage.setItem('withdrawn_submissions', JSON.stringify(newWithdrawn));
+        setWithdrawnIds(newWithdrawn);
+
+        // Also remove from author_submissions in localStorage
+        const localSubs = JSON.parse(localStorage.getItem('author_submissions') || '[]');
+        const updatedLocal = localSubs.filter((s: any) => s.id !== id);
+        localStorage.setItem('author_submissions', JSON.stringify(updatedLocal));
+
+        // Call backend withdraw API asynchronously
+        fetch(`/api/author/withdraw/${id}`, { method: 'POST' }).catch(() => {});
+
+        toast.success(
+          locale === 'tr'
+            ? 'Makale başarıyla geri çekildi ve listeden kaldırıldı.'
+            : 'Manuscript withdrawn and removed successfully.'
+        );
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
 
   const getStatusInfo = (statusStr: string) => {
     const status = (statusStr || '').toUpperCase();
@@ -107,8 +153,6 @@ export default function Submissions() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-
-
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-black text-slate-800">{t('sub.mySubmissions')}</h2>
@@ -120,7 +164,6 @@ export default function Submissions() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
-        {/* Right-aligned fade gradient for mobile horizontal scrolling indication */}
         <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden z-10" />
 
         <div className="overflow-x-auto custom-scrollbar">
@@ -165,7 +208,7 @@ export default function Submissions() {
                   <th className="p-4 font-bold">{locale === 'tr' ? 'Başlık' : 'Title'}</th>
                   <th className="p-4 font-bold">{locale === 'tr' ? 'Tarih' : 'Date'}</th>
                   <th className="p-4 font-bold">{locale === 'tr' ? 'Durum' : 'Status'}</th>
-                  <th className="p-4 font-bold text-right rounded-tr-2xl">{locale === 'tr' ? 'İşlem' : 'Action'}</th>
+                  <th className="p-4 font-bold text-right rounded-tr-2xl">{locale === 'tr' ? 'İşlemler' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -189,9 +232,24 @@ export default function Submissions() {
                         </div>
                       </td>
                       <td className="p-4 text-right">
-                        <Link to={`/dashboard/yazar/track/${sub.id}`} className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors group-hover:shadow-sm border border-transparent hover:border-indigo-100" title={t('sub.track')}>
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1">
+                          <Link 
+                            to={`/dashboard/yazar/track/${sub.id}`} 
+                            className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors group-hover:shadow-sm border border-transparent hover:border-indigo-100 cursor-pointer" 
+                            title={t('sub.track')}
+                          >
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                          </Link>
+
+                          <button
+                            onClick={() => handleWithdrawDirectly(sub.id, sub.title)}
+                            disabled={deletingId === sub.id}
+                            className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100 cursor-pointer"
+                            title={locale === 'tr' ? 'Makaleyi Geri Çek / Sil' : 'Withdraw / Remove Manuscript'}
+                          >
+                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-rose-600 transition-colors" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -204,3 +262,4 @@ export default function Submissions() {
     </div>
   );
 }
+

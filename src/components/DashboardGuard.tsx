@@ -15,13 +15,17 @@ const getDefaultPathForRole = (role: Role) => {
 };
 
 export default function DashboardGuard() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, activeRole } = useAuthStore();
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Always force entry to Role Selector Gateway upon logging in / entering dashboard
+  if (activeRole) {
+    const targetPath = getDefaultPathForRole(activeRole);
+    return <Navigate to={targetPath} replace />;
+  }
+
   return <Navigate to="/dashboard/role-selector" replace />;
 }

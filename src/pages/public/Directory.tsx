@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useApiQuery } from '../../hooks/useApiQuery';
 import {
   ArrowLeft,
   Search,
@@ -258,6 +259,7 @@ const normalizeText = (str: string | null | undefined): string => {
 export default function Directory() {
   const { t, lang } = useTranslation();
   const { journals, isLoading, fetchJournals } = useJournalStore();
+  const { data: dbData } = useApiQuery<any>({ url: '/api/public/directory' });
 
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get('q') || '';
@@ -296,9 +298,16 @@ export default function Directory() {
 
   /* ─── Data Aggregations ─────────────────────────────────────────────────── */
 
-  // 1. Compile all articles from all journals
+  // 1. Compile all articles from all journals + Database articles
   const allArticles = useMemo(() => {
-    const list: any[] = [];
+    let list: any[] = [];
+    
+    // Add real database articles
+    if (dbData?.data?.articles) {
+      list = [...dbData.data.articles];
+    }
+    
+    // Add static mock articles (for visual richness until fully populated)
     journals.forEach((j) => {
       if (j.articles && Array.isArray(j.articles)) {
         j.articles.forEach((a: any) => {
@@ -312,7 +321,7 @@ export default function Directory() {
       }
     });
     return list;
-  }, [journals]);
+  }, [journals, dbData]);
 
   // 2. Compile unique researchers from article authors
   const researchers = useMemo(() => {
@@ -458,7 +467,8 @@ export default function Directory() {
         if (!matchesText) return false;
       }
 
-      const journal = journals.find((j) => j.id === art.journalId);
+      const jId = art.journalId || art.journal_id;
+      const journal = journals.find((j) => j.id === jId);
       if (!journal) return true;
 
       const { submissionStatus, publisherType, periods, index } = getJournalAttributes(journal);

@@ -15,18 +15,12 @@ export default function RoleSelector() {
   const { data: responseData, isLoading, error, refetch } = useApiQuery<any>({ url: '/api/user/workspaces' });
   const rawWorkspaces = responseData?.data ? responseData.data : (Array.isArray(responseData) ? responseData : null);
 
-  const userRoles = useAuthStore.getState().roles || [];
-  const userEmail = useAuthStore.getState().user?.email || '';
+
 
   const workspaces = useMemo(() => {
     if (!rawWorkspaces || !Array.isArray(rawWorkspaces)) return [];
-    return rawWorkspaces.filter((ws: any) => {
-      if (ws.role === 'super_admin') {
-        return userRoles.includes('super_admin') || userEmail === 'super_admin@demo.com';
-      }
-      return true;
-    });
-  }, [rawWorkspaces, userRoles, userEmail]);
+    return rawWorkspaces;
+  }, [rawWorkspaces]);
 
   const handleSelect = (workspace: any) => {
     setActiveRole(workspace.role);
@@ -41,6 +35,8 @@ export default function RoleSelector() {
     let path = '/dashboard/activity'; // Fallback
     if (workspace.role === 'author') path = '/dashboard/yazar/submissions';
     else if (workspace.role === 'editor') path = '/dashboard/editor/overview';
+    else if (workspace.role === 'section_editor') path = '/dashboard/editor/overview'; // Share editor view for now
+    else if (workspace.role === 'copyeditor') path = '/dashboard/layout/queue'; // Share layout view for now
     else if (workspace.role === 'reviewer') path = '/dashboard/reviewer/assigned';
     else if (workspace.role === 'layout_editor') path = '/dashboard/layout/queue';
     else if (workspace.role === 'super_admin') path = '/dashboard/admin/system';
@@ -51,9 +47,11 @@ export default function RoleSelector() {
   const getRoleIcon = (role: string) => {
     switch(role) {
       case 'editor': return <LayoutDashboard className="w-5 h-5 text-indigo-600" />;
+      case 'section_editor': return <LayoutDashboard className="w-5 h-5 text-teal-600" />;
       case 'author': return <PenTool className="w-5 h-5 text-emerald-600" />;
       case 'reviewer': return <CheckSquare className="w-5 h-5 text-blue-600" />;
       case 'layout_editor': return <BookOpen className="w-5 h-5 text-amber-600" />;
+      case 'copyeditor': return <PenTool className="w-5 h-5 text-rose-600" />;
       case 'super_admin': return <ShieldCheck className="w-5 h-5 text-purple-600" />;
       default: return <Users className="w-5 h-5 text-slate-600" />;
     }
@@ -62,9 +60,11 @@ export default function RoleSelector() {
   const getRoleBadgeStyle = (role: string) => {
     switch(role) {
       case 'editor': return 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
+      case 'section_editor': return 'bg-teal-50 text-teal-700 border-teal-200/80';
       case 'author': return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
       case 'reviewer': return 'bg-blue-50 text-blue-700 border-blue-200/80';
       case 'layout_editor': return 'bg-amber-50 text-amber-700 border-amber-200/80';
+      case 'copyeditor': return 'bg-rose-50 text-rose-700 border-rose-200/80';
       case 'super_admin': return 'bg-purple-50 text-purple-700 border-purple-200/80';
       default: return 'bg-slate-50 text-slate-700 border-slate-200';
     }
@@ -73,9 +73,11 @@ export default function RoleSelector() {
   const getRoleTranslation = (role: string) => {
     switch(role) {
       case 'editor': return t('role.editor');
+      case 'section_editor': return locale === 'tr' ? 'Alan Editörü' : 'Section Editor';
       case 'author': return t('role.author');
       case 'reviewer': return t('role.reviewer');
       case 'layout_editor': return t('role.layout_editor');
+      case 'copyeditor': return locale === 'tr' ? 'Dil Editörü' : 'Copyeditor';
       case 'super_admin': return t('role.super_admin');
       default: return role;
     }
@@ -92,6 +94,10 @@ export default function RoleSelector() {
     if (ws.role === 'super_admin') return locale === 'tr' ? 'Sistem Yönetimi' : 'System Administration';
     if (ws.role === 'author' && ws.id === 'global-author') return locale === 'tr' ? 'Yazar Portalı' : 'Author Portal';
     if (ws.role === 'reviewer' && ws.id === 'global-reviewer') return locale === 'tr' ? 'Hakem Portalı' : 'Reviewer Portal';
+    if (ws.role === 'editor' && ws.id === 'global-editor') return locale === 'tr' ? 'Editör Portalı' : 'Editor Portal';
+    if (ws.role === 'section_editor' && ws.id === 'global-section') return locale === 'tr' ? 'Alan Editörü Portalı' : 'Section Editor Portal';
+    if (ws.role === 'layout_editor' && ws.id === 'global-layout') return locale === 'tr' ? 'Mizanpaj Portalı' : 'Layout Editor Portal';
+    if (ws.role === 'copyeditor' && ws.id === 'global-copy') return locale === 'tr' ? 'Dil Editörü Portalı' : 'Copyeditor Portal';
     return ws.tenantName;
   };
 

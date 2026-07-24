@@ -1,21 +1,32 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { supabase } from '../config/supabase';
-import { AuthRequest } from '../middlewares/authMiddleware';
+import type { AuthRequest } from '../middlewares/authMiddleware';
 
 export const createIssue = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { journal_id, volume, number, article_ids, title } = req.body;
 
-    if (!journal_id || !volume || !number || !article_ids || !Array.isArray(article_ids)) {
+    if (!volume || !number || !article_ids || !Array.isArray(article_ids)) {
       res.status(400).json({ error: 'Missing required fields or article_ids is not an array' });
       return;
+    }
+
+    let jId = journal_id;
+    if (!jId) {
+      const { data: journal } = await supabase.from('journals').select('id').limit(1).single();
+      jId = journal?.id;
+    }
+
+    if (!jId) {
+       res.status(400).json({ error: 'No journal found in DB' });
+       return;
     }
 
     // 1. Insert into issues table
     const { data: newIssue, error: issueError } = await supabase
       .from('issues')
       .insert({
-        journal_id,
+        journal_id: jId,
         issue_volume: volume,
         issue_number: number,
         issue_title_english: title,

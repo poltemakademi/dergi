@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSubmissionStore } from '../../../store/useSubmissionStore';
-import { Check, ChevronRight, Upload, Users, FileText, ArrowLeft, RefreshCcw } from 'lucide-react';
+import { Check, ChevronRight, Upload, Users, FileText, ArrowLeft, RefreshCcw, Sparkles, Plus, Trash2, ExternalLink, Star, Mail, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -12,6 +12,25 @@ interface SubmitResponse {
   submissionId?: string;
   message?: string;
 }
+
+// Formats ORCID as 0000-0000-0000-0000
+const formatOrcid = (val: string): string => {
+  if (!val) return '';
+  if (val.includes('orcid.org/')) {
+    val = val.split('orcid.org/')[1] || val;
+  }
+  let clean = val.replace(/[^0-9Xx]/g, '').toUpperCase().slice(0, 16);
+  const groups = [];
+  for (let i = 0; i < clean.length; i += 4) {
+    groups.push(clean.slice(i, i + 4));
+  }
+  return groups.join('-');
+};
+
+// Validates email address format
+const isValidEmail = (email: string): boolean => {
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+};
 
 export default function SubmitWizard() {
   const { currentStep, nextStep, prevStep, metadata, updateMetadata, fileUploaded, setFileUploaded, reset, authors, addAuthor, removeAuthor } = useSubmissionStore();
@@ -45,18 +64,28 @@ export default function SubmitWizard() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (!['doc', 'docx'].includes(ext || '')) {
+        toast.error(
+          locale === 'tr'
+            ? 'Lütfen yalnızca geçerli bir Word (.doc, .docx) dosyası yükleyin.'
+            : 'Please upload a valid Word (.doc, .docx) file only.'
+        );
+        return;
+      }
+      setSelectedFile(file);
       setFileUploaded(true);
     }
   };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-      if (!metadata.titleEn?.trim() || !metadata.titleTr?.trim() || !metadata.abstractEn?.trim() || !metadata.abstractTr?.trim()) {
+      if (!metadata.titleEn?.trim() && !metadata.titleTr?.trim()) {
         toast.error(
           locale === 'tr'
-            ? 'Lütfen tüm zorunlu Türkçe ve İngilizce alanları doldurunuz.'
-            : 'Please ensure all mandatory English and Turkish fields are filled.'
+            ? 'Lütfen en az bir dilde Makale Başlığı ve Özet giriniz veya "⚡ Örnek Makale Verisi Yükle" butonunu kullanınız.'
+            : 'Please fill in manuscript title & abstract or click "⚡ Auto-Fill Sample Article".'
         );
         return;
       }
@@ -74,6 +103,18 @@ export default function SubmitWizard() {
     }
 
     nextStep();
+  };
+
+  const fillSampleMetadata = () => {
+    updateMetadata({
+      titleEn: 'Automated Reviewer Matching in Academic Journal Management Systems via Deep Learning and Natural Language Processing',
+      titleTr: 'Derin Öğrenme ve Doğal Dil İşleme Tabanlı Akademik Dergi Yönetim Sistemlerinde Otomatik Hakem Eşleştirme',
+      abstractEn: 'In this study, an innovative deep learning and NLP framework is proposed for automated peer reviewer assignment based on manuscript abstracts and keyword embeddings in academic publishing platforms.',
+      abstractTr: 'Bu çalışmada, akademik dergi yönetim sistemlerinde başvurulan makalelerin özet ve anahtar kelimelerinden hareketle en uygun hakemlerin otomatik olarak belirlenmesi amacıyla yenilikçi bir derin öğrenme modeli geliştirilmiştir.',
+      keywordsEn: 'Deep Learning, Natural Language Processing, Peer Review Assignment, Journal Management',
+      keywordsTr: 'Derin Öğrenme, Doğal Dil İşleme, Hakem Atama, Hakemlik Süreçleri'
+    });
+    toast.success(locale === 'tr' ? 'Örnek makale meta verileri yüklendi.' : 'Sample manuscript metadata filled.');
   };
 
   const handleComplete = async () => {
@@ -109,6 +150,17 @@ export default function SubmitWizard() {
       toast.success(locale === 'tr' ? 'Makale başarıyla gönderildi!' : 'Manuscript submitted successfully!');
       navigate('/dashboard/yazar/submissions');
     }
+  };
+
+  const fillSampleAuthor = () => {
+    const samples = [
+      { name: 'Prof. Dr. Ahmet Yılmaz', email: 'a.yilmaz@itu.edu.tr', institution: 'İstanbul Teknik Üniversitesi', orcid: '0000-0002-8819-3401', isCorresponding: false },
+      { name: 'Doç. Dr. Elif Demir', email: 'e.demir@boun.edu.tr', institution: 'Boğaziçi Üniversitesi', orcid: '0000-0001-4450-9921', isCorresponding: true },
+      { name: 'Dr. Öğr. Üyesi Can Öztürk', email: 'c.ozturk@metu.edu.tr', institution: 'Orta Doğu Teknik Üniversitesi', orcid: '0000-0003-1120-7745', isCorresponding: false }
+    ];
+    const picked = samples[Math.floor(Math.random() * samples.length)];
+    setNewAuthor(picked);
+    toast.success(locale === 'tr' ? 'Örnek yazar bilgileri dolduruldu.' : 'Sample author details filled.');
   };
 
   const steps = [
@@ -184,27 +236,97 @@ export default function SubmitWizard() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3 }}
-                className="space-y-8"
+                className="space-y-6"
               >
+                <div className="border-b border-slate-100 pb-3">
+                  <h3 className="font-bold text-slate-900 text-lg">
+                    {locale === 'tr' ? 'Makale Meta Verileri' : 'Manuscript Metadata'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {locale === 'tr' ? 'Çift dilli indeksleme için başlık, özet ve anahtar kelimeleri giriniz.' : 'Provide title, abstract, and keywords for indexing.'}
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="space-y-5">
-                    <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
+                  {/* English Metadata */}
+                  <div className="space-y-4 bg-slate-50/60 p-5 rounded-2xl border border-slate-200/80">
+                    <h4 className="font-bold text-indigo-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
                       {locale === 'tr' ? 'İngilizce Meta Veriler' : 'English Metadata'}
-                    </h3>
-                    <div className="space-y-4">
-                      <input type="text" placeholder={locale === 'tr' ? 'Başlık (İngilizce)' : 'Title (English)'} value={metadata.titleEn} onChange={(e) => updateMetadata({ titleEn: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm" />
-                      <textarea rows={5} placeholder={locale === 'tr' ? 'Özet (İngilizce)' : 'Abstract (English)'} value={metadata.abstractEn} onChange={(e) => updateMetadata({ abstractEn: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm resize-none" />
-                      <input type="text" placeholder={locale === 'tr' ? 'Anahtar Kelimeler (İngilizce)' : 'Keywords (English)'} value={metadata.keywordsEn} onChange={(e) => updateMetadata({ keywordsEn: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm" />
+                    </h4>
+                    
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Makale Başlığı (İngilizce)' : 'Manuscript Title (English)'} <span className="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        placeholder="Title (English)" 
+                        value={metadata.titleEn} 
+                        onChange={(e) => updateMetadata({ titleEn: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium" 
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Özet (İngilizce)' : 'Abstract (English)'} <span className="text-rose-500">*</span></label>
+                      <textarea 
+                        rows={5} 
+                        placeholder="Abstract (English)" 
+                        value={metadata.abstractEn} 
+                        onChange={(e) => updateMetadata({ abstractEn: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm resize-none leading-relaxed" 
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Anahtar Kelimeler (İngilizce)' : 'Keywords (English)'}</label>
+                      <input 
+                        type="text" 
+                        placeholder="Keywords (e.g. Deep Learning, NLP)" 
+                        value={metadata.keywordsEn} 
+                        onChange={(e) => updateMetadata({ keywordsEn: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm" 
+                      />
                     </div>
                   </div>
-                  <div className="space-y-5">
-                    <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
+
+                  {/* Turkish Metadata */}
+                  <div className="space-y-4 bg-slate-50/60 p-5 rounded-2xl border border-slate-200/80">
+                    <h4 className="font-bold text-indigo-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                       {locale === 'tr' ? 'Türkçe Meta Veriler' : 'Turkish Metadata'}
-                    </h3>
-                    <div className="space-y-4">
-                      <input type="text" placeholder={locale === 'tr' ? 'Başlık (Türkçe)' : 'Title (Turkish)'} value={metadata.titleTr} onChange={(e) => updateMetadata({ titleTr: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm" />
-                      <textarea rows={5} placeholder={locale === 'tr' ? 'Özet (Türkçe)' : 'Abstract (Turkish)'} value={metadata.abstractTr} onChange={(e) => updateMetadata({ abstractTr: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm resize-none" />
-                      <input type="text" placeholder={locale === 'tr' ? 'Anahtar Kelimeler (Türkçe)' : 'Keywords (Turkish)'} value={metadata.keywordsTr} onChange={(e) => updateMetadata({ keywordsTr: e.target.value })} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all text-sm" />
+                    </h4>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Makale Başlığı (Türkçe)' : 'Manuscript Title (Turkish)'} <span className="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        placeholder="Başlık (Türkçe)" 
+                        value={metadata.titleTr} 
+                        onChange={(e) => updateMetadata({ titleTr: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium" 
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Özet (Türkçe)' : 'Abstract (Turkish)'} <span className="text-rose-500">*</span></label>
+                      <textarea 
+                        rows={5} 
+                        placeholder="Özet (Türkçe)" 
+                        value={metadata.abstractTr} 
+                        onChange={(e) => updateMetadata({ abstractTr: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm resize-none leading-relaxed" 
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600">{locale === 'tr' ? 'Anahtar Kelimeler (Türkçe)' : 'Keywords (Turkish)'}</label>
+                      <input 
+                        type="text" 
+                        placeholder="Anahtar Kelimeler (Örn: Yapay Zeka, Derin Öğrenme)" 
+                        value={metadata.keywordsTr} 
+                        onChange={(e) => updateMetadata({ keywordsTr: e.target.value })} 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm" 
+                      />
                     </div>
                   </div>
                 </div>
@@ -220,56 +342,193 @@ export default function SubmitWizard() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3 }}
-                className="flex flex-col py-6"
+                className="flex flex-col py-4"
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-xl mb-1">
+                    <h3 className="font-bold text-slate-900 text-xl mb-1 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-indigo-600" />
                       {locale === 'tr' ? 'Ortak Yazarlar' : 'Co-Authors'}
                     </h3>
                     <p className="text-slate-500 text-sm">
-                      {locale === 'tr' ? 'Makaleye katkıda bulunan tüm araştırmacıları ekleyin.' : 'Add any contributing researchers to ensure they receive proper attribution and ORCID credit.'}
+                      {locale === 'tr' ? 'Makaleye katkıda bulunan tüm araştırmacıları ekleyin.' : 'Add all contributing authors with affiliations and ORCID.'}
                     </p>
                   </div>
                   {!isAddingAuthor && (
-                    <button onClick={() => setIsAddingAuthor(true)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md font-bold hover:bg-indigo-100 transition-all inline-flex items-center gap-2 text-sm shadow-sm cursor-pointer">
-                      <Users className="w-4 h-4" /> {locale === 'tr' ? 'Yazar Ekle' : 'Add Author'}
+                    <button 
+                      onClick={() => setIsAddingAuthor(true)} 
+                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all inline-flex items-center gap-2 text-sm shadow-md cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-4 h-4" /> {locale === 'tr' ? 'Yeni Yazar Ekle' : 'Add Co-Author'}
                     </button>
                   )}
                 </div>
 
+                {/* Add Author Form Card */}
                 {isAddingAuthor && (
-                  <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6 space-y-4">
-                    <h4 className="font-bold text-slate-800 text-sm">{locale === 'tr' ? 'Yeni Yazar Bilgileri' : 'New Author Details'}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input type="text" placeholder={locale === 'tr' ? 'Ad Soyad' : 'Full Name'} value={newAuthor.name} onChange={(e) => setNewAuthor(prev => ({ ...prev, name: e.target.value }))} className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm" />
-                      <input type="email" placeholder={locale === 'tr' ? 'E-posta Adresi' : 'Email Address'} value={newAuthor.email} onChange={(e) => setNewAuthor(prev => ({ ...prev, email: e.target.value }))} className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm" />
-                      <input type="text" placeholder={locale === 'tr' ? 'Kurum / Üniversite' : 'Institution'} value={newAuthor.institution} onChange={(e) => setNewAuthor(prev => ({ ...prev, institution: e.target.value }))} className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm" />
-                      <input type="text" placeholder="ORCID iD (0000-0000-0000-0000)" value={newAuthor.orcid} onChange={(e) => setNewAuthor(prev => ({ ...prev, orcid: e.target.value }))} className="px-4 py-2 bg-white border border-slate-200 rounded-md text-sm" />
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-indigo-100 shadow-sm mb-6 space-y-4 animate-in fade-in">
+                    <div className="border-b border-slate-200/80 pb-3">
+                      <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <Users className="w-4 h-4 text-indigo-600" />
+                        {locale === 'tr' ? 'Yeni Yazar Bilgileri' : 'New Author Details'}
+                      </h4>
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                      <button onClick={() => setIsAddingAuthor(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 rounded-md cursor-pointer">{locale === 'tr' ? 'İptal' : 'Cancel'}</button>
-                      <button onClick={() => {
-                        if (!newAuthor.name || !newAuthor.email) {
-                          toast.error(locale === 'tr' ? 'Lütfen ad ve e-posta doldurun.' : 'Please enter name and email.');
-                          return;
-                        }
-                        addAuthor({ id: `author-${Date.now()}`, ...newAuthor });
-                        setNewAuthor({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
-                        setIsAddingAuthor(false);
-                      }} className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-bold shadow-sm cursor-pointer">{locale === 'tr' ? 'Yazarı Kaydet' : 'Save Author'}</button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{locale === 'tr' ? 'Ad Soyad' : 'Full Name'} <span className="text-rose-500">*</span></label>
+                        <input 
+                          type="text" 
+                          placeholder={locale === 'tr' ? 'Örn: Prof. Dr. Mehmet Kaya' : 'e.g. Prof. Dr. Mehmet Kaya'} 
+                          value={newAuthor.name} 
+                          onChange={(e) => setNewAuthor(prev => ({ ...prev, name: e.target.value }))} 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" 
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{locale === 'tr' ? 'E-posta Adresi' : 'Email Address'} <span className="text-rose-500">*</span></label>
+                        <input 
+                          type="email" 
+                          placeholder="m.kaya@itu.edu.tr" 
+                          value={newAuthor.email} 
+                          onChange={(e) => setNewAuthor(prev => ({ ...prev, email: e.target.value }))} 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" 
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{locale === 'tr' ? 'Kurum / Üniversite' : 'Institution'} <span className="text-rose-500">*</span></label>
+                        <input 
+                          type="text" 
+                          placeholder={locale === 'tr' ? 'Örn: İstanbul Teknik Üniversitesi' : 'e.g. Stanford University'} 
+                          value={newAuthor.institution} 
+                          onChange={(e) => setNewAuthor(prev => ({ ...prev, institution: e.target.value }))} 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500" 
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">ORCID iD <span className="text-rose-500">*</span></label>
+                        <input 
+                          type="text" 
+                          placeholder="0000-0001-5234-9812" 
+                          value={newAuthor.orcid} 
+                          onChange={(e) => setNewAuthor(prev => ({ ...prev, orcid: formatOrcid(e.target.value) }))} 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono tracking-wider focus:ring-2 focus:ring-indigo-500" 
+                          maxLength={19}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="isCorresponding"
+                        checked={newAuthor.isCorresponding}
+                        onChange={(e) => setNewAuthor(prev => ({ ...prev, isCorresponding: e.target.checked }))}
+                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <label htmlFor="isCorresponding" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                        {locale === 'tr' ? '★ Sorumlu Yazar (Corresponding Author)' : '★ Corresponding Author'}
+                      </label>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/80">
+                      <button 
+                        onClick={() => setIsAddingAuthor(false)} 
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer"
+                      >
+                        {locale === 'tr' ? 'İptal' : 'Cancel'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (!newAuthor.name.trim() || !newAuthor.email.trim() || !newAuthor.institution.trim() || !newAuthor.orcid.trim()) {
+                            toast.error(
+                              locale === 'tr' 
+                                ? 'Lütfen tüm yazar bilgilerini (Ad Soyad, E-posta, Kurum ve ORCID iD) doldurunuz.' 
+                                : 'Please fill in all author details (Full Name, Email, Institution, and ORCID iD).'
+                            );
+                            return;
+                          }
+
+                          if (!isValidEmail(newAuthor.email)) {
+                            toast.error(
+                              locale === 'tr' 
+                                ? 'Lütfen geçerli bir e-posta adresi giriniz (Örn: m.kaya@itu.edu.tr).' 
+                                : 'Please enter a valid email address (e.g. m.kaya@itu.edu.tr).'
+                            );
+                            return;
+                          }
+
+                          if (!/^\d{4}-\d{4}-\d{4}-[\dX]{4}$/i.test(newAuthor.orcid.trim())) {
+                            toast.error(
+                              locale === 'tr' 
+                                ? 'Lütfen geçerli bir 16 haneli ORCID iD giriniz (Örn: 0000-0002-1825-0097).' 
+                                : 'Please enter a valid 16-digit ORCID iD (e.g. 0000-0002-1825-0097).'
+                            );
+                            return;
+                          }
+                          addAuthor({ id: `author-${Date.now()}`, ...newAuthor });
+                          setNewAuthor({ name: '', email: '', institution: '', orcid: '', isCorresponding: false });
+                          setIsAddingAuthor(false);
+                          toast.success(locale === 'tr' ? 'Yazar eklendi!' : 'Author added!');
+                        }} 
+                        className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer"
+                      >
+                        {locale === 'tr' ? 'Yazarı Kaydet' : 'Save Author'}
+                      </button>
                     </div>
                   </div>
                 )}
 
+                {/* Author Cards List */}
                 <div className="space-y-3">
                   {authors && authors.map((author: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{author.name}</h4>
-                        <p className="text-xs text-slate-500">{author.institution} • {author.email}</p>
+                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50/80 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 transition-all gap-3 shadow-2xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-slate-900 text-sm">{author.name}</h4>
+                          {author.isCorresponding && (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-full flex items-center gap-1 border border-amber-200">
+                              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                              {locale === 'tr' ? 'Sorumlu Yazar' : 'Corresponding Author'}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                            {author.email}
+                          </span>
+                          {author.institution && (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                              {author.institution}
+                            </span>
+                          )}
+                          {author.orcid && (
+                            <a 
+                              href={`https://orcid.org/${author.orcid}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-emerald-600 hover:text-emerald-700 font-mono flex items-center gap-1 font-semibold"
+                            >
+                              <span>{author.orcid}</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
                       </div>
-                      <button onClick={() => removeAuthor(author.id || String(idx))} className="text-xs text-rose-600 font-bold hover:underline cursor-pointer">{locale === 'tr' ? 'Kaldır' : 'Remove'}</button>
+
+                      <button 
+                        onClick={() => removeAuthor(author.id || String(idx))} 
+                        className="px-3 py-1.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl font-bold transition-colors flex items-center gap-1 self-end sm:self-auto cursor-pointer border border-transparent hover:border-rose-200 shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {locale === 'tr' ? 'Kaldır' : 'Remove'}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -289,14 +548,14 @@ export default function SubmitWizard() {
               >
                 <div>
                   <h3 className="font-bold text-slate-900 text-xl mb-1">
-                    {locale === 'tr' ? 'Körleştirilmiş Makale Dosyasını Yükleyin (PDF)' : 'Upload Blinded Manuscript (PDF)'}
+                    {locale === 'tr' ? 'Körleştirilmiş Makale Dosyasını Yükleyin (Word)' : 'Upload Blinded Manuscript (Word)'}
                   </h3>
                   <p className="text-slate-500 text-sm">
-                    {locale === 'tr' ? 'Çift kör hakemlik için tüm yazar kimliklerinin ve kurum bilgilerinin silindiğinden emin olun.' : 'Ensure all author identities, affiliations, and acknowledgments are removed for double-blind peer review.'}
+                    {locale === 'tr' ? 'Çift kör hakemlik için tüm yazar kimliklerinin ve kurum bilgilerinin silindiğinden emin olun (.doc veya .docx).' : 'Ensure all author identities, affiliations, and acknowledgments are removed for double-blind peer review (.doc or .docx).'}
                   </p>
                 </div>
 
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf" />
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".doc,.docx" />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -305,16 +564,16 @@ export default function SubmitWizard() {
                   {fileUploaded ? (
                     <div className="flex flex-col items-center">
                       <Check className="w-10 h-10 text-emerald-500 mb-2" />
-                      <span className="font-bold text-emerald-800 text-base">{selectedFile?.name || 'blinded_manuscript.pdf'}</span>
-                      <span className="text-emerald-600 text-xs mt-1 font-medium">{locale === 'tr' ? 'Dosya Başarıyla Doğrulandı ve Yüklendi' : 'Successfully Verified & Uploaded'}</span>
+                      <span className="font-bold text-emerald-800 text-base">{selectedFile?.name || 'blinded_manuscript.docx'}</span>
+                      <span className="text-emerald-600 text-xs mt-1 font-medium">{locale === 'tr' ? 'Word Dosyası Başarıyla Doğrulandı ve Yüklendi' : 'Word File Successfully Verified & Uploaded'}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-200 text-slate-400">
                         <Upload className="w-5 h-5" />
                       </div>
-                      <span className="font-bold text-slate-700 text-base">{locale === 'tr' ? 'Körleştirilmiş PDF Dosyasını Buraya Bırakın' : 'Drop Blinded PDF Here'}</span>
-                      <span className="text-slate-400 text-xs mt-1 font-medium">{locale === 'tr' ? 'veya dosya seçmek için tıklayın' : 'or click to browse files'}</span>
+                      <span className="font-bold text-slate-700 text-base">{locale === 'tr' ? 'Körleştirilmiş Word Dosyasını Buraya Bırakın' : 'Drop Blinded Word File Here'}</span>
+                      <span className="text-slate-400 text-xs mt-1 font-medium">{locale === 'tr' ? 'veya dosya seçmek için tıklayın (.doc, .docx)' : 'or click to browse (.doc, .docx)'}</span>
                     </div>
                   )}
                 </button>

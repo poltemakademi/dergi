@@ -149,7 +149,7 @@ export default function Evaluate() {
           if (parsed.confidentialNotes) setConfidentialNotes(parsed.confidentialNotes);
           if (parsed.recommendation) setRecommendation(parsed.recommendation);
           if (parsed.coiChecked !== undefined) setCoiChecked(parsed.coiChecked);
-        } catch {}
+        } catch { }
       }
     }
   }, [id]);
@@ -194,7 +194,7 @@ export default function Evaluate() {
       toast.error(locale === 'tr' ? 'Lütfen nihai değerlendirme kararınızı seçin.' : 'Please select a final recommendation.');
       return;
     }
-    
+
     if (!coiChecked) {
       toast.error(locale === 'tr' ? 'Lütfen Çıkar Çatışması beyanını onaylayın.' : 'Please declare no conflict of interest.');
       return;
@@ -210,7 +210,7 @@ export default function Evaluate() {
           const accepted = JSON.parse(localStorage.getItem('accepted_reviews') || '[]');
           const updatedAccepted = accepted.filter((item: any) => item.id !== id);
           localStorage.setItem('accepted_reviews', JSON.stringify(updatedAccepted));
-        } catch {}
+        } catch { }
 
         // 3. Mark as hidden in queue
         try {
@@ -218,7 +218,10 @@ export default function Evaluate() {
           if (!hiddenQueue.includes(id)) {
             localStorage.setItem('completed_reviews_hidden', JSON.stringify([...hiddenQueue, id]));
           }
-        } catch {}
+        } catch { }
+
+        // Notify sidebar badge & queue to update instantly
+        window.dispatchEvent(new CustomEvent('assigned-updated'));
 
         // 4. Append to completed reviews history
         try {
@@ -231,12 +234,12 @@ export default function Evaluate() {
             recommendation: recommendation
           };
           localStorage.setItem('completed_reviews', JSON.stringify([newCompleted, ...existingHistory]));
-        } catch {}
+        } catch { }
       }
 
       toast.success(
-        locale === 'tr' 
-          ? 'Değerlendirme başarıyla tamamlandı ve geçmişe eklendi!' 
+        locale === 'tr'
+          ? 'Değerlendirme başarıyla tamamlandı ve geçmişe eklendi!'
           : 'Review submitted successfully! Moved to Review History.'
       );
       navigate('/dashboard/reviewer/history');
@@ -279,11 +282,10 @@ export default function Evaluate() {
             key={score}
             type="button"
             onClick={() => { setScores({ ...scores, [key]: score }); setIsDirty(true); }}
-            className={`w-10 h-10 rounded-xl border font-bold transition-all flex items-center justify-center cursor-pointer active:scale-95 text-sm ${
-              scores[key] === score
-                ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-600/20 scale-105'
-                : 'border-slate-200 text-slate-600 bg-white hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600'
-            }`}
+            className={`w-10 h-10 rounded-xl border font-bold transition-all flex items-center justify-center cursor-pointer active:scale-95 text-sm ${scores[key] === score
+              ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-600/20 scale-105'
+              : 'border-slate-200 text-slate-600 bg-white hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600'
+              }`}
           >
             {score}
           </button>
@@ -332,154 +334,154 @@ export default function Evaluate() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 lg:h-[85vh]">
-      {/* Left: Secure PDF Viewer Panel */}
-      <div className="h-[500px] lg:h-auto lg:flex-1 bg-slate-200 rounded-2xl shadow-inner border border-slate-300 overflow-hidden flex flex-col relative">
-        <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 z-10">
-          <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          {locale === 'tr' ? 'Çift Kör Koruma' : 'Double-Blind'}
+        {/* Left: Secure PDF Viewer Panel */}
+        <div className="h-[500px] lg:h-auto lg:flex-1 bg-slate-200 rounded-2xl shadow-inner border border-slate-300 overflow-hidden flex flex-col relative">
+          <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 z-10">
+            <Shield className="w-3.5 h-3.5 text-emerald-400" />
+            {locale === 'tr' ? 'Çift Kör Koruma' : 'Double-Blind'}
+          </div>
+
+          {pdfLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-slate-800 text-slate-400 gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+              <p className="text-sm">{locale === 'tr' ? 'Güvenli PDF akışı yükleniyor...' : 'Loading secure PDF stream...'}</p>
+            </div>
+          ) : pdfError ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-slate-800 text-rose-400 p-6 gap-2 text-center">
+              <AlertTriangle className="w-8 h-8" />
+              <p className="font-semibold">Secure PDF Load Failed</p>
+              <p className="text-xs text-slate-400 max-w-xs">{pdfError}</p>
+            </div>
+          ) : pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              className="w-full h-full border-none bg-slate-800"
+              title="Secure PDF Viewer"
+              aria-label="Secure PDF Document Viewer"
+            />
+          ) : null}
         </div>
 
-        {pdfLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center bg-slate-800 text-slate-400 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-            <p className="text-sm">{locale === 'tr' ? 'Güvenli PDF akışı yükleniyor...' : 'Loading secure PDF stream...'}</p>
-          </div>
-        ) : pdfError ? (
-          <div className="flex-1 flex flex-col items-center justify-center bg-slate-800 text-rose-400 p-6 gap-2 text-center">
-            <AlertTriangle className="w-8 h-8" />
-            <p className="font-semibold">Secure PDF Load Failed</p>
-            <p className="text-xs text-slate-400 max-w-xs">{pdfError}</p>
-          </div>
-        ) : pdfUrl ? (
-          <iframe
-            src={pdfUrl}
-            className="w-full h-full border-none bg-slate-800"
-            title="Secure PDF Viewer"
-            aria-label="Secure PDF Document Viewer"
-          />
-        ) : null}
-      </div>
-
-      {/* Right: Scoring Form */}
-      <div className="w-full lg:w-[450px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden flex-shrink-0">
-        <div className="p-6 border-b border-slate-100 bg-rose-50/30">
-          <h2 className="text-lg font-black text-slate-800">
-            {locale === 'tr' ? 'Hakem Değerlendirme Formu' : 'Reviewer Evaluation Form'}
-          </h2>
-          {article && <p className="text-sm font-bold text-slate-700 mt-2 truncate" title={parseTitle(article.title).title}>{parseTitle(article.title).title}</p>}
-          <p className="text-xs text-slate-500 mt-1">
-            {locale === 'tr' ? 'Lütfen yapıcı ve detaylı geri bildirim sağlayın.' : 'Please provide constructive feedback.'}
-          </p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-          
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-6">
-            {renderScoreSection('originality', locale === 'tr' ? '1. Özgünlük ve Yenilik' : '1. Originality & Novelty')}
-            {renderScoreSection('rigor', locale === 'tr' ? '2. Metodoloji ve Titizlik' : '2. Methodology & Rigor')}
-            {renderScoreSection('literature', locale === 'tr' ? '3. Literatür Taraması' : '3. Literature Review')}
-            {renderScoreSection('clarity', locale === 'tr' ? '4. Açıklık ve Sunum' : '4. Clarity & Presentation')}
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-800">
-              {locale === 'tr' ? 'Yazara Notlar (Yazar Görebilir)' : 'Notes for Author (Visible to Author)'}
-            </h3>
-            <textarea
-              rows={5}
-              value={notesForAuthor}
-              onChange={(e) => { setNotesForAuthor(e.target.value); setIsDirty(true); }}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:bg-white transition-colors text-sm resize-none"
-              placeholder={locale === 'tr' ? 'Yapısal gereksinimleri, metodoloji eleştirilerini buraya yazın...' : 'Provide structural requirements, methodology critiques...'}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-800">
-              {locale === 'tr' ? 'Editöre Özel Gizli Notlar' : 'Confidential Comments for Editor'}
-            </h3>
-            <textarea
-              rows={3}
-              value={confidentialNotes}
-              onChange={(e) => { setConfidentialNotes(e.target.value); setIsDirty(true); }}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:bg-white transition-colors text-sm resize-none"
-              placeholder={locale === 'tr' ? 'Bu notlar yazardan gizlenir, sadece editör görür.' : 'These notes are hidden from the author.'}
-            />
-          </div>
-
-          {/* Optional Annotated File Upload */}
-          <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Paperclip className="w-4 h-4 text-slate-500" /> {locale === 'tr' ? 'Açıklamalı Dosya (İsteğe Bağlı)' : 'Annotated File (Optional)'}
-            </h3>
-            <p className="text-xs text-slate-500 mb-2">
-              {locale === 'tr' ? 'Notlar aldığınız düzenlenmiş PDF dosyasını yükleyin.' : 'Upload a marked-up PDF with specific inline comments.'}
+        {/* Right: Scoring Form */}
+        <div className="w-full lg:w-[450px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden flex-shrink-0">
+          <div className="p-6 border-b border-slate-100 bg-rose-50/30">
+            <h2 className="text-lg font-black text-slate-800">
+              {locale === 'tr' ? 'Hakem Değerlendirme Formu' : 'Reviewer Evaluation Form'}
+            </h2>
+            {article && <p className="text-sm font-bold text-slate-700 mt-2 truncate" title={parseTitle(article.title).title}>{parseTitle(article.title).title}</p>}
+            <p className="text-xs text-slate-500 mt-1">
+              {locale === 'tr' ? 'Lütfen yapıcı ve detaylı geri bildirim sağlayın.' : 'Please provide constructive feedback.'}
             </p>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
-            <button 
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-6">
+              {renderScoreSection('originality', locale === 'tr' ? '1. Özgünlük ve Yenilik' : '1. Originality & Novelty')}
+              {renderScoreSection('rigor', locale === 'tr' ? '2. Metodoloji ve Titizlik' : '2. Methodology & Rigor')}
+              {renderScoreSection('literature', locale === 'tr' ? '3. Literatür Taraması' : '3. Literature Review')}
+              {renderScoreSection('clarity', locale === 'tr' ? '4. Açıklık ve Sunum' : '4. Clarity & Presentation')}
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-800">
+                {locale === 'tr' ? 'Yazara Notlar (Yazar Görebilir)' : 'Notes for Author (Visible to Author)'}
+              </h3>
+              <textarea
+                rows={5}
+                value={notesForAuthor}
+                onChange={(e) => { setNotesForAuthor(e.target.value); setIsDirty(true); }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:bg-white transition-colors text-sm resize-none"
+                placeholder={locale === 'tr' ? 'Yapısal gereksinimleri, metodoloji eleştirilerini buraya yazın...' : 'Provide structural requirements, methodology critiques...'}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-800">
+                {locale === 'tr' ? 'Editöre Özel Gizli Notlar' : 'Confidential Comments for Editor'}
+              </h3>
+              <textarea
+                rows={3}
+                value={confidentialNotes}
+                onChange={(e) => { setConfidentialNotes(e.target.value); setIsDirty(true); }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:bg-white transition-colors text-sm resize-none"
+                placeholder={locale === 'tr' ? 'Bu notlar yazardan gizlenir, sadece editör görür.' : 'These notes are hidden from the author.'}
+              />
+            </div>
+
+            {/* Optional Annotated File Upload */}
+            <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Paperclip className="w-4 h-4 text-slate-500" /> {locale === 'tr' ? 'Açıklamalı Dosya (İsteğe Bağlı)' : 'Annotated File (Optional)'}
+              </h3>
+              <p className="text-xs text-slate-500 mb-2">
+                {locale === 'tr' ? 'Notlar aldığınız düzenlenmiş PDF dosyasını yükleyin.' : 'Upload a marked-up PDF with specific inline comments.'}
+              </p>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2.5 bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 hover:bg-indigo-50/50 rounded-xl text-sm font-bold transition-all w-full flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                {annotatedFile ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <UploadCloud className="w-4 h-4 text-indigo-500" />}
+                {annotatedFile ? annotatedFile.name : (locale === 'tr' ? 'Dosya Seç...' : 'Choose File...')}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-800">
+                {locale === 'tr' ? 'Nihai Değerlendirme Kararı' : 'Final Recommendation'}
+              </h3>
+              <select
+                value={recommendation}
+                onChange={(e) => { setRecommendation(e.target.value); setIsDirty(true); }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-rose-500 text-sm cursor-pointer"
+              >
+                <option value="">{locale === 'tr' ? 'Karar seçiniz...' : 'Select recommendation...'}</option>
+                <option value="accept">{locale === 'tr' ? 'Kabul Et (Accept)' : 'Accept Submission'}</option>
+                <option value="revision">{locale === 'tr' ? 'Düzeltme İste (Revision)' : 'Revision Required'}</option>
+                <option value="reject">{locale === 'tr' ? 'Reddet (Reject)' : 'Reject'}</option>
+              </select>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex items-start pt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={coiChecked}
+                    onChange={(e) => { setCoiChecked(e.target.checked); setIsDirty(true); }}
+                    className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer"
+                  />
+                </div>
+                <span className="text-xs text-slate-600 font-medium leading-relaxed group-hover:text-slate-800 transition-colors">
+                  {locale === 'tr'
+                    ? 'Bu makalenin değerlendirilmesiyle ilgili hiçbir çıkar çatışmam olmadığını ve çift kör hakemlik sürecinin gizliliğini koruyacağımı beyan ederim.'
+                    : 'I declare that I have no conflicts of interest regarding the evaluation of this manuscript, and I commit to maintaining the confidentiality of this double-blind peer review process.'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="p-6 border-t border-slate-100 bg-slate-50 flex gap-4">
+            <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 hover:bg-indigo-50/50 rounded-xl text-sm font-bold transition-all w-full flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft || isSubmitting}
+              className="px-6 py-3 border border-slate-200 font-bold text-slate-700 bg-white hover:bg-slate-100 transition-all flex-1 flex items-center justify-center gap-2 text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm rounded-xl"
             >
-              {annotatedFile ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <UploadCloud className="w-4 h-4 text-indigo-500" />}
-              {annotatedFile ? annotatedFile.name : (locale === 'tr' ? 'Dosya Seç...' : 'Choose File...')}
+              {isSavingDraft && <RefreshCcw className="w-4 h-4 animate-spin" />} {isSavingDraft ? (locale === 'tr' ? 'Kaydediliyor...' : 'Saving...') : (locale === 'tr' ? 'Taslak Kaydet' : 'Save Draft')}
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting || isSavingDraft}
+              className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex-1 flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+            >
+              {isSubmitting ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {isSubmitting ? (locale === 'tr' ? 'Gönderiliyor...' : 'Submitting...') : (locale === 'tr' ? 'Değerlendirmeyi Gönder' : 'Submit Review')}
             </button>
           </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-800">
-              {locale === 'tr' ? 'Nihai Değerlendirme Kararı' : 'Final Recommendation'}
-            </h3>
-            <select
-              value={recommendation}
-              onChange={(e) => { setRecommendation(e.target.value); setIsDirty(true); }}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-rose-500 text-sm cursor-pointer"
-            >
-              <option value="">{locale === 'tr' ? 'Karar seçiniz...' : 'Select recommendation...'}</option>
-              <option value="accept">{locale === 'tr' ? 'Kabul Et (Accept)' : 'Accept Submission'}</option>
-              <option value="revision">{locale === 'tr' ? 'Düzeltme İste (Revision)' : 'Revision Required'}</option>
-              <option value="reject">{locale === 'tr' ? 'Reddet (Reject)' : 'Reject'}</option>
-            </select>
-          </div>
-          
-          <div className="pt-4 border-t border-slate-100">
-             <label className="flex items-start gap-3 cursor-pointer group">
-               <div className="relative flex items-start pt-0.5">
-                 <input 
-                   type="checkbox" 
-                   checked={coiChecked}
-                   onChange={(e) => { setCoiChecked(e.target.checked); setIsDirty(true); }}
-                   className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer"
-                 />
-               </div>
-               <span className="text-xs text-slate-600 font-medium leading-relaxed group-hover:text-slate-800 transition-colors">
-                 {locale === 'tr'
-                   ? 'Bu makalenin değerlendirilmesiyle ilgili hiçbir çıkar çatışmam olmadığını ve çift kör hakemlik sürecinin gizliliğini koruyacağımı beyan ederim.'
-                   : 'I declare that I have no conflicts of interest regarding the evaluation of this manuscript, and I commit to maintaining the confidentiality of this double-blind peer review process.'}
-               </span>
-             </label>
-          </div>
         </div>
-
-        <div className="p-6 border-t border-slate-100 bg-slate-50 flex gap-4">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={isSavingDraft || isSubmitting}
-            className="px-6 py-3 border border-slate-200 font-bold text-slate-700 bg-white hover:bg-slate-100 transition-all flex-1 flex items-center justify-center gap-2 text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm rounded-xl"
-          >
-            {isSavingDraft && <RefreshCcw className="w-4 h-4 animate-spin" />} {isSavingDraft ? (locale === 'tr' ? 'Kaydediliyor...' : 'Saving...') : (locale === 'tr' ? 'Taslak Kaydet' : 'Save Draft')}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting || isSavingDraft}
-            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex-1 flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-          >
-            {isSubmitting ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {isSubmitting ? (locale === 'tr' ? 'Gönderiliyor...' : 'Submitting...') : (locale === 'tr' ? 'Değerlendirmeyi Gönder' : 'Submit Review')}
-          </button>
-        </div>
-      </div>
       </div>
     </div>
   );

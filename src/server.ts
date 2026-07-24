@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import adminRoutes from './routes/adminRoutes';
 import messageRoutes from './routes/messageRoutes';
+import publicRoutes from './routes/publicRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -48,7 +49,25 @@ app.use('/api/user', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/public', publicRoutes);
 // Note: Issue routes (like /api/editor/issues/create) are already mounted inside editorRoutes.
+
+// Mock Journal Settings (Phase 6 placeholder)
+app.get('/api/journal/settings', (_req: Request, res: Response) => {
+  res.status(200).json({
+    journalName: 'Novai Journal of Academic Research',
+    abbreviation: 'NJAR',
+    issn: '1234-5678',
+    eIssn: '8765-4321',
+    aimsScope: 'Our journal aims to publish high-quality research...',
+    crossrefPrefix: '10.1234',
+    doajKey: 'dummy-doaj-key'
+  });
+});
+
+app.put('/api/journal/settings', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'Settings saved successfully', data: req.body });
+});
 
 // Handle 404 - Route Not Found
 app.use((req: Request, res: Response, _next: NextFunction) => {

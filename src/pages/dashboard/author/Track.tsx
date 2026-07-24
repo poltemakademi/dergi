@@ -73,7 +73,7 @@ export default function Track() {
 
   // Secure withdrawal mutation setup
   const { mutate: withdrawMutation, isLoading: isWithdrawMutating } = useApiMutation<undefined, void>(
-    `/api/withdraw/${id}`,
+    `/api/author/withdraw/${id}`,
     {
       method: 'POST',
       showSuccessToast: false,
@@ -144,10 +144,26 @@ export default function Track() {
     } catch {
       // Continue with local optimistic update
     } finally {
+      try {
+        // Record ID in local withdrawn list to hide it from Submissions view
+        const withdrawnList = JSON.parse(localStorage.getItem('withdrawn_submissions') || '[]');
+        if (id && !withdrawnList.includes(id)) {
+          withdrawnList.push(id);
+          localStorage.setItem('withdrawn_submissions', JSON.stringify(withdrawnList));
+        }
+
+        // Remove from author_submissions array in localStorage
+        const localSubs = JSON.parse(localStorage.getItem('author_submissions') || '[]');
+        const updatedLocal = localSubs.filter((s: any) => s.id !== id);
+        localStorage.setItem('author_submissions', JSON.stringify(updatedLocal));
+      } catch (err) {
+        console.error('Local storage withdrawal update error', err);
+      }
+
       toast.success(
         locale === 'tr' 
-          ? 'Makale başarıyla geri çekildi.' 
-          : 'Manuscript withdrawn successfully.'
+          ? 'Makale geri çekildi ve listenizden kaldırıldı.' 
+          : 'Manuscript withdrawn and removed from your list.'
       );
       navigate('/dashboard/yazar/submissions');
     }

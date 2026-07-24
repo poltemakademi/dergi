@@ -43,6 +43,8 @@ import EditorOverview from './pages/dashboard/editor/Overview';
 import EditorArticles from './pages/dashboard/editor/Articles';
 import EditorIssues from './pages/dashboard/editor/Issues';
 import EditorSettings from './pages/dashboard/editor/Settings';
+import FormBuilder from './pages/dashboard/editor/FormBuilder';
+import EmailTemplates from './pages/dashboard/editor/EmailTemplates';
 
 // Author Pages
 import AuthorSubmissions from './pages/dashboard/author/Submissions';
@@ -114,10 +116,12 @@ export default function App() {
             <Route path="activity" element={<Activity />} />
 
             {/* Editor Routes */}
-            <Route path="editor/overview" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorOverview /></RoleGuard>} />
-            <Route path="editor/articles" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorArticles /></RoleGuard>} />
-            <Route path="editor/issues" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorIssues /></RoleGuard>} />
+            <Route path="editor/overview" element={<RoleGuard allowedRoles={['editor', 'section_editor', 'super_admin']}><EditorOverview /></RoleGuard>} />
+            <Route path="editor/articles" element={<RoleGuard allowedRoles={['editor', 'section_editor', 'super_admin']}><EditorArticles /></RoleGuard>} />
+            <Route path="editor/issues" element={<RoleGuard allowedRoles={['editor', 'section_editor', 'super_admin']}><EditorIssues /></RoleGuard>} />
             <Route path="editor/settings" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EditorSettings /></RoleGuard>} />
+            <Route path="editor/forms" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><FormBuilder /></RoleGuard>} />
+            <Route path="editor/emails" element={<RoleGuard allowedRoles={['editor', 'super_admin']}><EmailTemplates /></RoleGuard>} />
 
             {/* Author Routes */}
             <Route path="yazar/submissions" element={<RoleGuard allowedRoles={['author']}><AuthorSubmissions /></RoleGuard>} />
@@ -131,9 +135,9 @@ export default function App() {
             <Route path="reviewer/history" element={<RoleGuard allowedRoles={['reviewer']}><ReviewerHistory /></RoleGuard>} />
 
             {/* Layout Editor Routes */}
-            <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutQueue /></RoleGuard>} />
-            <Route path="layout/proofs" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
-            <Route path="layout/proofs/:id" element={<RoleGuard allowedRoles={['layout_editor']}><LayoutProofs /></RoleGuard>} />
+            <Route path="layout/queue" element={<RoleGuard allowedRoles={['layout_editor', 'copyeditor', 'super_admin']}><LayoutQueue /></RoleGuard>} />
+            <Route path="layout/proofs" element={<RoleGuard allowedRoles={['layout_editor', 'copyeditor', 'super_admin']}><LayoutProofs /></RoleGuard>} />
+            <Route path="layout/proofs/:id" element={<RoleGuard allowedRoles={['layout_editor', 'copyeditor', 'super_admin']}><LayoutProofs /></RoleGuard>} />
 
             {/* Super Admin Routes */}
             <Route path="admin/system" element={<RoleGuard allowedRoles={['super_admin']}><SystemOverview /></RoleGuard>} />
